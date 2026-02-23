@@ -15,14 +15,31 @@
 
 ## 설치
 
-```bash
-claude plugins add /path/to/sellernote-vibecode-plugin
+### 사전 요구사항
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 설치
+- GitHub 인증 완료 (`gh auth login`) — private repo 접근에 필요
+
+### 1. 마켓플레이스 추가 (최초 1회)
+
+Claude Code에서 다음 명령어를 실행합니다:
+
+```
+/plugin marketplace add sellernote/sellernote-vibecode-plugin
 ```
 
-또는 GitHub에서 직접:
+### 2. 플러그인 설치
+
+```
+/plugin install sellernote-vibecode@sellernote-vibecode-plugin
+```
+
+### 로컬 개발/테스트
+
+플러그인을 로컬에서 테스트하려면:
 
 ```bash
-claude plugins add sellernote/sellernote-vibecode-plugin
+claude --plugin-dir /path/to/sellernote-vibecode-plugin
 ```
 
 ## 사용법
@@ -57,12 +74,24 @@ claude plugins add sellernote/sellernote-vibecode-plugin
 "새 기능 개발해줘"
 ```
 
+### Skill 직접 호출
+
+자동 트리거 외에 명시적으로 skill을 호출할 수도 있습니다:
+
+```
+/sellernote-vibecode:nestjs-api-dev
+/sellernote-vibecode:typeorm-dev
+/sellernote-vibecode:nextjs-data-provider
+/sellernote-vibecode:nextjs-ui-dev
+/sellernote-vibecode:nextjs-dev-orchestration
+```
+
 ## 포함된 컨벤션 문서
 
 각 skill의 `references/` 디렉토리에 관련 컨벤션 문서가 번들되어 있습니다.
 
 ```
-nestjs-api-dev/references/
+skills/nestjs-api-dev/references/
   ├── COMMON_CONVENTION.md          # 공통 규칙 (네이밍, Git, 에러 처리)
   ├── TYPESCRIPT_CONVENTION.md      # TypeScript 코딩 규칙
   ├── BACKEND_CONVENTION.md         # 백엔드 3-layer 아키텍처
@@ -71,41 +100,48 @@ nestjs-api-dev/references/
   ├── SECURITY_CONVENTION.md        # JWT, RBAC, 입력 검증, XSS/SQL Injection
   └── NESTJS_CONVENTION.md          # NestJS 모듈, DI, @sellernote-api-property
 
-typeorm-dev/references/
+skills/typeorm-dev/references/
   ├── DATABASE_CONVENTION.md        # DB 모델링, 공통 필드, 인덱싱
   ├── MYSQL_CONVENTION.md           # MySQL 타입, UTC 타임존, 쿼리 최적화
   ├── REDIS_CONVENTION.md           # Redis 키 네이밍, TTL, 캐시 전략
   └── TYPEORM_CONVENTION.md         # Entity, Relations, Migration, 트랜잭션
 
-nextjs-data-provider/references/
+skills/nextjs-data-provider/references/
   ├── FRONTEND_CONVENTION.md        # 프론트엔드 공통 규칙
   ├── NEXTJS_CONVENTION.md          # App Router, Server/Client Components
   └── STATE_CONVENTION.md           # Zustand, TanStack Query, 상태 분류
 
-nextjs-ui-dev/references/
+skills/nextjs-ui-dev/references/
   ├── FRONTEND_ARCHITECTURE_CONVENTION.md  # 컴포넌트 분류, 의존 방향
   ├── STYLING_CONVENTION.md         # MUI v6, 디자인 토큰, 반응형
   ├── FORM_CONVENTION.md            # React Hook Form + Zod
   └── TESTING_CONVENTION.md         # Storybook, Jest, RTL, Playwright
 
-nextjs-dev-orchestration/references/
+skills/nextjs-dev-orchestration/references/
   ├── FRONTEND_ARCHITECTURE_CONVENTION.md  # 컴포넌트 트리 설계
   └── NEXTJS_CONVENTION.md          # 라우팅, 레이아웃, 미들웨어
 ```
 
 ## 컨벤션 업데이트
 
-컨벤션 문서는 플러그인에 포함되어 있어 플러그인 업데이트 시 함께 갱신됩니다.
+컨벤션 문서는 플러그인에 포함되어 있어 **플러그인 업데이트 시 함께 갱신**됩니다.
 
-컨벤션 원본 저장소(`sellernote-development-convention`)가 업데이트된 경우, 다음 명령으로 최신 문서를 동기화할 수 있습니다:
+### 플러그인 관리자용: 컨벤션 동기화
+
+컨벤션 원본 저장소(`sellernote-development-convention`)가 업데이트된 경우:
 
 ```bash
 # sellernote-vibecode-plugin 루트에서 실행
 # gh CLI 인증 필요 (private repo)
 bash scripts/sync-conventions.sh
+
+# 변경사항 커밋 & 푸시
+git add skills/*/references/*.md
+git commit -m "chore: sync convention docs"
+git push
 ```
 
-동기화 후 변경사항을 커밋하면 다른 사용자도 플러그인 업데이트를 통해 최신 컨벤션을 받을 수 있습니다.
+동기화 후 커밋하면 다른 사용자도 플러그인 업데이트를 통해 최신 컨벤션을 받을 수 있습니다.
 
 ## 컨벤션 계층 구조
 
@@ -123,7 +159,7 @@ Tier 3 (도구별)   → NESTJS_CONVENTION, TYPEORM_CONVENTION, NEXTJS_CONVENTIO
 
 ### 백엔드 (NestJS + TypeORM)
 
-- **3-layer 아키텍처**: Controller(HTTP) → Service(비즈니스) → Repository(데이터) 단방향
+- **3-layer 아키텍처**: Controller(HTTP) -> Service(비즈니스) -> Repository(데이터) 단방향
 - **DTO**: `@sellernote/sellernote-nestjs-api-property` 라이브러리 필수
 - **금액 처리**: DTO에서 `string` 타입 + `@SellernoteApiDecimal`, Service에서 `big.js` 연산
 - **Entity**: 커스텀 `BaseEntity` 상속 (id/UUID, _no/BIGINT, createdAt, updatedAt, deletedAt)
@@ -133,22 +169,36 @@ Tier 3 (도구별)   → NESTJS_CONVENTION, TYPEORM_CONVENTION, NEXTJS_CONVENTIO
 ### 프론트엔드 (Next.js + MUI)
 
 - **App Router**: Server Components 기본, `'use client'`는 트리 리프에서만
-- **컴포넌트 4유형**: UI(props-only) → Feature(비즈니스) → Layout(구조) → Page(조합)
+- **컴포넌트 4유형**: UI(props-only) -> Feature(비즈니스) -> Layout(구조) -> Page(조합)
 - **데이터**: Server Components(초기 로드), TanStack Query(클라이언트), Server Actions(뮤테이션)
-- **상태**: Zustand(클라이언트), TanStack Query(서버) — 서버 상태 Zustand 복제 금지
+- **상태**: Zustand(클라이언트), TanStack Query(서버) -- 서버 상태 Zustand 복제 금지
 - **스타일링**: MUI v6, Theme overrides > styled() > sx (hex 하드코딩 금지)
 - **폼**: React Hook Form + Zod 필수 조합
 - **테스트**: Storybook CSF3 + Jest/RTL + Playwright
+
+## 플러그인 구조
+
+```
+sellernote-vibecode-plugin/
+├── .claude-plugin/
+│   ├── plugin.json              # 플러그인 메타데이터
+│   └── marketplace.json         # 마켓플레이스 설정
+├── skills/
+│   ├── nestjs-api-dev/          # NestJS API 개발 skill
+│   ├── typeorm-dev/             # TypeORM 개발 skill
+│   ├── nextjs-data-provider/    # Next.js 데이터 레이어 skill
+│   ├── nextjs-ui-dev/           # Next.js UI 개발 skill
+│   └── nextjs-dev-orchestration/ # 전체 기능 개발 오케스트레이션 skill
+├── scripts/
+│   └── sync-conventions.sh      # 컨벤션 문서 동기화 스크립트
+└── README.md
+```
 
 ## 기여
 
 ### 새 Skill 추가
 
-`skill-creator` skill을 사용하여 새 skill을 생성할 수 있습니다:
-
-```
-"새 skill을 만들어줘"
-```
+이 플러그인 프로젝트 내에서 `skill-creator` skill을 사용하여 새 skill을 생성할 수 있습니다.
 
 ### 컨벤션 문서 수정
 

@@ -10,7 +10,7 @@ set -euo pipefail
 REPO="sellernote/sellernote-development-convention"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-SKILLS_DIR="${PROJECT_DIR}/.claude/skills"
+SKILLS_DIR="${PROJECT_DIR}/skills"
 
 echo "Syncing Sellernote development conventions..."
 echo "Repository: ${REPO}"

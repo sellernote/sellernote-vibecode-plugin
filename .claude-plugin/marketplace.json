@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "sellernote-vibecode-plugin",
+  "description": "Sellernote development convention skills for NestJS, TypeORM, and Next.js",
+  "owner": {
+    "name": "Sellernote",
+    "email": "dev@ship-da.com"
+  },
+  "plugins": [
+    {
+      "name": "sellernote-vibecode",
+      "source": ".",
+      "description": "Convention-based development skills for NestJS API, TypeORM, Next.js data provider, UI, and orchestration",
+      "version": "1.0.0"
+    }
+  ]
+}
