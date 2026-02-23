@@ -9,30 +9,23 @@ Orchestrate full Next.js feature development by analyzing requirements, designin
 
 ## Convention Loading
 
-Before starting, read the following reference files from `references/` within this skill directory:
+Before starting, read from `references/` within this skill directory:
 
-1. **Always read first**:
-   - `references/FRONTEND_ARCHITECTURE_CONVENTION.md` - Directory layout, component taxonomy (Page/Feature/UI/Layout), dependency direction, co-location rules
-   - `references/NEXTJS_CONVENTION.md` - App Router file conventions, Server/Client Components, data fetching strategies, caching, middleware, error/loading handling
-
-2. **Read when relevant**:
-   - `references/FRONTEND_CONVENTION.md` - Tech stack overview, component design principles, naming, import rules, accessibility, performance
+1. **Always**: `references/FRONTEND_ARCHITECTURE_CONVENTION.md`, `references/NEXTJS_CONVENTION.md`
+2. **When relevant**: `references/FRONTEND_CONVENTION.md`
 
 ## Orchestration Workflow
 
-Follow these steps sequentially for every feature or page development task.
-
 ### Step 1: Analyze Requirements
 
-1. Identify the feature scope: what the user wants to build (page, CRUD feature, dashboard section, form, etc.)
-2. List the data entities involved (e.g., orders, products, users)
-3. List the user interactions required (e.g., filtering, creating, editing, deleting)
-4. Determine the route structure: which URL paths, route groups, and dynamic segments are needed
-5. Check whether the feature requires authentication, authorization, or middleware
+1. Identify feature scope (page, CRUD feature, dashboard section, form, etc.)
+2. List data entities and user interactions
+3. Determine route structure (URL paths, route groups, dynamic segments)
+4. Check auth/middleware requirements
 
 ### Step 2: Design Component Tree
 
-Design the component hierarchy following the dependency direction: **Page -> Feature -> UI**.
+Design the hierarchy following **Page -> Feature -> UI** dependency direction.
 
 ```
 app/(group)/feature-name/
@@ -49,18 +42,13 @@ components/ui/
   (reusable UI components used by Feature components)
 ```
 
-Rules for the component tree:
-- [MUST] `app/` contains only route files (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`)
-- [MUST] Business logic lives in `components/feature/`, not in `page.tsx`
-- [MUST] `page.tsx` is a Server Component by default; it only composes Feature/UI components
-- [MUST] Dependency flows downward: Page -> Feature -> UI (never reverse)
-- [MUST] UI components (`components/ui/`) depend only on props, never on store/queries/hooks
-- [MUST] Feature components (`components/feature/`) contain business logic and compose UI components
-- [MUST NOT] Place components, hooks, or stores inside `app/`
+Sellernote-specific rules:
+- `app/` contains only route files -- no components, hooks, or stores
+- `page.tsx` is a Server Component that only composes Feature/UI components (no business logic)
+- Feature components live in `components/feature/` and contain all business logic
+- UI components in `components/ui/` depend only on props (never on store/queries/hooks)
 
 ### Step 3: Plan Data Layer
-
-Identify the data requirements:
 
 | Category | Items to Identify |
 |----------|-------------------|
@@ -70,16 +58,11 @@ Identify the data requirements:
 | Server State | TanStack Query hooks for client-side data fetching/caching |
 | Types | Shared TypeScript interfaces and Zod schemas |
 
-For each query/mutation, note:
-- The API endpoint or Server Action to call
-- The query key structure for TanStack Query
-- Cache invalidation strategy (which queries to invalidate after mutations)
+For each query/mutation, note the API endpoint, query key structure, and cache invalidation strategy.
 
 ### Step 4: Delegate to nextjs-data-provider Skill
 
-Invoke the `nextjs-data-provider` skill to implement the data layer.
-
-**Handoff instructions to provide:**
+Invoke the `nextjs-data-provider` skill with this handoff template:
 
 ```
 Use the nextjs-data-provider skill to implement the data layer for [feature name]:
@@ -105,11 +88,9 @@ Files to create:
 - schemas/{feature}Schema.ts
 ```
 
-Wait for the data layer to be fully implemented before proceeding to Step 5.
+Wait for the data layer to be fully implemented before proceeding.
 
 ### Step 5: Plan UI Layer
-
-Identify the UI components needed:
 
 | Component Type | Location | Examples |
 |----------------|----------|----------|
@@ -117,17 +98,11 @@ Identify the UI components needed:
 | Feature components | `components/feature/` | OrderList, OrderForm, OrderDetail |
 | Layout components | `components/layout/` | PageLayout, SectionHeader |
 
-For each component, note:
-- Props interface
-- Whether it needs `'use client'` (only if it uses hooks, event handlers, or browser APIs)
-- Which data hooks/stores it consumes (Feature components only)
-- Storybook story requirements (UI components)
+For each component, note: props interface, `'use client'` need, data hooks consumed, Storybook requirements.
 
 ### Step 6: Delegate to nextjs-ui-dev Skill
 
-Invoke the `nextjs-ui-dev` skill to implement the UI layer.
-
-**Handoff instructions to provide:**
+Invoke the `nextjs-ui-dev` skill with this handoff template:
 
 ```
 Use the nextjs-ui-dev skill to implement the UI for [feature name]:
@@ -153,166 +128,30 @@ Files to create:
 - components/feature/{Feature}/index.ts
 ```
 
-### Step 7: Configure Routing and Layout
+### Step 7: Configure Routing
 
-After data and UI layers are implemented, wire everything together in the App Router.
+After data and UI layers are implemented, wire everything in App Router.
 
-#### 7a: Create page.tsx
-
-```typescript
-// app/(group)/feature-name/page.tsx
-import { FeatureName } from '@/components/feature/FeatureName';
-import { PageLayout } from '@/components/layout/PageLayout';
-
-export default function FeatureNamePage() {
-  return (
-    <PageLayout title="Feature Title">
-      <FeatureName />
-    </PageLayout>
-  );
-}
-```
-
-Rules:
-- [MUST] Keep `page.tsx` as Server Component (no `'use client'`)
-- [MUST] Only import and compose components; no business logic
-- [MUST] Use `@/` absolute import paths
-
-#### 7b: Create loading.tsx
-
-```typescript
-// app/(group)/feature-name/loading.tsx
-import { Skeleton } from '@mui/material';
-
-export default function Loading() {
-  return (
-    <div>
-      <Skeleton variant="rectangular" height={48} sx={{ mb: 2 }} />
-      <Skeleton variant="rectangular" height={400} />
-    </div>
-  );
-}
-```
-
-Rules:
-- [SHOULD] Use skeleton UI matching the page layout, not a spinner
-- [SHOULD] Match the visual structure of the actual page content
-
-#### 7c: Create error.tsx
-
-```typescript
-// app/(group)/feature-name/error.tsx
-'use client';
-
-export default function ErrorPage({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  return (
-    <div>
-      <h2>문제가 발생했습니다</h2>
-      <p>{error.message}</p>
-      <button onClick={reset}>다시 시도</button>
-    </div>
-  );
-}
-```
-
-Rules:
-- [MUST] `error.tsx` requires `'use client'` directive
-- [MUST] Accept `error` and `reset` props
-- [MUST NOT] Expose stack traces or internal error details to users
-
-#### 7d: Configure layout.tsx (if needed)
-
-Create or update the route group layout when the feature requires shared layout elements (sidebar, header, breadcrumbs):
-
-```typescript
-// app/(dashboard)/layout.tsx
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div>
-      <Sidebar />
-      <main>{children}</main>
-    </div>
-  );
-}
-```
-
-#### 7e: Configure middleware (if needed)
-
-If the feature requires authentication or route-level logic:
-
-```typescript
-// src/middleware.ts
-import { NextRequest, NextResponse } from 'next/server';
-
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value;
-  if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
-};
-```
-
-Rules:
-- [MUST] Always define `matcher` config to limit middleware scope
-- [MUST NOT] Run middleware on static files or `_next/` paths
+Sellernote-specific routing notes:
+- `page.tsx`: Server Component only -- import and compose, no business logic, use `@/` paths
+- `loading.tsx`: Use MUI `Skeleton` matching page layout structure (not spinners)
+- `error.tsx`: Must have `'use client'`; Korean error messages; never expose stack traces
+- `layout.tsx`: Create for route groups needing shared layout (sidebar, breadcrumbs)
+- `middleware.ts`: Always define `matcher` config; never run on `_next/` or static paths
 
 ### Step 8: Integration Verification
 
-Run through this checklist to verify the feature is complete and correctly integrated.
+Verify the completed feature against these checks:
 
-#### Architecture Checklist
-
-- [ ] `app/` contains only route files (page, layout, loading, error, not-found)
-- [ ] No business logic in `page.tsx`; all delegated to Feature components
-- [ ] Component dependency direction: Page -> Feature -> UI (no reverse imports)
-- [ ] UI components depend only on props (no store, query, or hook imports)
-- [ ] `'use client'` only at leaf nodes (Feature components), not on Page or Layout
+- [ ] `app/` has only route files; all business logic in `components/feature/`
+- [ ] Dependency direction: Page -> Feature -> UI (no reverse imports)
+- [ ] `'use client'` only at leaf nodes (Feature components), not on Page/Layout
 - [ ] All imports use `@/` absolute paths
-- [ ] Co-located files: component, test, story, index.ts in same folder
-
-#### Data Layer Checklist
-
-- [ ] TanStack Query hooks created with proper query keys
-- [ ] Server Actions created for mutations with `'use server'` directive
-- [ ] Cache invalidation configured (revalidatePath/revalidateTag after mutations)
-- [ ] Zustand store created for client-only UI state
-- [ ] Zod schemas defined for form validation
-- [ ] TypeScript types/interfaces defined for shared data shapes
-
-#### UI Layer Checklist
-
-- [ ] UI components have Storybook stories
-- [ ] Feature components have unit tests
-- [ ] Forms use React Hook Form + Zod validation
-- [ ] MUI components used for base UI (not custom CSS for standard elements)
-- [ ] Accessible: semantic HTML, keyboard navigation, alt text
-
-#### Routing Checklist
-
-- [ ] `loading.tsx` with skeleton UI present for the route
-- [ ] `error.tsx` with `'use client'` present for the route
-- [ ] Route group layout configured if shared layout is needed
-- [ ] Middleware with `matcher` config if authentication is required
-- [ ] Dynamic routes have `generateStaticParams` if statically generated
-
-#### Performance Checklist
-
-- [ ] Server Components used by default; `'use client'` minimized
-- [ ] Heavy components use `dynamic()` import with loading fallback
-- [ ] Images use `next/image` with `priority` on LCP images
-- [ ] Independent data sections wrapped in individual `<Suspense>` boundaries
-- [ ] Fetch calls have explicit cache options (`cache`, `next.revalidate`, `next.tags`)
+- [ ] Data layer complete: query hooks, server actions, Zustand store, Zod schemas
+- [ ] UI layer complete: Storybook stories for UI components, tests for Feature components
+- [ ] Route files present: `loading.tsx` (skeleton), `error.tsx` (`'use client'`)
+- [ ] Server Components as default; heavy components use `dynamic()` import
+- [ ] Independent data sections wrapped in `<Suspense>` boundaries
 
 ## Key Rules Summary
 
@@ -321,14 +160,9 @@ Run through this checklist to verify the feature is complete and correctly integ
 | MUST | `app/` for route files only; business logic in `components/`, `hooks/`, `store/`, `queries/` |
 | MUST | Server Components as default; `'use client'` at leaf nodes only |
 | MUST | Dependency direction: Page -> Feature -> UI (never reverse) |
-| MUST | `error.tsx` with `'use client'`; `loading.tsx` with skeleton UI per route |
-| MUST | Middleware with `matcher` config |
 | MUST | `@/` absolute import paths |
 | MUST NOT | Business logic in `page.tsx` |
 | MUST NOT | UI components importing from store, queries, or hooks |
-| MUST NOT | Components, hooks, or stores placed inside `app/` directory |
-| SHOULD | Co-locate component, test, story, index.ts in same folder |
-| SHOULD | Use `<Suspense>` boundaries for independent data sections |
 
 ## Cross-Skill References
 

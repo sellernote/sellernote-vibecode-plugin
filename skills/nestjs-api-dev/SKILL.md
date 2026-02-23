@@ -30,11 +30,11 @@ Follow these steps sequentially. Skip a step only when it does not apply to the 
 
 1. Identify the target feature module under `src/modules/`
 2. Check existing patterns in the codebase (file naming, DI patterns, existing DTOs)
-3. If creating a new module, identify the directory layout from `NESTJS_CONVENTION.md`
+3. If creating a new module, check directory layout in `references/NESTJS_CONVENTION.md`
 
 ### Step 2: Define Domain Model Interface
 
-Create or update the interface in `modules/{feature}/interfaces/{feature}.model.interface.ts`:
+Create or update the interface in `modules/{feature}/interfaces/{feature}.model.interface.ts`.
 
 ```typescript
 // modules/order/interfaces/order.model.interface.ts
@@ -51,19 +51,17 @@ export interface IOrderModel {
 }
 ```
 
-Rules:
 - [MUST] Include only data fields belonging to this model; exclude relations
 - [MUST] Entity implements this interface; Mapper uses it as parameter type
 - For Entity/TypeORM work, delegate to the `typeorm-dev` skill
 
 ### Step 3: Create DTOs
 
-Place DTOs in `modules/{feature}/dto/`. Follow naming: `create-{feature}.dto.ts`, `update-{feature}.dto.ts`, `{feature}-response.dto.ts`, `get-{feature}-list-query.dto.ts`.
+Place DTOs in `modules/{feature}/dto/`. Follow naming from `references/BACKEND_CONVENTION.md`.
 
-**Critical: Use `@sellernote/sellernote-nestjs-api-property` exclusively.**
+**Critical: Use `@sellernote/sellernote-nestjs-api-property` exclusively -- never use `@ApiProperty`, `class-validator`, or `class-transformer` directly.**
 
 ```typescript
-// GOOD - Sellernote API property decorators
 import {
   SellernoteApiString,
   SellernoteApiNumber,
@@ -82,129 +80,42 @@ export class CreateOrderDto {
 }
 ```
 
-```typescript
-// BAD - Do not use these directly; use @sellernote/sellernote-nestjs-api-property instead
-import { ApiProperty } from '@nestjs/swagger';           // Use @SellernoteApi* decorators
-import { IsString, MaxLength } from 'class-validator';   // Wrapped by @SellernoteApi* decorators
-import { Type } from 'class-transformer';                 // Wrapped by @SellernoteApi* decorators
-```
-
-> **Note:** `class-validator` and `class-transformer` are used internally by the `@sellernote/sellernote-nestjs-api-property` library. Always use `@SellernoteApi*` decorators which wrap these. See `references/NESTJS_CONVENTION.md` for edge cases.
+> `class-validator` and `class-transformer` are used internally by `@sellernote/sellernote-nestjs-api-property`. Always use `@SellernoteApi*` decorators which wrap these. See `references/NESTJS_CONVENTION.md` for edge cases.
 
 **Money fields:**
-- [MUST] Declare as `string` type in DTOs
-- [MUST] Use `@SellernoteApiDecimal` decorator
-- [MUST] Use `big.js` for arithmetic in Service layer
+- [MUST] Declare as `string` type + `@SellernoteApiDecimal` decorator
+- [MUST] Use `big.js` for arithmetic in Service layer (never native `number` arithmetic)
 - [MUST NOT] Use `number` type or `@SellernoteApiNumber` for money
 
 ### Step 4: Create Controller
 
-Place in `modules/{feature}/{feature}.controller.ts`. Controller handles HTTP only.
+Place in `modules/{feature}/{feature}.controller.ts`. Controller handles HTTP only -- delegate to Service immediately.
 
-```typescript
-@Controller({ path: 'orders', version: '1' })
-export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
-
-  @ApiOperation({ summary: '주문 생성' })
-  @ApiResponse({ status: 201, type: OrderResponseDto })
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  async create(@Body() dto: CreateOrderDto): Promise<OrderResponseDto> {
-    return this.orderService.createOrder(dto);
-  }
-}
-```
-
-Rules:
-- [MUST] Delegate to Service immediately; no business logic in Controller
 - [MUST] Add `@ApiOperation({ summary })` and `@ApiResponse` to every endpoint
 - [MUST] Use Guards for auth/RBAC, not inline checks
-- [MUST NOT] Inject or call Repository from Controller
+- See `references/BACKEND_ARCHITECTURE_CONVENTION.md` for layer responsibility rules
 
 ### Step 5: Create Service
 
 Place in `modules/{feature}/{feature}.service.ts`. All business logic lives here.
 
-```typescript
-import { Transactional } from 'typeorm-transactional';
-
-@Injectable()
-export class OrderService {
-  constructor(
-    private readonly orderRepository: OrderRepository,
-    private readonly productRepository: ProductRepository,
-  ) {}
-
-  @Transactional()
-  async createOrder(dto: CreateOrderDto): Promise<OrderResponseDto> {
-    const product = await this.productRepository.findOne({
-      where: { id: dto.productId },
-    });
-    if (!product) {
-      throw new NotFoundException('상품을 찾을 수 없습니다.');
-    }
-
-    // Money arithmetic with big.js
-    const lineTotal = new Big(dto.totalAmount).times(dto.quantity).toFixed(2);
-
-    const order = this.orderRepository.create({
-      ...dto,
-      totalAmount: Number(lineTotal),
-      status: 'PENDING',
-    });
-    const saved = await this.orderRepository.save(order);
-    return OrderMapper.toResponseDto(saved);
-  }
-}
-```
-
-Rules:
-- [MUST] Constructor injection for all dependencies
-- [MUST] All business validation, domain rules, conditional logic here
-- [MUST] Use `big.js` for money calculations (never native `number` arithmetic)
-- [MUST] Throw `HttpException` subclasses for errors (`NotFoundException`, `BadRequestException`)
-- [MUST] Use `@Transactional()` from `typeorm-transactional` package for transaction management
-- [MUST NOT] Use `QueryRunner` for manual transaction management
+**Sellernote-specific patterns:**
+- [MUST] Use `@Transactional()` from `typeorm-transactional` for transaction management (not `QueryRunner`)
+- [MUST] Use `big.js` for money calculations: `new Big(dto.totalAmount).times(dto.quantity).toFixed(2)`
+- See `references/BACKEND_ARCHITECTURE_CONVENTION.md` for full Service rules and forbidden patterns
 
 ### Step 6: Create Repository
 
 Place in `modules/{feature}/{feature}.repository.ts`. Pure data access only.
 
-```typescript
-@Injectable()
-export class OrderRepository extends Repository<Order> {
-  constructor(private dataSource: DataSource) {
-    super(Order, dataSource.createEntityManager());
-  }
-
-  async findByUserId(userId: string): Promise<Order[]> {
-    return this.find({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-    });
-  }
-
-  async findByFilter(filter: GetOrderListQueryDto): Promise<[Order[], number]> {
-    const qb = this.createQueryBuilder('order');
-    if (filter.status) {
-      qb.andWhere('order.status = :status', { status: filter.status });
-    }
-    return qb.take(filter.size).skip((filter.page - 1) * filter.size).getManyAndCount();
-  }
-}
-```
-
-Rules:
-- [MUST] Only CRUD, dynamic query building, and aggregate queries
 - [MUST] Use parameterized queries (never string interpolation)
-- [MUST NOT] Contain business logic, if/else branching on domain rules, or throw HttpExceptions
-- [MUST NOT] Inject other Repositories or Services
-- [MUST NOT] Transform data into business DTOs
+- See `references/BACKEND_ARCHITECTURE_CONVENTION.md` for allowed/forbidden Repository patterns
 
 ### Step 7: Create Mapper
 
-Place in `modules/{feature}/mappers/{feature}.mapper.ts`:
+Place in `modules/{feature}/mappers/{feature}.mapper.ts`.
+
+- [MUST] Use Domain Model Interface (`IXxxModel`) as parameter type, not Entity directly
 
 ```typescript
 import type { IOrderModel } from '../interfaces/order.model.interface';
@@ -221,83 +132,24 @@ export class OrderMapper {
 }
 ```
 
-- [MUST] Use Domain Model Interface as parameter type, not Entity directly
-
 ### Step 8: Wire Module
 
-```typescript
-@Module({
-  imports: [TypeOrmModule.forFeature([Order])],
-  controllers: [OrderController],
-  providers: [OrderService, OrderRepository],
-  exports: [OrderService],
-})
-export class OrderModule {}
-```
+Register all providers in the feature module. Use `exports` for cross-module access. Avoid `@Global()` unless truly app-wide.
 
-- [MUST] Register all providers; use `exports` for cross-module access
-- [MUST] Import other modules explicitly; avoid `@Global()` unless truly app-wide
+- See `references/NESTJS_CONVENTION.md` for module wiring rules
 
 ### Step 9: Add Guards and Security
 
-- [MUST] Use `JwtAuthGuard` for authenticated endpoints
-- [MUST] Use `RolesGuard` + `@Roles()` decorator for RBAC
-- [MUST] Ensure global `ValidationPipe` with `whitelist: true, forbidNonWhitelisted: true`
-- [MUST] Use `helmet` middleware
-- [MUST NOT] Check roles inside Controller methods manually
+Apply `JwtAuthGuard`, `RolesGuard` + `@Roles()` decorator as needed.
+
+- See `references/SECURITY_CONVENTION.md` for full auth/RBAC/input validation rules
+- See `references/NESTJS_CONVENTION.md` for Guard/Interceptor/Pipe usage patterns
 
 ### Step 10: Verify Swagger
 
-- [MUST] Every DTO field has a `@Sellernote*` decorator with `description`
+- [MUST] Every DTO field has a `@SellernoteApi*` decorator with `description`
 - [MUST] Every endpoint has `@ApiOperation` and `@ApiResponse`
-- [MUST] Money fields documented with `@SellernoteApiDecimal`
-
-## Quick Reference: MUST / MUST NOT
-
-### Architecture
-| Rule | Detail |
-|------|--------|
-| MUST | 3-layer: Controller -> Service -> Repository (unidirectional) |
-| MUST | Business logic only in Service |
-| MUST | Data access only in Repository |
-| MUST NOT | Controller call Repository directly |
-| MUST NOT | Repository inject other Repository or Service |
-| MUST NOT | Repository throw HttpException or contain business branching |
-
-### NestJS
-| Rule | Detail |
-|------|--------|
-| MUST | Use `@sellernote/sellernote-nestjs-api-property` for all DTO decorators |
-| MUST NOT | Use `@ApiProperty`, `class-validator`, or `class-transformer` decorators directly |
-| MUST | Money DTO fields as `string` + `@SellernoteApiDecimal` |
-| MUST | Money arithmetic with `big.js` |
-| MUST | Constructor injection (never `new Service()`) |
-| MUST | Domain Model Interface per model; Entity implements it |
-| MUST | Global `ValidationPipe` with `whitelist: true`, `forbidNonWhitelisted: true` |
-| MUST | Global Exception Filter returning `{ success, data, error }` |
-| MUST NOT | Use `any` type |
-| MUST NOT | Create circular module dependencies |
-
-### API Design
-| Rule | Detail |
-|------|--------|
-| MUST | RESTful: plural nouns, kebab-case URLs, max 2-level nesting |
-| MUST | URL versioning: `/api/v1/...` |
-| MUST | Response format: `{ success, data, error }` with pagination |
-| MUST | Bulk endpoints: `/bulk` path, `items` array, max 100 items |
-| MUST | POST endpoints support `Idempotency-Key` header |
-| MUST | JSON fields in camelCase, dates in ISO 8601 UTC |
-
-### Security
-| Rule | Detail |
-|------|--------|
-| MUST | JWT Access + Refresh tokens |
-| MUST | Auth/RBAC via Guards, not inline Controller checks |
-| MUST | Parameterized queries only (prevent SQL injection) |
-| MUST | `helmet` middleware |
-| MUST NOT | Hardcode secrets; use `ConfigService` + env vars |
-| MUST NOT | Return Entity directly (use ResponseDto) |
-| MUST NOT | Expose stack traces or internal info in error responses |
+- See `references/NESTJS_CONVENTION.md` for Swagger documentation rules
 
 ## File Structure Reference
 
