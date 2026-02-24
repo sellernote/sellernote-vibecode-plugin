@@ -70,47 +70,64 @@ interface CreateUserFormData {
 
 ---
 
-## 3. React Hook Form + shadcn/ui 연동
+## 3. React Hook Form + @sellernote/design-system 연동
 
-- **규칙**: [MUST] shadcn/ui의 Form 컴포넌트 또는 React Hook Form의 `Controller`를 사용하여 폼 필드를 연결한다
-- **이유**: shadcn/ui의 `Input`, `Select` 등은 네이티브 HTML 요소 기반으로 동작하여 React Hook Form의 `register`와 직접 호환된다. 복잡한 컴포넌트(Select, DatePicker 등)는 `Controller`를 사용한다.
+- **규칙**: [MUST] `@sellernote/design-system` 컴포넌트와 React Hook Form의 `Controller`를 사용하여 폼 필드를 연결한다
+- **이유**: DS의 `TextField`, `Select` 등은 `value`/`onChange` 패턴을 따르므로 React Hook Form의 `Controller`와 자연스럽게 연동된다.
 - **규칙**: [MUST] `useForm`에 `zodResolver`를 설정하고, `mode: 'onBlur'`를 기본으로 사용한다
 - **이유**: `zodResolver`는 Zod 스키마를 React Hook Form의 유효성 검사 체계에 연결한다. `mode: 'onBlur'`는 사용자가 필드를 떠날 때 검증하여 입력 중 피로감을 줄이면서도 제출 전 피드백을 제공한다.
 - **좋은 예시**:
 ```typescript
 "use client";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { TextField, PasswordField, ActionButton } from "@sellernote/design-system";
 import { emailSchema, passwordSchema } from "@/lib/schemas/common";
 
 const LoginSchema = z.object({ email: emailSchema, password: passwordSchema });
 type LoginFormData = z.infer<typeof LoginSchema>;
 
 export function LoginForm() {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
     resolver: zodResolver(LoginSchema),
     mode: "onBlur",
     defaultValues: { email: "", password: "" },
   });
   return (
-    <form onSubmit={handleSubmit((data) => login(data))} noValidate>
-      <div>
-        <Label htmlFor="email">이메일</Label>
-        <Input id="email" type="email" {...register("email")} />
-        {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
-      </div>
-      <div>
-        <Label htmlFor="password">비밀번호</Label>
-        <Input id="password" type="password" {...register("password")} />
-        {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
-      </div>
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+    <form onSubmit={handleSubmit((data) => login(data))} noValidate className="flex flex-col gap-400">
+      <Controller
+        name="email"
+        control={control}
+        render={({ field }) => (
+          <TextField
+            label="이메일"
+            type="email"
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            status={errors.email ? "error" : undefined}
+            helperText={errors.email?.message}
+          />
+        )}
+      />
+      <Controller
+        name="password"
+        control={control}
+        render={({ field }) => (
+          <PasswordField
+            label="비밀번호"
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            status={errors.password ? "error" : undefined}
+            helperText={errors.password?.message}
+          />
+        )}
+      />
+      <ActionButton type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "로그인 중..." : "로그인"}
-      </Button>
+      </ActionButton>
     </form>
   );
 }
@@ -149,27 +166,37 @@ return (
 - **이유**: 에러 메시지가 해당 필드에 인접해 있어야 사용자가 어떤 필드에 문제가 있는지 즉시 파악할 수 있다.
 - **좋은 예시**:
 ```typescript
-<div>
-  <Label htmlFor="email">이메일</Label>
-  <Input id="email" type="email" {...register("email")} />
-  {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
-</div>
+<Controller
+  name="email"
+  control={control}
+  render={({ field }) => (
+    <TextField
+      label="이메일"
+      type="email"
+      value={field.value}
+      onChange={field.onChange}
+      onBlur={field.onBlur}
+      status={errors.email ? "error" : undefined}
+      helperText={errors.email?.message}
+    />
+  )}
+/>
 ```
 
 ### 폼 레벨 에러
 
-- **규칙**: [SHOULD] 서버 에러, 네트워크 에러 등 특정 필드에 귀속되지 않는 에러는 shadcn/ui `Alert` 컴포넌트로 폼 상단에 표시한다
+- **규칙**: [SHOULD] 서버 에러, 네트워크 에러 등 특정 필드에 귀속되지 않는 에러는 DS `Alert` 컴포넌트로 폼 상단에 표시한다
 - **이유**: 폼 레벨 에러는 개별 필드와 연결할 수 없으므로, 폼 전체에 대한 에러임을 명확히 전달하는 별도의 영역이 필요하다.
 - **좋은 예시**:
 ```typescript
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert } from "@sellernote/design-system";
 
 const [formError, setFormError] = useState<string | null>(null);
 return (
   <form onSubmit={handleSubmit(onSubmit)}>
     {formError && (
-      <Alert variant="destructive" className="mb-4">
-        <AlertDescription>{formError}</AlertDescription>
+      <Alert variant="error" title="오류" open>
+        {formError}
       </Alert>
     )}
     {/* 폼 필드들 */}
@@ -281,15 +308,13 @@ export function OrderForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       {fields.map((field, index) => (
-        <div key={field.id} className="flex gap-4 items-center">
+        <div key={field.id} className="flex gap-400 items-center">
           <Controller name={`items.${index}.name`} control={control}
-            render={({ field }) => <Input {...field} placeholder="상품명" />} />
-          <Button variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length === 1}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+            render={({ field }) => <TextField label="상품명" value={field.value} onChange={field.onChange} />} />
+          <IconButton icon="icon-utility-trash" onClick={() => remove(index)} disabled={fields.length === 1} aria-label="삭제" />
         </div>
       ))}
-      <Button type="button" variant="outline" onClick={() => append({ name: "", quantity: 1 })}>상품 추가</Button>
+      <ActionButton type="button" variant="tertiary" onClick={() => append({ name: "", quantity: 1 })}>상품 추가</ActionButton>
     </form>
   );
 }
@@ -307,22 +332,16 @@ const ShippingSchema = z.discriminatedUnion("method", [
 ]);
 
 export function ShippingForm() {
-  const { control, watch } = useForm({ resolver: zodResolver(ShippingSchema) });
+  const { control, watch, register } = useForm({ resolver: zodResolver(ShippingSchema) });
   const method = watch("method");
   return (
     <form>
       {/* RadioGroup으로 method 선택 */}
       {method === "delivery" && (
-        <div>
-          <Label>배송 주소</Label>
-          <Input {...register("address")} placeholder="배송 주소" />
-        </div>
+        <TextField label="배송 주소" {...register("address")} />
       )}
       {method === "pickup" && (
-        <div>
-          <Label>매장 선택</Label>
-          <Input {...register("storeId")} placeholder="매장을 선택해주세요" />
-        </div>
+        <TextField label="매장 선택" {...register("storeId")} />
       )}
     </form>
   );
@@ -398,5 +417,5 @@ const debouncedCheck = useDebouncedCallback(async (value: string) => {
 
 - [React Hook Form 공식 문서](https://react-hook-form.com)
 - [Zod 공식 문서](https://zod.dev)
-- [shadcn/ui Form Components](https://ui.shadcn.com/docs/components/form)
+- [@sellernote/design-system](https://github.com/sellernote/sellernote-design-system)
 - [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)

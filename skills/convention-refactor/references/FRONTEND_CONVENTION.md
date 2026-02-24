@@ -22,10 +22,12 @@
 | 언어 | TypeScript | 최신 안정 버전 |
 | 클라이언트 상태 | Zustand | 최신 안정 버전 |
 | 서버 상태 | TanStack Query | v5 |
-| UI 컴포넌트 | shadcn/ui + Tailwind CSS | 최신 안정 버전 |
+| UI 컴포넌트 | @sellernote/design-system | 최신 버전 |
 | 컴포넌트 문서화 | Storybook | 8 |
 | 폼/유효성검사 | React Hook Form + Zod | 최신 안정 버전 |
 | 테스트 | Jest + React Testing Library | 최신 안정 버전 |
+
+> `@sellernote/design-system`은 Radix UI + Tailwind CSS v4 + CVA 기반으로 구축된 사내 디자인 시스템이다. 40+ 컴포넌트, 166+ 아이콘, 자체 디자인 토큰을 제공한다.
 
 ---
 
@@ -143,6 +145,8 @@ function Button({ variant, size = "md", disabled = false, children, onClick }: B
 }
 ```
 
+> **참고**: `@sellernote/design-system`이 제공하는 컴포넌트(ActionButton, TextField, Select 등)는 이미 이 원칙을 따르므로 직접 구현 없이 사용한다. 버튼, 입력, 선택 등 기본 UI 요소는 DS 컴포넌트를 우선 확인한다.
+
 - **나쁜 예시**:
 
 ```typescript
@@ -183,7 +187,7 @@ function Button(props: ButtonProps) {
 
 ### Import 순서
 
-- **규칙**: [SHOULD] import 문은 다음 순서를 따른다: 1) React/외부 라이브러리, 2) 내부 모듈 (`@/`), 3) 상대 경로 (`./`), 4) 타입 (type import)
+- **규칙**: [SHOULD] import 문은 다음 순서를 따른다: 1) React/외부 라이브러리, 2) 디자인 시스템 (`@sellernote/design-system`), 3) 내부 모듈 (`@/`), 4) 상대 경로 (`./`), 5) 타입 (type import)
 - **이유**: 일관된 순서는 의존성의 출처를 빠르게 파악하게 해주며, 코드 리뷰 시 불필요한 논의를 줄인다.
 - **좋은 예시**:
 
@@ -192,14 +196,16 @@ function Button(props: ButtonProps) {
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-// 2) 내부 모듈
-import { Button } from "@/components/ui/button";
+// 2) 디자인 시스템
+import { ActionButton, TextField, Dialog } from "@sellernote/design-system";
+
+// 3) 내부 모듈
 import { useAuth } from "@/hooks/useAuth";
 
-// 3) 상대 경로
+// 4) 상대 경로
 import { formatPrice } from "./utils";
 
-// 4) 타입
+// 5) 타입
 import type { Product } from "@/types/Product.types";
 ```
 
@@ -209,7 +215,7 @@ import type { Product } from "@/types/Product.types";
 import type { Product } from "@/types/Product.types";
 import { formatPrice } from "./utils";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ActionButton } from "@sellernote/design-system";
 ```
 
 ### 배럴 파일 사용 범위

@@ -1,78 +1,70 @@
 # 스타일링 컨벤션
 
-> 이 문서는 shadcn/ui + Tailwind CSS 기반 스타일링과 디자인 시스템 규칙을 정의합니다.
+> 이 문서는 `@sellernote/design-system` + Tailwind CSS v4 기반 스타일링과 디자인 토큰 규칙을 정의합니다.
 > 상위 규칙: [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)
 
 ---
 
-## 1. shadcn/ui + Next.js 15 설정
+## 1. @sellernote/design-system 설정
 
-### 의존성
+### 패키지 설치
 
-- **규칙**: [MUST] shadcn/ui 프로젝트에 다음 핵심 의존성을 설치한다
-- **이유**: shadcn/ui는 Radix UI primitives 위에 Tailwind CSS로 스타일링된 컴포넌트를 제공한다. 각 의존성은 컴포넌트 시스템의 필수 요소이다.
+- **규칙**: [MUST] `@sellernote/design-system` 패키지를 설치하고 프로젝트에 연동한다
+- **이유**: DS는 Radix UI + Tailwind CSS v4 + CVA 기반 사내 디자인 시스템으로, 40+ 컴포넌트, 166+ 아이콘, 자체 디자인 토큰을 제공한다. npm 패키지로 관리되어 일관된 UI를 보장한다.
 
-| 패키지 | 역할 |
-|--------|------|
-| `tailwindcss` | 유틸리티 기반 CSS 프레임워크 |
-| `class-variance-authority` | 컴포넌트 변형(variants) 타입 안전 관리 |
-| `clsx` | 조건부 className 결합 |
-| `tailwind-merge` | Tailwind 클래스 충돌 해결 |
-| `lucide-react` | 아이콘 라이브러리 |
-| `tw-animate-css` | 애니메이션 유틸리티 |
+**.npmrc 설정 (GitHub Packages 인증):**
+
+```ini
+@sellernote:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+**설치:**
 
 ```bash
-npm install class-variance-authority clsx tailwind-merge lucide-react tw-animate-css
+pnpm add @sellernote/design-system
 ```
 
-### components.json
+### Tailwind 연동
 
-- **규칙**: [MUST] 프로젝트 루트에 `components.json` 파일을 생성하여 shadcn/ui 설정을 정의한다
-- **이유**: `components.json`은 shadcn CLI가 컴포넌트를 추가할 때 참조하는 설정 파일이다. import 경로, 스타일 방식, 아이콘 라이브러리 등을 한 곳에서 관리한다.
+- **규칙**: [MUST] DS의 Tailwind preset을 프로젝트 Tailwind 설정에 적용한다
+- **이유**: DS의 디자인 토큰(색상, 타이포그래피, 스페이싱 등)이 Tailwind 클래스로 자동 변환된다.
 
-```json
-{
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "new-york",
-  "rsc": true,
-  "tsx": true,
-  "tailwind": {
-    "config": "",
-    "css": "src/app/globals.css",
-    "baseColor": "neutral",
-    "cssVariables": true,
-    "prefix": ""
-  },
-  "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
-  },
-  "iconLibrary": "lucide"
-}
+```javascript
+// tailwind.config.js
+import designSystemPreset from '@sellernote/design-system/tailwind.preset.js';
+
+export default {
+  presets: [designSystemPreset],
+  content: [
+    './src/**/*.{ts,tsx}',
+    './node_modules/@sellernote/design-system/dist/**/*.js',
+  ],
+};
 ```
+
+### 스타일 Import
+
+- **규칙**: [MUST] 글로벌 CSS 파일에서 Tailwind와 DS 스타일을 아래 순서로 import한다
+- **이유**: DS 스타일은 CSS Variables(디자인 토큰), Pretendard 폰트, 베이스 스타일을 포함한다. Tailwind 다음에 import해야 토큰이 올바르게 적용된다.
+
+```css
+/* app/globals.css */
+@import 'tailwindcss';
+@config '../tailwind.config.js';
+@import '@sellernote/design-system/styles';
+```
+
+> **참고**: `@sellernote/design-system/styles`에 Pretendard 폰트가 포함되어 있으므로 별도의 `next/font` 설정이 불필요하다.
 
 ### cn() 유틸리티 함수
 
-- **규칙**: [MUST] `lib/utils.ts`에 `cn()` 유틸리티 함수를 정의하고, 모든 className 조합에 사용한다
-- **이유**: `cn()`은 `clsx`(조건부 클래스 결합)와 `tailwind-merge`(Tailwind 클래스 충돌 해결)를 결합한 함수이다. 이를 통해 `p-4`와 `p-2`가 동시에 적용될 때 후자만 유지되는 등 Tailwind 특유의 클래스 충돌 문제를 자동으로 해결한다.
-
-```typescript
-// lib/utils.ts
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-```
-
+- **규칙**: [MUST] 조건부 className 결합에 DS에서 제공하는 `cn()` 함수를 사용한다
+- **이유**: DS의 `cn()`은 `clsx` + `tailwind-merge`를 결합한 함수로, DS 토큰의 타이포그래피 prefix까지 지원하는 커스텀 설정이 적용되어 있다.
 - **좋은 예시**:
 
 ```typescript
-import { cn } from "@/lib/utils";
+import { cn } from "@sellernote/design-system";
 
 interface CardProps {
   className?: string;
@@ -81,14 +73,14 @@ interface CardProps {
 
 function Card({ className, children }: CardProps) {
   return (
-    <div className={cn("rounded-lg border bg-card p-6 shadow-sm", className)}>
+    <div className={cn("rounded-200 bg-surface-1 p-600 shadow-normal", className)}>
       {children}
     </div>
   );
 }
 
 // 사용: 기본 스타일을 유지하면서 외부에서 커스터마이징 가능
-<Card className="p-4"> {/* p-6이 p-4로 올바르게 오버라이드됨 */}
+<Card className="p-400"> {/* p-600이 p-400으로 올바르게 오버라이드됨 */}
   <p>내용</p>
 </Card>
 ```
@@ -99,220 +91,287 @@ function Card({ className, children }: CardProps) {
 // cn() 없이 템플릿 리터럴로 직접 결합 — Tailwind 클래스 충돌 미해결
 function Card({ className, children }: CardProps) {
   return (
-    <div className={`rounded-lg border bg-card p-6 shadow-sm ${className}`}>
+    <div className={`rounded-200 bg-surface-1 p-600 shadow-normal ${className}`}>
       {children}
     </div>
   );
 }
-
-// p-6과 p-4가 모두 적용되어 예측 불가능한 결과
-<Card className="p-4">내용</Card>
-```
-
-### next/font 연동
-
-- **규칙**: [MUST] `next/font`로 폰트를 설정하고, CSS variable로 Tailwind에 연동한다
-- **이유**: `next/font`는 빌드 타임에 폰트를 최적화하여 Layout Shift를 방지하고, self-hosting으로 외부 네트워크 요청을 제거한다.
-- **좋은 예시**:
-
-```typescript
-// app/layout.tsx
-import { Noto_Sans_KR } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
-import "@/app/globals.css";
-
-const notoSansKR = Noto_Sans_KR({
-  weight: ["300", "400", "500", "700"],
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-noto-sans-kr",
-});
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className={notoSansKR.variable}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
-  );
-}
-```
-
-- **나쁜 예시**:
-
-```typescript
-// 외부 CDN 직접 로드 — FOUT 발생, 외부 의존성
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR" rel="stylesheet" />
 ```
 
 ---
 
-## 2. 테마 구조
+## 2. 디자인 토큰
 
-### CSS Variables 기반 디자인 토큰
+> 모든 토큰은 Tailwind 클래스로 사용한다. 소스: `@sellernote/design-system`의 `assets/token.json` → `tailwind.preset.js`
 
-- **규칙**: [MUST] 디자인 토큰은 `globals.css`의 CSS Variables로 정의하고, `:root`(라이트모드)와 `.dark`(다크모드)에서 각각 값을 설정한다
+### 컬러 시스템
 
-> **주의**: 아래 CSS 예시는 **Tailwind CSS v4** 문법을 기반으로 한다.
-> `@import "tailwindcss"`, `@theme inline`, `@custom-variant` 등은 v4에서만 동작한다.
-> v3 프로젝트에서는 `tailwind.config.ts`와 `@tailwind base/components/utilities` 지시어를 사용한다.
-- **이유**: CSS Variables를 사용하면 JavaScript 런타임 없이 테마 전환이 가능하고, Tailwind의 유틸리티 클래스와 자연스럽게 통합된다. 다크모드 전환 시 깜빡임(flash)이 발생하지 않는다.
+- **규칙**: [MUST] 색상은 DS의 시스템 컬러 토큰을 통해 참조한다. hex 값이나 Tailwind 기본 palette를 직접 사용하지 않는다.
+- **이유**: DS 토큰은 용도별로 정의되어 있어 UI 일관성을 보장하고, 향후 다크모드 확장 시 자동 대응할 수 있다.
 
-```css
-/* app/globals.css */
-@import "tailwindcss";
-@import "tw-animate-css";
+#### 배경 (bg)
 
-@custom-variant dark (&:is(.dark *));
+| 토큰 | Tailwind 클래스 | 값      | 용도             |
+|------|----------------|---------|------------------|
+| bg-1 | `bg-bg-1`      | #ffffff | 기본 페이지 배경 |
+| bg-2 | `bg-bg-2`      | #f6f7f8 | 보조 배경        |
+| bg-3 | `bg-bg-3`      | #1f2328 | 다크 배경        |
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
+#### 서피스 (surface)
 
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-}
+| 토큰      | Tailwind 클래스 | 값      | 용도                       |
+|-----------|----------------|---------|----------------------------|
+| surface-1 | `bg-surface-1` | #ffffff | 카드, 패널 기본            |
+| surface-2 | `bg-surface-2` | #f6f7f8 | disabled 배경, 보조 서피스 |
+| surface-3 | `bg-surface-3` | #e8eaed | hover 상태, 선택된 항목    |
+| surface-4 | `bg-surface-4` | #ccd0d7 | 강조 배경                  |
+| surface-5 | `bg-surface-5` | #48505b | 다크 서피스                |
+| surface-6 | `bg-surface-6` | #1f2328 | 가장 어두운 서피스         |
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-}
+#### 텍스트 (text)
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
+| 토큰   | Tailwind 클래스 | 값      | 용도                       |
+|--------|----------------|---------|----------------------------|
+| text-1 | `text-text-1`  | #1f2328 | 기본 텍스트 (제목, 입력값) |
+| text-2 | `text-text-2`  | #48505b | 보조 텍스트 (목록 아이템)  |
+| text-3 | `text-text-3`  | #768293 | 플레이스홀더, 레이블       |
+| text-4 | `text-text-4`  | #afb6c0 | disabled 텍스트            |
+| text-5 | `text-text-5`  | #ffffff | 흰색 텍스트 (어두운 배경)  |
+
+#### 라인 (line) — 구분선
+
+| 토큰   | Tailwind 클래스   | 값      | 용도              |
+|--------|------------------|---------|-------------------|
+| line-1 | `border-line-1`  | #ffffff | 흰색 구분선       |
+| line-2 | `border-line-2`  | #e8eaed | 기본 구분선       |
+| line-3 | `border-line-3`  | #ccd0d7 | 중간 강조 구분선  |
+| line-4 | `border-line-4`  | #363c45 | 어두운 구분선     |
+| line-5 | `border-line-5`  | #1f2328 | 최어두운 구분선   |
+
+#### 보더 (border) — 입력 테두리
+
+| 토큰     | Tailwind 클래스    | 값      | 용도                |
+|----------|--------------------|---------|---------------------|
+| border-1 | `border-border-1`  | #ffffff | 흰색 테두리         |
+| border-2 | `border-border-2`  | #e8eaed | disabled 상태 테두리|
+| border-3 | `border-border-3`  | #ccd0d7 | 기본 resting 테두리 |
+
+#### 아이콘 (icon)
+
+| 토큰   | Tailwind 클래스 | 값      | 용도                      |
+|--------|----------------|---------|---------------------------|
+| icon-1 | `text-icon-1`  | #000000 | 기본 아이콘               |
+| icon-2 | `text-icon-2`  | #48505b | 보조 아이콘               |
+| icon-3 | `text-icon-3`  | #8d97a5 | placeholder/subtle 아이콘 |
+| icon-4 | `text-icon-4`  | #ccd0d7 | disabled 아이콘           |
+| icon-5 | `text-icon-5`  | #ffffff | 흰색 아이콘               |
+
+#### 브랜드 (brand)
+
+| 토큰      | Tailwind 클래스                  | 용도               |
+|-----------|----------------------------------|--------------------|
+| brand-1~3 | `bg-brand-1` ~ `bg-brand-3`     | 연파랑 계열        |
+| brand-4   | `bg-brand-4` / `text-brand-4`   | 주 브랜드 컬러 (#1d67cd) |
+| brand-5~7 | `bg-brand-5` ~ `bg-brand-7`     | 진파랑 계열        |
+
+#### 톤 컬러 (tone) — 상태 표현
+
+각 컬러(red / yellow / green / cyan / blue / purple)에 1~5 단계. 1~2는 배경용(연함), 3은 기본 텍스트/아이콘용, 4~5는 강조/hover용(진함).
+
+```
+tone-red-1~5, tone-yellow-1~5, tone-green-1~5
+tone-cyan-1~5, tone-blue-1~5, tone-purple-1~5
 ```
 
-### 시맨틱 컬러 시스템
-
-- **규칙**: [MUST] shadcn/ui의 시맨틱 컬러 시스템을 이해하고 올바르게 사용한다
-- **이유**: 각 시맨틱 컬러는 용도가 명확히 정의되어 있으며, 다크모드 전환 시 자동으로 적절한 값으로 변경된다.
-
-| 토큰 | 용도 | Tailwind 클래스 |
-|------|------|-----------------|
-| `background` / `foreground` | 페이지 배경과 기본 텍스트 | `bg-background`, `text-foreground` |
-| `card` / `card-foreground` | 카드 컴포넌트 | `bg-card`, `text-card-foreground` |
-| `primary` / `primary-foreground` | 주요 액션 버튼, 강조 | `bg-primary`, `text-primary-foreground` |
-| `secondary` / `secondary-foreground` | 보조 액션 | `bg-secondary`, `text-secondary-foreground` |
-| `muted` / `muted-foreground` | 비활성 영역, 보조 텍스트 | `bg-muted`, `text-muted-foreground` |
-| `accent` / `accent-foreground` | 호버, 선택 강조 | `bg-accent`, `text-accent-foreground` |
-| `destructive` / `destructive-foreground` | 삭제, 에러 | `bg-destructive`, `text-destructive`, `text-destructive-foreground` |
-| `border` | 테두리 | `border-border` |
-| `input` | 입력 필드 테두리 | `border-input` |
-| `ring` | 포커스 링 | `ring-ring` |
-
-### 커스텀 컬러 확장
-
-- **규칙**: [SHOULD] 프로젝트 고유 컬러가 필요하면 동일한 CSS Variables 패턴으로 확장한다
-- **이유**: 기존 시맨틱 컬러 패턴을 따르면 다크모드 지원이 자동으로 이루어지고, 팀원 간 일관된 방식으로 컬러를 관리할 수 있다.
 - **좋은 예시**:
 
-```css
-/* globals.css에 커스텀 컬러 추가 */
-:root {
-  /* 기존 변수들... */
-  --success: oklch(0.62 0.19 145);
-  --success-foreground: oklch(0.985 0 0);
-  --warning: oklch(0.75 0.18 85);
-  --warning-foreground: oklch(0.145 0 0);
-}
+```typescript
+// 에러 상태 표시
+<div className="bg-tone-red-1 border border-tone-red-3 text-tone-red-3 rounded-100 p-400">
+  에러 메시지
+</div>
 
-.dark {
-  /* 기존 변수들... */
-  --success: oklch(0.72 0.19 145);
-  --success-foreground: oklch(0.145 0 0);
-  --warning: oklch(0.85 0.18 85);
-  --warning-foreground: oklch(0.145 0 0);
-}
-```
-
-```css
-/* @theme inline에 등록 */
-@theme inline {
-  /* 기존 매핑들... */
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-}
+// 성공 상태 표시
+<div className="bg-tone-green-1 border border-tone-green-3 text-tone-green-3 rounded-100 p-400">
+  성공 메시지
+</div>
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-// CSS Variables에 정의하지 않고 Tailwind 임의 값으로 직접 사용
-<div className="bg-[#2e7d32] text-white dark:bg-[#4caf50]">
-  성공 메시지
+// hex 값 하드코딩 — 토큰 변경 시 수동 수정 필요
+<div className="bg-[#fef2f2] border border-[#ef4444] text-[#ef4444] rounded p-4">
+  에러 메시지
+</div>
+```
+
+### 타이포그래피
+
+- **규칙**: [MUST] 텍스트 스타일은 DS의 타이포그래피 토큰 클래스(`text-{name}`)를 사용한다. font-size, line-height, font-weight가 묶음으로 적용된다.
+- **이유**: 타이포그래피 토큰은 font-size + line-height + font-weight를 하나의 클래스로 관리하여 일관된 텍스트 스타일을 보장한다.
+
+| Tailwind 클래스     | 크기 | 줄높이 | 굵기 | 용도                             |
+|---------------------|------|--------|------|----------------------------------|
+| `text-display-lg`   | 56px | 72px   | 700  | 대형 디스플레이                  |
+| `text-display-md`   | 40px | 52px   | 700  | 중형 디스플레이                  |
+| `text-heading-lg`   | 32px | 40px   | 600  | 페이지 제목                      |
+| `text-heading-md`   | 24px | 32px   | 600  | 섹션 제목                        |
+| `text-heading-sm`   | 20px | 28px   | 600  | 소제목                           |
+| `text-heading-xs`   | 18px | 26px   | 600  | 소소제목                         |
+| `text-subtitle-xl`  | 18px | 28px   | 500  | 강조 본문 대                     |
+| `text-subtitle-lg`  | 16px | 24px   | 500  | 강조 본문 중                     |
+| `text-subtitle-md`  | 14px | 20px   | 500  | UI 기본 텍스트 (레이블, 옵션 등) |
+| `text-subtitle-sm`  | 12px | 16px   | 500  | 작은 강조                        |
+| `text-body-lg`      | 16px | 26px   | 400  | 본문 대                          |
+| `text-body-md`      | 14px | 22px   | 400  | 일반 본문 (입력값 등)            |
+| `text-body-sm`      | 12px | 18px   | 400  | 작은 본문                        |
+| `text-caption-md`   | 12px | 16px   | 400  | 캡션                             |
+| `text-caption-sm`   | 10px | 14px   | 400  | 작은 캡션                        |
+
+> 컴포넌트에서 가장 자주 쓰이는 클래스: `text-subtitle-md`(UI 요소), `text-body-md`(입력값)
+
+- **좋은 예시**:
+
+```typescript
+<h1 className="text-heading-lg text-text-1">페이지 제목</h1>
+<p className="text-body-md text-text-2">본문 내용</p>
+<span className="text-caption-md text-text-3">보조 정보</span>
+```
+
+- **나쁜 예시**:
+
+```typescript
+// Tailwind 기본 텍스트 유틸리티 직접 사용 — DS 토큰과 불일치
+<h1 className="text-3xl font-bold text-gray-900">페이지 제목</h1>
+<p className="text-sm text-gray-600">본문 내용</p>
+```
+
+### 스페이싱
+
+- **규칙**: [MUST] 간격(padding, margin, gap 등)은 DS 스페이싱 토큰을 사용한다.
+- **이유**: DS 스페이싱 스케일은 일관된 간격 체계를 제공하여 UI 정렬이 자연스럽다.
+
+| 토큰 | Tailwind 클래스       | 값   |
+|------|-----------------------|------|
+| 50   | `p-50` / `gap-50`    | 2px  |
+| 100  | `p-100` / `gap-100`  | 4px  |
+| 200  | `p-200` / `gap-200`  | 8px  |
+| 300  | `p-300` / `gap-300`  | 12px |
+| 400  | `p-400` / `gap-400`  | 16px |
+| 500  | `p-500` / `gap-500`  | 20px |
+| 600  | `p-600` / `gap-600`  | 24px |
+| 800  | `p-800` / `gap-800`  | 32px |
+| 1000 | `p-1000`             | 40px |
+| 1200 | `p-1200`             | 48px |
+| 1600 | `p-1600`             | 64px |
+| 2000 | `p-2000`             | 80px |
+
+- **좋은 예시**:
+
+```typescript
+<div className="p-600 flex flex-col gap-400">
+  <h2 className="text-heading-sm text-text-1">섹션 제목</h2>
+  <p className="text-body-md text-text-2">내용</p>
+</div>
+```
+
+- **나쁜 예시**:
+
+```typescript
+// Tailwind 임의 값으로 매직 넘버 사용
+<div className="p-[23px] flex flex-col gap-[15px]">
+  <h2>섹션 제목</h2>
+</div>
+```
+
+### 보더 반경
+
+| 토큰 | Tailwind 클래스  | 값    | 용도                         |
+|------|------------------|-------|------------------------------|
+| 50   | `rounded-50`     | 2px   | 최소                         |
+| 100  | `rounded-100`    | 4px   | 일반 요소 (버튼, 입력, 카드) |
+| 200  | `rounded-200`    | 8px   | 패널, 드롭다운               |
+| 300  | `rounded-300`    | 12px  | 대형 카드                    |
+| 400  | `rounded-400`    | 16px  | 모달                         |
+| full | `rounded-full`   | 999px | 알약형, 원형                 |
+
+### 그림자
+
+| Tailwind 클래스      | 용도             |
+|----------------------|------------------|
+| `shadow-normal`      | 카드 기본        |
+| `shadow-emphasize`   | 드롭다운, 팝오버 |
+| `shadow-strong`      | 다이얼로그       |
+| `shadow-heavy`       | 강조 레이어      |
+
+### Z-Index
+
+| Tailwind 클래스    | 용도                     |
+|--------------------|--------------------------|
+| `z-tooltip`        | Tooltip                  |
+| `z-popover`        | Popover                  |
+| `z-toast`          | Toast                    |
+| `z-snackbar`       | Snackbar                 |
+| `z-alertdialog`    | AlertDialog              |
+| `z-panel`          | Select/Combobox 드롭다운 |
+| `z-dropdownmenu`   | DropdownMenu             |
+| `z-dialog`         | Dialog                   |
+| `z-overlay`        | 오버레이 (딤)            |
+| `z-drawer`         | Drawer                   |
+| `z-sticky`         | Sticky 요소              |
+| `z-base`           | 기본                     |
+
+> **참고**: DS 컴포넌트(Dialog, Toast 등)는 올바른 z-index가 내장되어 있어 수동 지정이 불필요하다. 커스텀 레이어를 만들 때만 이 토큰을 사용한다.
+
+### 애니메이션
+
+| Tailwind 클래스             | 용도           |
+|-----------------------------|----------------|
+| `animate-fly-down`          | 드롭다운 open  |
+| `animate-fly-down-out`      | 드롭다운 close |
+| `animate-fly-up`            | Dialog open    |
+| `animate-fly-up-out`        | Dialog close   |
+| `animate-slide-down`        | Toast 등장     |
+| `animate-slide-up`          | Toast 퇴장     |
+| `animate-slide-in-right`    | Snackbar 등장  |
+| `animate-slide-out-right`   | Snackbar 퇴장  |
+| `animate-slide-in-left`     | Drawer open    |
+| `animate-slide-out-left`    | Drawer close   |
+| `animate-fade-in`           | 페이드 인      |
+| `animate-fade-out`          | 페이드 아웃    |
+
+> 모든 애니메이션 duration: 150ms, easing: ease. DS 컴포넌트에 내장되어 있으므로 수동 적용은 커스텀 애니메이션에만 사용한다.
+
+### 커스텀 토큰 확장
+
+- **규칙**: [SHOULD] 프로젝트 고유 토큰이 필요하면 Tailwind config의 `theme.extend`로 확장한다
+- **이유**: DS preset 위에 확장하면 기존 토큰과 자연스럽게 통합되고, 프로젝트별 요구사항에 대응할 수 있다.
+- **좋은 예시**:
+
+```javascript
+// tailwind.config.js
+import designSystemPreset from '@sellernote/design-system/tailwind.preset.js';
+
+export default {
+  presets: [designSystemPreset],
+  content: ['./src/**/*.{ts,tsx}', './node_modules/@sellernote/design-system/dist/**/*.js'],
+  theme: {
+    extend: {
+      colors: {
+        'custom-highlight': '#ff6b35',
+      },
+    },
+  },
+};
+```
+
+- **나쁜 예시**:
+
+```typescript
+// Tailwind 임의 값으로 직접 사용 — 토큰 시스템 우회
+<div className="bg-[#ff6b35] text-white">
+  커스텀 강조 영역
 </div>
 ```
 
@@ -324,154 +383,128 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 | 질문 | 답변 | 방법 |
 |------|------|------|
-| shadcn/ui에 해당 컴포넌트가 있는가? | 예 | shadcn/ui 컴포넌트 사용 |
+| DS에 해당 컴포넌트가 있는가? | 예 | `@sellernote/design-system` 컴포넌트 사용 |
 | 재사용 가능한 커스텀 컴포넌트인가? | 예 | `cva()` + `cn()`으로 변형 관리 |
-| 일회성 스타일링인가? | 예 | Tailwind utility classes 직접 사용 |
+| 일회성 스타일링인가? | 예 | Tailwind utility classes + DS 토큰 사용 |
 
-### 1순위: shadcn/ui 컴포넌트
+### 1순위: DS 컴포넌트
 
-- **규칙**: [SHOULD] UI 구현 시 shadcn/ui에서 제공하는 컴포넌트를 우선 사용한다
-- **이유**: shadcn/ui 컴포넌트는 Radix UI primitives 기반으로 접근성(WAI-ARIA)이 내장되어 있고, 키보드 내비게이션, 포커스 관리, 스크린 리더 지원이 기본 제공된다.
+- **규칙**: [MUST] UI 구현 시 `@sellernote/design-system`에서 제공하는 컴포넌트를 우선 사용한다
+- **이유**: DS 컴포넌트는 Radix UI 기반으로 접근성(WAI-ARIA)이 내장되어 있고, 키보드 내비게이션, 포커스 관리, 스크린 리더 지원이 기본 제공된다. 또한 DS 디자인 토큰과 일관된 스타일이 적용되어 있다.
 - **좋은 예시**:
 
 ```typescript
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ActionButton,
+  TextField,
+  Select,
+  Dialog,
+  Table,
+  TableHeader,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableBodyCell,
+  Tag,
+} from "@sellernote/design-system";
 
 function ProductCard({ product }: ProductCardProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{product.name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">{product.description}</p>
-        <Button className="mt-4">구매하기</Button>
-      </CardContent>
-    </Card>
+    <div className="rounded-200 bg-surface-1 p-600 shadow-normal">
+      <h3 className="text-heading-sm text-text-1">{product.name}</h3>
+      <p className="mt-200 text-body-md text-text-2">{product.description}</p>
+      <Tag color="green" className="mt-200">{product.status}</Tag>
+      <ActionButton className="mt-400">구매하기</ActionButton>
+    </div>
   );
 }
 ```
 
+#### DS 컴포넌트 카테고리
+
+| 카테고리 | 컴포넌트 |
+|----------|----------|
+| 버튼 | `ActionButton`, `IconButton`, `TextButton` |
+| 입력 | `TextField`, `Textarea`, `PasswordField`, `SearchField`, `NumberField`, `Checkbox`, `CheckboxGroup`, `RadioButton`, `RadioGroup`, `Switch`, `Slider`, `Select`, `Combobox`, `ToggleGroup` |
+| 데이터 표시 | `Avatar`, `Badge`, `Tag`, `Empty`, `Image`, `Label`, `Steps`, `Table`, `ScrollArea` |
+| 피드백 | `Alert`, `Toast` (`addToast()`), `Snackbar` (`addSnackbar()`) |
+| 오버레이 | `Dialog`, `AlertDialog` (`showAlertDialog()`), `Drawer`, `Tooltip`, `Popover`, `DropdownMenu` |
+| 내비게이션 | `Sidebar`, `SidebarMenuItem`, `Tabs`, `TabContent`, `Header`, `Menubar`, `Pagination` |
+| 로딩 | `Spinner`, `Progress` |
+| 기초 | `Icon` |
+
 ### 2순위: cva() + cn()으로 변형 관리
 
-- **규칙**: [SHOULD] 재사용 가능한 커스텀 컴포넌트의 변형(variants)은 `class-variance-authority(cva)`로 관리한다
-- **이유**: `cva()`는 컴포넌트의 변형을 타입 안전하게 정의할 수 있으며, 기본 스타일과 변형별 스타일을 선언적으로 관리할 수 있다.
+- **규칙**: [SHOULD] DS에 없는 재사용 가능한 커스텀 컴포넌트의 변형(variants)은 `class-variance-authority(cva)`로 관리한다
+- **이유**: `cva()`는 컴포넌트의 변형을 타입 안전하게 정의할 수 있으며, DS 토큰을 활용한 변형을 선언적으로 관리할 수 있다.
 - **좋은 예시**:
 
 ```typescript
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@sellernote/design-system";
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors",
+const statusBadgeVariants = cva(
+  "inline-flex items-center rounded-full px-200 py-50 text-caption-md",
   {
     variants: {
-      variant: {
-        default: "border-transparent bg-primary text-primary-foreground",
-        secondary: "border-transparent bg-secondary text-secondary-foreground",
-        destructive: "border-transparent bg-destructive text-destructive-foreground",
-        outline: "text-foreground",
+      status: {
+        active: "bg-tone-green-1 text-tone-green-3",
+        pending: "bg-tone-yellow-1 text-tone-yellow-3",
+        error: "bg-tone-red-1 text-tone-red-3",
       },
     },
     defaultVariants: {
-      variant: "default",
+      status: "active",
     },
   }
 );
 
-interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+interface StatusBadgeProps
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof statusBadgeVariants> {}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function StatusBadge({ className, status, ...props }: StatusBadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  );
-}
-
-// 사용
-<Badge variant="destructive">에러</Badge>
-<Badge variant="outline">대기중</Badge>
-```
-
-- **나쁜 예시**:
-
-```typescript
-// 조건부 클래스를 직접 나열 — 변형이 많아질수록 복잡해짐
-function Badge({ variant, className }: BadgeProps) {
-  return (
-    <div
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold
-        ${variant === "default" ? "bg-primary text-primary-foreground" : ""}
-        ${variant === "destructive" ? "bg-destructive text-destructive-foreground" : ""}
-        ${variant === "outline" ? "text-foreground" : ""}
-        ${className}`}
-    />
+    <span className={cn(statusBadgeVariants({ status }), className)} {...props} />
   );
 }
 ```
 
 ### 3순위: Tailwind utility classes
 
-- **규칙**: [MAY] 일회성 레이아웃/간격 조정에 Tailwind utility classes를 직접 사용한다
-- **이유**: 별도 컴포넌트를 생성할 필요 없이 간단한 스타일을 인라인으로 적용할 수 있다. 시맨틱 토큰에 직접 접근하므로 디자인 시스템과의 일관성을 유지한다.
+- **규칙**: [MAY] 일회성 레이아웃/간격 조정에 Tailwind utility classes를 DS 토큰과 함께 사용한다
 - **좋은 예시**:
 
 ```typescript
 function PageHeader({ title }: { title: string }) {
   return (
-    <div className="flex items-center gap-4 mb-6">
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+    <div className="flex items-center gap-400 mb-600">
+      <h1 className="text-heading-lg text-text-1">{title}</h1>
     </div>
   );
 }
 ```
 
-- **나쁜 예시**:
+### DS 컴포넌트 커스터마이징
 
-```typescript
-// 과도하게 많은 utility classes — cva()로 분리해야 함
-function ProductCard({ product }: ProductCardProps) {
-  return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer relative overflow-hidden">
-      {/* 이 수준의 스타일은 cva() 또는 shadcn Card 컴포넌트로 분리하는 것이 적절하다 */}
-    </div>
-  );
-}
-```
-
-### shadcn/ui 컴포넌트 커스터마이징
-
-- **규칙**: [SHOULD] shadcn/ui 컴포넌트의 기본 스타일을 변경해야 할 때는 `components/ui/` 내의 소스 파일을 직접 수정한다
-- **이유**: shadcn/ui 컴포넌트는 프로젝트에 복사되어 로컬 소유된다. npm 패키지와 달리 업데이트 시 덮어씌워지지 않으므로, 소스 코드를 직접 수정하는 것이 의도된 사용 방법이다.
+- **규칙**: [MUST NOT] DS 컴포넌트의 소스를 프로젝트에 복사하여 수정하지 않는다. `className` prop과 variant props로 커스터마이징한다.
+- **이유**: DS는 npm 패키지로 관리된다. 소스를 복사하면 업데이트를 받을 수 없고, DS와의 일관성이 깨진다. 새로운 변형이나 기능이 필요하면 DS 저장소에 기여한다.
 - **좋은 예시**:
 
 ```typescript
-// components/ui/button.tsx — 프로젝트 전역 기본 스타일 수정
-const buttonVariants = cva(
-  // 프로젝트에 맞게 기본 스타일 수정 가능
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        // 프로젝트 고유 변형 추가 가능
-        success: "bg-success text-success-foreground hover:bg-success/90",
-      },
-      // ...
-    },
-  }
-);
+// className prop으로 추가 스타일 적용
+<ActionButton className="w-full">전체 너비 버튼</ActionButton>
+
+// variant props 활용
+<ActionButton variant="destructive" size="sm">삭제</ActionButton>
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-// shadcn 컴포넌트를 래핑하여 스타일을 오버라이드 — 불필요한 추상화 계층
-function CustomButton({ className, ...props }: ButtonProps) {
-  return <Button className={cn("my-custom-styles", className)} {...props} />;
+// DS 컴포넌트를 래핑하여 스타일을 오버라이드 — 불필요한 추상화 계층
+function CustomButton({ className, ...props }: ActionButtonProps) {
+  return <ActionButton className={cn("my-custom-styles", className)} {...props} />;
 }
 ```
 
@@ -481,17 +514,16 @@ function CustomButton({ className, ...props }: ButtonProps) {
 
 ### Tailwind Breakpoints 시스템 활용
 
-- **규칙**: [MUST] 반응형 레이아웃에 Tailwind의 breakpoint 접두사(sm, md, lg, xl, 2xl)를 사용한다
-- **이유**: Tailwind의 breakpoints는 일관된 중단점 값을 제공하며, mobile-first 접근법으로 설계되어 있다. 모바일 스타일을 기본으로 작성하고, 큰 화면에서 스타일을 추가하는 방식이다.
+- **규칙**: [MUST] 반응형 레이아웃에 Tailwind의 breakpoint 접두사를 사용한다
+- **이유**: DS preset이 제공하는 breakpoints는 일관된 중단점 값을 제공하며, mobile-first 접근법으로 설계되어 있다.
 
 | Breakpoint | 최소 너비 | 적용 대상 |
 |-----------|----------|-----------|
 | (기본) | 0px | 모바일 |
-| `sm` | 640px | 소형 태블릿 |
-| `md` | 768px | 태블릿 |
-| `lg` | 1024px | 소형 데스크톱 |
-| `xl` | 1280px | 데스크톱 |
-| `2xl` | 1536px | 대형 데스크톱 |
+| `xs` | 360px | 모바일 |
+| `sm` | 768px | 태블릿 / 모바일·데스크톱 분기점 |
+| `md` | 1024px | 데스크톱 |
+| `lg` | 1440px | 와이드 |
 
 ### Mobile-first 접근
 
@@ -502,8 +534,8 @@ function CustomButton({ className, ...props }: ButtonProps) {
 ```typescript
 function ResponsiveSection() {
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-full md:max-w-3xl lg:max-w-5xl mx-auto">
-      <h2 className="text-xl sm:text-2xl md:text-3xl text-center md:text-left font-bold">
+    <div className="p-400 md:p-600 lg:p-800 max-w-full md:max-w-3xl lg:max-w-5xl mx-auto">
+      <h2 className="text-heading-sm sm:text-heading-md md:text-heading-lg text-center md:text-left">
         반응형 제목
       </h2>
     </div>
@@ -515,21 +547,20 @@ function ResponsiveSection() {
 
 ```typescript
 // desktop-first로 작성하여 max 접두사 남용
-<div className="max-lg:p-4 max-md:p-2 p-8">
-  <h2 className="max-md:text-xl max-sm:text-lg text-3xl">제목</h2>
+<div className="max-lg:p-400 max-md:p-200 p-800">
+  <h2 className="max-md:text-heading-sm max-sm:text-body-lg text-heading-lg">제목</h2>
 </div>
 ```
 
 ### 반응형 그리드
 
 - **규칙**: [SHOULD] 그리드 레이아웃에 Tailwind의 CSS Grid utility classes를 사용한다
-- **이유**: CSS Grid는 2차원 레이아웃에 적합하며, Tailwind의 `grid-cols-*` 클래스와 breakpoint 접두사를 조합하면 간결하게 반응형 그리드를 구현할 수 있다.
 - **좋은 예시**:
 
 ```typescript
 function ProductGrid({ products }: { products: Product[] }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-400 md:gap-600">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
@@ -541,7 +572,7 @@ function ProductGrid({ products }: { products: Product[] }) {
 ### 미디어 쿼리 직접 작성 금지
 
 - **규칙**: [MUST NOT] CSS 미디어 쿼리를 직접 작성하지 않는다. Tailwind breakpoint 접두사를 사용한다.
-- **이유**: 하드코딩된 미디어 쿼리는 Tailwind에 정의된 breakpoint 값과 불일치할 수 있으며, 중단점 변경 시 모든 미디어 쿼리를 수동으로 수정해야 한다.
+- **이유**: 하드코딩된 미디어 쿼리는 DS breakpoint 값과 불일치할 수 있으며, 중단점 변경 시 모든 미디어 쿼리를 수동으로 수정해야 한다.
 - **좋은 예시**:
 
 ```typescript
@@ -568,7 +599,7 @@ function ProductGrid({ products }: { products: Product[] }) {
 - **이유**: `next-themes`는 시스템 설정 감지, localStorage 저장, SSR 호환 등을 자동 처리한다. class 기반 전환은 Tailwind의 `dark:` variant와 직접 연동되어 추가 설정 없이 동작한다.
 
 ```bash
-npm install next-themes
+pnpm add next-themes
 ```
 
 ```typescript
@@ -585,76 +616,15 @@ export function ThemeProvider({
 }
 ```
 
-### dark: variant 사용
+### DS 토큰 사용
 
-- **규칙**: [SHOULD] 시맨틱 컬러 토큰(`bg-background`, `text-foreground` 등)을 사용하면 `dark:` 접두사 없이도 자동으로 다크모드가 적용된다. 시맨틱 토큰으로 해결되지 않는 경우에만 `dark:` variant를 사용한다.
-- **이유**: CSS Variables 기반 시맨틱 컬러는 `.dark` 클래스에 따라 자동으로 값이 전환된다. 대부분의 경우 `dark:` 접두사가 불필요하며, 이를 남용하면 코드가 불필요하게 길어진다.
+- **규칙**: [SHOULD] DS 시스템 컬러 토큰을 사용하면 향후 다크모드 확장 시 자동으로 전환된다. 하드코딩된 색상 대신 토큰을 사용한다.
 - **좋은 예시**:
 
 ```typescript
-// 시맨틱 토큰 사용 — dark: 접두사 불필요
-<div className="bg-background text-foreground border-border">
-  <p className="text-muted-foreground">보조 텍스트</p>
-</div>
-
-// 시맨틱 토큰으로 해결되지 않는 특수한 경우에만 dark: 사용
-<div className="bg-white dark:bg-slate-900">
-  <p className="text-gray-900 dark:text-gray-100">특수 스타일</p>
-</div>
-```
-
-- **나쁜 예시**:
-
-```typescript
-// 시맨틱 토큰이 있는데 dark: variant를 중복 사용
-<div className="bg-background dark:bg-background text-foreground dark:text-foreground">
-  불필요한 dark: 접두사
-</div>
-```
-
-### 테마 전환 컴포넌트
-
-- **규칙**: [SHOULD] 테마 전환 UI는 `next-themes`의 `useTheme` 훅을 사용한다
-- **이유**: `useTheme`은 현재 테마 상태와 전환 함수를 제공하며, 마운트 전 hydration 불일치를 방지하기 위해 `mounted` 체크가 필요하다.
-- **좋은 예시**:
-
-```typescript
-"use client";
-
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-function ThemeToggle() {
-  const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
-
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      aria-label={theme === "light" ? "다크 모드로 전환" : "라이트 모드로 전환"}
-    >
-      {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-    </Button>
-  );
-}
-```
-
-### 색상 하드코딩 금지
-
-- **규칙**: [MUST] 색상은 항상 시맨틱 토큰(`bg-primary`, `text-foreground` 등)을 통해 참조한다. hex 값이나 Tailwind의 기본 palette를 직접 사용하지 않는다.
-- **이유**: 하드코딩된 색상은 다크모드 전환 시 자동으로 변경되지 않아 UI가 깨진다. 시맨틱 토큰을 사용하면 모드별로 적절한 색상이 자동 적용된다.
-- **좋은 예시**:
-
-```typescript
-<div className="bg-card text-card-foreground border-border">
-  <p className="text-primary">테마 색상 사용</p>
+// DS 토큰 사용 — 향후 다크모드 지원 시 자동 전환
+<div className="bg-bg-1 text-text-1 border-border-3">
+  <p className="text-text-3">보조 텍스트</p>
 </div>
 ```
 
@@ -663,57 +633,100 @@ function ThemeToggle() {
 ```typescript
 // 하드코딩된 색상 — 다크모드에서 깨짐
 <div className="bg-white text-gray-900 border-gray-200">
-  <p className="text-blue-600">하드코딩 색상</p>
+  <p className="text-gray-500">보조 텍스트</p>
 </div>
+```
+
+### 색상 하드코딩 금지
+
+- **규칙**: [MUST] 색상은 항상 DS 시스템 컬러 토큰을 통해 참조한다. hex 값이나 Tailwind의 기본 palette를 직접 사용하지 않는다.
+- **이유**: 하드코딩된 색상은 다크모드 전환 시 자동으로 변경되지 않아 UI가 깨진다. DS 토큰을 사용하면 모드별로 적절한 색상이 자동 적용된다.
+- **좋은 예시**:
+
+```typescript
+<span className="text-tone-red-3">에러 메시지</span>
+<div className="bg-surface-3 p-400 rounded-100">안내 영역</div>
+```
+
+- **나쁜 예시**:
+
+```typescript
+// Tailwind 기본 palette를 직접 사용 — 다크모드에서 깨짐
+<span className="text-red-600">에러 메시지</span>
+<div className="bg-gray-100 p-4 rounded">안내 영역</div>
 ```
 
 ---
 
 ## 6. 아이콘
 
-### Lucide React 사용
+### DS Icon 컴포넌트 사용
 
-- **규칙**: [SHOULD] 아이콘은 `lucide-react` 패키지를 사용한다
-- **이유**: Lucide React는 shadcn/ui의 기본 아이콘 라이브러리이며, tree-shaking을 지원하여 사용하지 않는 아이콘은 번들에 포함되지 않는다. 1000개 이상의 일관된 디자인 아이콘을 제공한다.
+- **규칙**: [MUST] 아이콘은 `@sellernote/design-system`의 `Icon` 컴포넌트를 사용한다
+- **이유**: DS Icon은 SVG 스프라이트 기반으로 166+ 아이콘을 제공하며, `currentColor`를 사용하여 부모의 텍스트 색상을 상속받는다. 국기 아이콘도 지원한다.
 - **좋은 예시**:
 
 ```typescript
-import { Search, Plus, Trash2, ChevronRight } from "lucide-react";
+import { Icon } from "@sellernote/design-system";
 
-<Search className="h-4 w-4" />
-<Plus className="h-5 w-5 text-primary" />
+// SVG 아이콘
+<Icon name="icon-utility-check" size={16} />
+<Icon name="icon-common-bell-fill" size={20} />
+<Icon name="icon-status-checkcircle" size={24} />
+
+// 국기 아이콘
+<Icon name="icon-flag-kr" size={24} />
+<Icon name="icon-flag-us" size={24} />
 ```
+
+- **나쁜 예시**:
+
+```typescript
+// 외부 아이콘 라이브러리 직접 사용 — DS 아이콘과 스타일 불일치
+import { Search, Plus } from "lucide-react";
+<Search className="h-4 w-4" />
+```
+
+### 아이콘 네이밍 규칙
+
+아이콘 이름은 `icon-{카테고리}-{이름}` 패턴을 따른다:
+
+| 카테고리 | 접두사 | 예시 | 용도 |
+|----------|--------|------|------|
+| common | `icon-common-` | `icon-common-bell`, `icon-common-person` | 일반 UI 아이콘 |
+| utility | `icon-utility-` | `icon-utility-check`, `icon-utility-plus` | 유틸리티 아이콘 |
+| status | `icon-status-` | `icon-status-checkcircle`, `icon-status-xcircle` | 상태 표시 |
+| menu | `icon-menu-` | `icon-menu-home`, `icon-menu-order` | 내비게이션 메뉴 |
+| file | `icon-file-` | `icon-file-pdf`, `icon-file-xlsx` | 파일 타입 |
+| emptydata | `icon-emptydata-` | `icon-emptydata-search`, `icon-emptydata-folder` | 빈 상태 일러스트 |
+| flag | `icon-flag-` | `icon-flag-kr`, `icon-flag-us` | 국기 |
 
 ### 아이콘 크기 규칙
 
-- **규칙**: [SHOULD] 아이콘 크기는 Tailwind의 width/height 클래스로 지정하며, 컨텍스트에 맞는 일관된 크기를 사용한다
-- **이유**: 일관된 크기 체계를 사용하면 UI 전체에서 아이콘이 균일하게 표시된다.
+- **규칙**: [SHOULD] 아이콘 크기는 `size` prop으로 px 단위로 지정한다
 
-| 용도 | 클래스 | 크기 |
-|------|--------|------|
-| 인라인 텍스트 | `h-4 w-4` | 16px |
-| 버튼 내부 | `h-4 w-4` 또는 `h-5 w-5` | 16px / 20px |
-| 독립 아이콘 버튼 | `h-5 w-5` | 20px |
-| 히어로/강조 | `h-6 w-6` 이상 | 24px+ |
+| 용도 | size | 크기 |
+|------|------|------|
+| 인라인 텍스트 | `16` | 16px |
+| 버튼 내부 | `16` 또는 `20` | 16px / 20px |
+| 독립 아이콘 버튼 | `20` | 20px |
+| 히어로/강조 | `24` 이상 | 24px+ |
 
 ### 아이콘 접근성
 
-- **규칙**: [MUST] 아이콘에 `aria-label` 또는 `aria-hidden` 속성을 설정한다
-- **이유**: 스크린 리더 사용자에게 아이콘의 의미를 전달하거나(기능 아이콘), 장식용 아이콘은 읽지 않도록 처리해야 접근성을 보장할 수 있다.
+- **규칙**: [MUST] 아이콘만 있는 버튼에는 `aria-label`을 설정한다
+- **이유**: 스크린 리더 사용자에게 아이콘의 의미를 전달해야 한다.
 - **좋은 예시**:
 
 ```typescript
-import { Trash2, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { IconButton, Icon } from "@sellernote/design-system";
 
-// 기능 아이콘 — 의미를 전달해야 함
-<Button variant="ghost" size="icon" aria-label="삭제">
-  <Trash2 className="h-4 w-4" />
-</Button>
+// 아이콘 버튼 — DS IconButton 사용
+<IconButton icon="icon-utility-trash" aria-label="삭제" />
 
-// 텍스트와 함께 사용되는 장식 아이콘 — 숨김 처리
-<div className="flex items-center gap-2">
-  <Star className="h-4 w-4" aria-hidden="true" />
+// 텍스트와 함께 사용되는 장식 아이콘
+<div className="flex items-center gap-200">
+  <Icon name="icon-common-star-fill" size={16} aria-hidden="true" />
   <span>즐겨찾기</span>
 </div>
 ```
@@ -722,10 +735,17 @@ import { Button } from "@/components/ui/button";
 
 ```typescript
 // aria 속성 없이 아이콘만 사용 — 스크린 리더가 의미를 알 수 없음
-<Button variant="ghost" size="icon">
-  <Trash2 className="h-4 w-4" />
-</Button>
+<IconButton icon="icon-utility-trash" />
 ```
+
+### 새 아이콘 추가
+
+프로젝트에 필요한 아이콘이 DS에 없는 경우:
+
+1. DS 저장소의 `assets/icons/origin/` 디렉토리에 SVG 파일을 추가한다
+2. 파일명은 `icon-{카테고리}-{이름}.svg` 패턴을 따른다
+3. `pnpm icon-gen` 명령으로 스프라이트를 재생성한다
+4. DS 저장소에 PR을 생성한다
 
 ---
 
@@ -734,12 +754,12 @@ import { Button } from "@/components/ui/button";
 ### 인라인 style 사용 금지
 
 - **규칙**: [MUST NOT] 인라인 `style={{}}` 속성을 사용하지 않는다. Tailwind utility classes를 사용한다.
-- **이유**: 인라인 style은 Tailwind의 디자인 시스템과 분리되고, 반응형 값과 다크모드 `dark:` variant를 지원하지 않으며, 의사 클래스(`:hover`, `:focus`)를 사용할 수 없다.
+- **이유**: 인라인 style은 DS 토큰과 분리되고, 반응형 값과 다크모드를 지원하지 않으며, 의사 클래스(`:hover`, `:focus`)를 사용할 수 없다.
 - **좋은 예시**:
 
 ```typescript
-<div className="flex gap-4 p-6 bg-card">
-  <h2 className="text-xl font-semibold text-foreground">제목</h2>
+<div className="flex gap-400 p-600 bg-surface-1">
+  <h2 className="text-heading-sm text-text-1">제목</h2>
 </div>
 ```
 
@@ -758,13 +778,13 @@ import { Button } from "@/components/ui/button";
 
 ### 매직 px 값 하드코딩 금지
 
-- **규칙**: [MUST NOT] 매직 넘버 px 값을 하드코딩하지 않는다. Tailwind의 spacing scale을 사용한다.
-- **이유**: 하드코딩된 px 값은 디자인 시스템의 spacing 단위와 불일치할 수 있으며, 전체 간격 체계를 변경할 때 모든 하드코딩 값을 수동으로 찾아 수정해야 한다.
+- **규칙**: [MUST NOT] 매직 넘버 px 값을 하드코딩하지 않는다. DS 스페이싱 토큰을 사용한다.
+- **이유**: 하드코딩된 px 값은 DS 스페이싱 스케일과 불일치할 수 있으며, 전체 간격 체계를 변경할 때 모든 하드코딩 값을 수동으로 찾아 수정해야 한다.
 - **좋은 예시**:
 
 ```typescript
-// Tailwind spacing scale 사용
-<div className="p-4 mt-6 gap-2"> {/* 16px, 24px, 8px */}
+// DS 스페이싱 토큰 사용
+<div className="p-400 mt-600 gap-200">
   <p>내용</p>
 </div>
 ```
@@ -778,25 +798,10 @@ import { Button } from "@/components/ui/button";
 </div>
 ```
 
-### 테마에 없는 색상 직접 사용 금지
+### DS 컴포넌트 로컬 복사 금지
 
-- **규칙**: [MUST NOT] CSS Variables에 정의되지 않은 색상을 직접 사용하지 않는다. 필요한 색상은 globals.css에 정의한 후 사용한다.
-- **이유**: 테마 외부의 색상은 다크모드 전환 시 자동으로 변경되지 않아 UI 불일치가 발생한다.
-- **좋은 예시**:
-
-```typescript
-// 시맨틱 토큰 사용
-<span className="text-destructive">에러 메시지</span>
-<div className="bg-muted p-4 rounded-md">안내 영역</div>
-```
-
-- **나쁜 예시**:
-
-```typescript
-// Tailwind 기본 palette를 직접 사용 — 다크모드에서 깨짐
-<span className="text-red-600">에러 메시지</span>
-<div className="bg-gray-100 p-4 rounded-md">안내 영역</div>
-```
+- **규칙**: [MUST NOT] `@sellernote/design-system` 컴포넌트의 소스를 프로젝트에 복사하여 수정하지 않는다
+- **이유**: DS는 npm 패키지로 버전 관리된다. 로컬 복사는 업데이트를 차단하고 DS와의 일관성을 깨뜨린다. 새로운 기능이나 변형이 필요하면 DS 저장소에 기여한다.
 
 ### className 문자열 수동 결합 금지
 
@@ -805,23 +810,23 @@ import { Button } from "@/components/ui/button";
 - **좋은 예시**:
 
 ```typescript
-<div className={cn("p-4 rounded-lg", isActive && "bg-accent", className)} />
+import { cn } from "@sellernote/design-system";
+<div className={cn("p-400 rounded-100", isActive && "bg-surface-3", className)} />
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-<div className={`p-4 rounded-lg ${isActive ? "bg-accent" : ""} ${className}`} />
+<div className={`p-400 rounded-100 ${isActive ? "bg-surface-3" : ""} ${className}`} />
 ```
 
 ---
 
 ## 8. 참고 자료
 
-- [shadcn/ui 공식 문서](https://ui.shadcn.com)
-- [Tailwind CSS 공식 문서](https://tailwindcss.com/docs)
+- [@sellernote/design-system 저장소](https://github.com/sellernote/sellernote-design-system)
+- [Tailwind CSS v4 공식 문서](https://tailwindcss.com/docs)
 - [Radix UI Primitives](https://www.radix-ui.com/primitives)
 - [Class Variance Authority (cva)](https://cva.style/docs)
 - [next-themes](https://github.com/pacocoursey/next-themes)
-- [Lucide Icons](https://lucide.dev)
 - [Tailwind Merge](https://github.com/dcastil/tailwind-merge)

@@ -19,7 +19,7 @@ src/
 │   ├── not-found.tsx       # 404 페이지
 │   └── api/                # Route Handlers
 ├── components/             # 재사용 컴포넌트
-│   ├── ui/                 # 기본 UI 컴포넌트 (shadcn/ui, Storybook 대상)
+│   ├── ui/                 # 기본 UI 컴포넌트 (프로젝트 고유 UI, Storybook 대상)
 │   ├── layout/             # 레이아웃 컴포넌트 (Header, Sidebar, Footer)
 │   └── feature/            # 비즈니스 로직 포함 컴포넌트
 ├── hooks/                  # 커스텀 훅
@@ -96,7 +96,7 @@ src/
 
 | 분류 | 위치 | 특징 | 예시 |
 |------|------|------|------|
-| UI 컴포넌트 | `components/ui/` | shadcn/ui 기반, props만으로 동작, 비즈니스 로직 없음, Storybook 대상 | Button, Card, Dialog, DataTable |
+| UI 컴포넌트 | `components/ui/` | props만으로 동작, 비즈니스 로직 없음, Storybook 대상. DS에 없는 프로젝트 고유 UI 컴포넌트를 배치한다. DS 컴포넌트(`@sellernote/design-system`)는 직접 import하여 사용한다. | StatusBadge, DataTable, FileUpload |
 | Feature 컴포넌트 | `components/feature/` | 비즈니스 로직 포함, hooks/store/queries 사용 | OrderList, UserProfile, PaymentForm |
 | Layout 컴포넌트 | `components/layout/` | 페이지 구조, 네비게이션 | Header, Sidebar, Footer, PageLayout |
 | Page 컴포넌트 | `app/**/page.tsx` | Server Component 기본, 데이터 페칭 + Feature/UI 조합 | DashboardPage, OrderDetailPage |
