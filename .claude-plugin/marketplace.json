@@ -9,7 +9,10 @@
   "plugins": [
     {
       "name": "sellernote-vibecode",
-      "source": ".",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/sellernote/sellernote-vibecode-plugin.git"
+      },
       "description": "Convention-based development skills for NestJS API, TypeORM, Next.js data provider, UI, orchestration, code review, refactoring, testing, and scaffolding",
       "version": "1.0.0"
     }
