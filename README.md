@@ -17,8 +17,50 @@
 
 ### 사전 요구사항
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 설치
-- GitHub 인증 완료 (`gh auth login`) — private repo 접근에 필요
+#### Windows
+
+1. **Node.js** (v18+): [nodejs.org](https://nodejs.org/) 에서 다운로드 또는:
+   ```powershell
+   winget install OpenJS.NodeJS.LTS
+   ```
+
+2. **Git**: [git-scm.com](https://git-scm.com/download/win) 에서 다운로드 또는:
+   ```powershell
+   winget install Git.Git
+   ```
+
+3. **GitHub CLI**: [cli.github.com](https://cli.github.com/) 에서 다운로드 또는:
+   ```powershell
+   winget install GitHub.cli
+   ```
+
+4. **GitHub 인증** (private repo 접근에 필요):
+   ```powershell
+   gh auth login
+   ```
+
+5. **Claude Code**:
+   ```powershell
+   npm install -g @anthropic-ai/claude-code
+   ```
+
+#### macOS
+
+1. **Node.js** (v18+):
+   ```bash
+   brew install node
+   ```
+
+2. **GitHub CLI**:
+   ```bash
+   brew install gh
+   gh auth login
+   ```
+
+3. **Claude Code**:
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   ```
 
 ### 1. 마켓플레이스 추가 (최초 1회)
 
@@ -36,10 +78,12 @@ Claude Code에서 다음 명령어를 실행합니다:
 
 ### 로컬 개발/테스트
 
-플러그인을 로컬에서 테스트하려면:
-
 ```bash
+# macOS / Linux
 claude --plugin-dir /path/to/sellernote-vibecode-plugin
+
+# Windows (PowerShell)
+claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 ```
 
 ## 사용법
@@ -131,9 +175,9 @@ skills/nextjs-dev-orchestration/references/
 컨벤션 원본 저장소(`sellernote-development-convention`)가 업데이트된 경우:
 
 ```bash
-# sellernote-vibecode-plugin 루트에서 실행
+# sellernote-vibecode-plugin 루트에서 실행 (Windows/macOS/Linux 공통)
 # gh CLI 인증 필요 (private repo)
-bash scripts/sync-conventions.sh
+node scripts/sync-conventions.mjs
 
 # 변경사항 커밋 & 푸시
 git add skills/*/references/*.md
@@ -148,9 +192,9 @@ git push
 이 플러그인의 skill들은 셀러노트의 3단계 컨벤션 계층을 따릅니다:
 
 ```
-Tier 1 (공통)     → COMMON_CONVENTION, TYPESCRIPT_CONVENTION
-Tier 2 (도메인)   → BACKEND_CONVENTION, FRONTEND_CONVENTION, DATABASE_CONVENTION
-Tier 3 (도구별)   → NESTJS_CONVENTION, TYPEORM_CONVENTION, NEXTJS_CONVENTION 등
+Tier 1 (공통)     -> COMMON_CONVENTION, TYPESCRIPT_CONVENTION
+Tier 2 (도메인)   -> BACKEND_CONVENTION, FRONTEND_CONVENTION, DATABASE_CONVENTION
+Tier 3 (도구별)   -> NESTJS_CONVENTION, TYPEORM_CONVENTION, NEXTJS_CONVENTION 등
 ```
 
 하위 Tier 규칙이 상위와 충돌할 경우 하위가 우선합니다.
@@ -190,7 +234,7 @@ sellernote-vibecode-plugin/
 │   ├── nextjs-ui-dev/           # Next.js UI 개발 skill
 │   └── nextjs-dev-orchestration/ # 전체 기능 개발 오케스트레이션 skill
 ├── scripts/
-│   └── sync-conventions.sh      # 컨벤션 문서 동기화 스크립트
+│   └── sync-conventions.mjs     # 컨벤션 문서 동기화 스크립트 (cross-platform)
 └── README.md
 ```
 
@@ -203,5 +247,5 @@ sellernote-vibecode-plugin/
 ### 컨벤션 문서 수정
 
 1. [sellernote-development-convention](https://github.com/sellernote/sellernote-development-convention) 저장소에서 컨벤션 수정
-2. 이 플러그인에서 `bash scripts/sync-conventions.sh` 실행
+2. 이 플러그인에서 `node scripts/sync-conventions.mjs` 실행
 3. 변경사항 커밋 & 푸시
