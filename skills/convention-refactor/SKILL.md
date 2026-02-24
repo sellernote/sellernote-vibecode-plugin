@@ -35,6 +35,7 @@ Conventions are loaded dynamically based on the target files. Before starting, R
    - `references/STYLING_CONVENTION.md` - MUI theming
    - `references/FORM_CONVENTION.md` - Form patterns
    - `references/TESTING_CONVENTION.md` - Test patterns
+   - `references/REACT_CONVENTION.md` - React 19 patterns, hooks, performance, anti-patterns
 
 ## Workflow
 
