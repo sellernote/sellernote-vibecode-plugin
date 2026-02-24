@@ -285,3 +285,4 @@ If money fields changed from `number` to `string`, explicitly note this as an **
 - **Frontend UI patterns**: Use `nextjs-ui-dev` for correct component patterns
 - **Data layer patterns**: Use `nextjs-data-provider` for query/state refactoring
 - **Prisma schema/client patterns**: Use `prisma-dev` for Prisma-specific refactoring
+- **PR 생성**: Use the `github-pr` skill to create a GitHub pull request

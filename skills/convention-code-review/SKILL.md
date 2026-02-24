@@ -258,3 +258,4 @@ This skill does NOT modify files. For applying fixes, delegate to `convention-re
 - **Frontend implementation**: Use `nextjs-ui-dev` for component patterns
 - **Data layer**: Use `nextjs-data-provider` for query/state patterns
 - **Prisma patterns**: Use `prisma-dev` for Prisma schema, client patterns, and NestJS integration
+- **PR 생성**: Use the `github-pr` skill to create a GitHub pull request
