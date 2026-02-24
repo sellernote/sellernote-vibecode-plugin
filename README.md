@@ -14,6 +14,7 @@
 | `nextjs-dev-orchestration` | data-provider + ui-dev 스킬을 조합한 전체 기능 개발 오케스트레이션 | "새 페이지 만들어줘", "기능 개발해줘" |
 | `convention-code-review` | git diff 기반 컨벤션 위반 자동 체크 (read-only) | "코드 리뷰해줘", "컨벤션 체크해줘" |
 | `convention-refactor` | 기존 코드를 컨벤션에 맞게 리팩토링 | "컨벤션에 맞게 리팩토링해줘", "패턴 적용해줘" |
+| `react-dev` | React 19 컴포넌트, 훅, 성능 최적화 개발 (순수 React 패턴) | "React 컴포넌트 만들어줘", "훅 만들어줘", "성능 최적화해줘" |
 | `nestjs-testing` | NestJS 백엔드 테스트 작성 (unit/integration/e2e) | "테스트 작성해줘", "서비스 테스트 만들어줘" |
 | `project-scaffold` | 새 모듈/페이지 컨벤션 준수 구조 자동 생성 | "새 모듈 만들어줘", "scaffold해줘" |
 
@@ -117,6 +118,11 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 "주문 목록 테이블 컴포넌트 만들어줘"
 "주문 생성 폼 구현해줘"
 
+# React 컴포넌트/훅 개발 (react-dev 자동 트리거)
+"Compound Component 패턴으로 Select 만들어줘"
+"커스텀 훅 설계해줘"
+"Error Boundary 추가해줘"
+
 # 전체 기능 개발 (nextjs-dev-orchestration 자동 트리거)
 "주문 관리 페이지를 만들어줘"
 "새 기능 개발해줘"
@@ -156,6 +162,7 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 /sellernote-vibecode:typeorm-dev
 /sellernote-vibecode:nextjs-data-provider
 /sellernote-vibecode:nextjs-ui-dev
+/sellernote-vibecode:react-dev
 /sellernote-vibecode:nextjs-dev-orchestration
 /sellernote-vibecode:convention-code-review
 /sellernote-vibecode:convention-refactor
@@ -192,17 +199,21 @@ skills/nextjs-ui-dev/references/
   ├── FRONTEND_ARCHITECTURE_CONVENTION.md  # 컴포넌트 분류, 의존 방향
   ├── STYLING_CONVENTION.md         # MUI v6, 디자인 토큰, 반응형
   ├── FORM_CONVENTION.md            # React Hook Form + Zod
-  └── TESTING_CONVENTION.md         # Storybook, Jest, RTL, Playwright
+  ├── TESTING_CONVENTION.md         # Storybook, Jest, RTL, Playwright
+  └── REACT_CONVENTION.md           # React 19 패턴, Hooks, 성능 최적화
+
+skills/react-dev/references/
+  └── REACT_CONVENTION.md           # React 19 컴포넌트, Hooks, 성능, Error Boundary, Context
 
 skills/nextjs-dev-orchestration/references/
   ├── FRONTEND_ARCHITECTURE_CONVENTION.md  # 컴포넌트 트리 설계
   └── NEXTJS_CONVENTION.md          # 라우팅, 레이아웃, 미들웨어
 
 skills/convention-code-review/references/
-  ├── (전체 17개 컨벤션 문서)       # 변경 파일 타입에 따라 동적 로딩
+  ├── (전체 18개 컨벤션 문서)       # 변경 파일 타입에 따라 동적 로딩 (REACT_CONVENTION 포함)
 
 skills/convention-refactor/references/
-  ├── (전체 17개 컨벤션 문서)       # 리팩토링 대상에 따라 동적 로딩
+  ├── (전체 18개 컨벤션 문서)       # 리팩토링 대상에 따라 동적 로딩 (REACT_CONVENTION 포함)
 
 skills/nestjs-testing/references/
   ├── COMMON_CONVENTION.md          # 공통 규칙
@@ -266,6 +277,7 @@ Tier 3 (도구별)   -> NESTJS_CONVENTION, TYPEORM_CONVENTION, NEXTJS_CONVENTION
 - **데이터**: Server Components(초기 로드), TanStack Query(클라이언트), Server Actions(뮤테이션)
 - **상태**: Zustand(클라이언트), TanStack Query(서버) -- 서버 상태 Zustand 복제 금지
 - **스타일링**: MUI v6, Theme overrides > styled() > sx (hex 하드코딩 금지)
+- **React 19**: Compound Components, ref prop 직접 전달(forwardRef 금지), React Compiler 활성화 시 수동 메모이제이션 금지
 - **폼**: React Hook Form + Zod 필수 조합
 - **테스트**: Storybook CSF3 + Jest/RTL + Playwright
 
@@ -281,6 +293,7 @@ sellernote-vibecode-plugin/
 │   ├── typeorm-dev/             # TypeORM 개발 skill
 │   ├── nextjs-data-provider/    # Next.js 데이터 레이어 skill
 │   ├── nextjs-ui-dev/           # Next.js UI 개발 skill
+│   ├── react-dev/               # React 19 컴포넌트/훅/성능 개발 skill
 │   ├── nextjs-dev-orchestration/ # 전체 기능 개발 오케스트레이션 skill
 │   ├── convention-code-review/  # 컨벤션 기반 코드 리뷰 skill
 │   ├── convention-refactor/     # 컨벤션 맞춤 리팩토링 skill
