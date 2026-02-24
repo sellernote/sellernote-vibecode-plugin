@@ -176,3 +176,4 @@ src/modules/{feature}/
 ## Cross-Skill References
 
 - **Entity/TypeORM work**: Use the `typeorm-dev` skill for Entity definitions, migrations, relations, and TypeORM-specific patterns
+- **Entity/Prisma work**: Use the `prisma-dev` skill for Prisma schema models, migrations, relations, and Prisma-specific patterns

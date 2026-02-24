@@ -9,6 +9,7 @@
 |-------|------|------------|
 | `nestjs-api-dev` | NestJS 3-layer API 개발 (Controller/Service/Repository, DTO, Swagger) | "API 엔드포인트 추가해줘", "CRUD 만들어줘" |
 | `typeorm-dev` | TypeORM Entity, Migration, Relations, Repository 패턴 | "Entity 만들어줘", "마이그레이션 생성해줘" |
+| `prisma-dev` | Prisma Schema, Migration, Client 패턴, NestJS 통합 | "Prisma 모델 만들어줘", "스키마 수정해줘" |
 | `nextjs-data-provider` | TanStack Query, Server Actions, Zustand 상태 관리 | "데이터 fetching 구현해줘", "쿼리 훅 만들어줘" |
 | `nextjs-ui-dev` | MUI v6 컴포넌트, React Hook Form + Zod, Storybook, 테스트 | "컴포넌트 만들어줘", "폼 구현해줘" |
 | `nextjs-dev-orchestration` | data-provider + ui-dev 스킬을 조합한 전체 기능 개발 오케스트레이션 | "새 페이지 만들어줘", "기능 개발해줘" |
@@ -105,6 +106,11 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 # TypeORM Entity/Migration (typeorm-dev 자동 트리거)
 "주문 Entity를 만들어줘"
 "배송 테이블에 컬럼 추가하는 마이그레이션 생성해줘"
+
+# Prisma 개발 (prisma-dev 자동 트리거)
+"Prisma 모델 추가해줘"
+"Prisma 마이그레이션 생성해줘"
+"PrismaService 설정해줘"
 ```
 
 ### 프론트엔드 개발
@@ -160,6 +166,7 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 ```
 /sellernote-vibecode:nestjs-api-dev
 /sellernote-vibecode:typeorm-dev
+/sellernote-vibecode:prisma-dev
 /sellernote-vibecode:nextjs-data-provider
 /sellernote-vibecode:nextjs-ui-dev
 /sellernote-vibecode:react-dev
@@ -189,6 +196,12 @@ skills/typeorm-dev/references/
   ├── MYSQL_CONVENTION.md           # MySQL 타입, UTC 타임존, 쿼리 최적화
   ├── REDIS_CONVENTION.md           # Redis 키 네이밍, TTL, 캐시 전략
   └── TYPEORM_CONVENTION.md         # Entity, Relations, Migration, 트랜잭션
+
+skills/prisma-dev/references/
+  ├── DATABASE_CONVENTION.md        # DB 모델링, 공통 필드, 인덱싱
+  ├── MYSQL_CONVENTION.md           # MySQL 타입, UTC 타임존, 쿼리 최적화
+  ├── REDIS_CONVENTION.md           # Redis 키 네이밍, TTL, 캐시 전략
+  └── PRISMA_CONVENTION.md          # Prisma Schema, Client, Migration, NestJS 통합
 
 skills/nextjs-data-provider/references/
   ├── FRONTEND_CONVENTION.md        # 프론트엔드 공통 규칙
@@ -254,7 +267,7 @@ git push
 ```
 Tier 1 (공통)     -> COMMON_CONVENTION, TYPESCRIPT_CONVENTION
 Tier 2 (도메인)   -> BACKEND_CONVENTION, FRONTEND_CONVENTION, DATABASE_CONVENTION
-Tier 3 (도구별)   -> NESTJS_CONVENTION, TYPEORM_CONVENTION, NEXTJS_CONVENTION 등
+Tier 3 (도구별)   -> NESTJS_CONVENTION, TYPEORM_CONVENTION, PRISMA_CONVENTION, NEXTJS_CONVENTION 등
 ```
 
 하위 Tier 규칙이 상위와 충돌할 경우 하위가 우선합니다.
@@ -291,6 +304,7 @@ sellernote-vibecode-plugin/
 ├── skills/
 │   ├── nestjs-api-dev/          # NestJS API 개발 skill
 │   ├── typeorm-dev/             # TypeORM 개발 skill
+│   ├── prisma-dev/             # Prisma ORM 개발 skill
 │   ├── nextjs-data-provider/    # Next.js 데이터 레이어 skill
 │   ├── nextjs-ui-dev/           # Next.js UI 개발 skill
 │   ├── react-dev/               # React 19 컴포넌트/훅/성능 개발 skill

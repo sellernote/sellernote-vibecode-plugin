@@ -52,6 +52,14 @@ const SKILL_MAP = {
     ['database/redis/REDIS_CONVENTION.md', 'REDIS_CONVENTION.md'],
     ['backend/typeorm/TYPEORM_CONVENTION.md', 'TYPEORM_CONVENTION.md'],
   ],
+  'prisma-dev': [
+    ['common/COMMON_CONVENTION.md', 'COMMON_CONVENTION.md'],
+    ['common/typescript/TYPESCRIPT_CONVENTION.md', 'TYPESCRIPT_CONVENTION.md'],
+    ['database/DATABASE_CONVENTION.md', 'DATABASE_CONVENTION.md'],
+    ['database/mysql/MYSQL_CONVENTION.md', 'MYSQL_CONVENTION.md'],
+    ['database/redis/REDIS_CONVENTION.md', 'REDIS_CONVENTION.md'],
+    ['backend/prisma/PRISMA_CONVENTION.md', 'PRISMA_CONVENTION.md'],
+  ],
   'nextjs-data-provider': [
     ['common/COMMON_CONVENTION.md', 'COMMON_CONVENTION.md'],
     ['common/typescript/TYPESCRIPT_CONVENTION.md', 'TYPESCRIPT_CONVENTION.md'],
@@ -92,6 +100,7 @@ const SKILL_MAP = {
     ['frontend/styling/STYLING_CONVENTION.md', 'STYLING_CONVENTION.md'],
     ['frontend/form/FORM_CONVENTION.md', 'FORM_CONVENTION.md'],
     ['frontend/testing/TESTING_CONVENTION.md', 'TESTING_CONVENTION.md'],
+    ['backend/prisma/PRISMA_CONVENTION.md', 'PRISMA_CONVENTION.md'],
   ],
   'convention-refactor': [
     ['common/COMMON_CONVENTION.md', 'COMMON_CONVENTION.md'],
@@ -111,6 +120,7 @@ const SKILL_MAP = {
     ['frontend/styling/STYLING_CONVENTION.md', 'STYLING_CONVENTION.md'],
     ['frontend/form/FORM_CONVENTION.md', 'FORM_CONVENTION.md'],
     ['frontend/testing/TESTING_CONVENTION.md', 'TESTING_CONVENTION.md'],
+    ['backend/prisma/PRISMA_CONVENTION.md', 'PRISMA_CONVENTION.md'],
   ],
   'nestjs-testing': [
     ['common/COMMON_CONVENTION.md', 'COMMON_CONVENTION.md'],
@@ -135,6 +145,7 @@ const SKILL_MAP = {
     ['frontend/state/STATE_CONVENTION.md', 'STATE_CONVENTION.md'],
     ['frontend/styling/STYLING_CONVENTION.md', 'STYLING_CONVENTION.md'],
     ['frontend/form/FORM_CONVENTION.md', 'FORM_CONVENTION.md'],
+    ['backend/prisma/PRISMA_CONVENTION.md', 'PRISMA_CONVENTION.md'],
   ],
 };
 

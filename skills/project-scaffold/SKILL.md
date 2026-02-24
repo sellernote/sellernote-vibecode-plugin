@@ -21,6 +21,7 @@ Before starting, Read the relevant reference files from `references/` within thi
    - `references/SECURITY_CONVENTION.md` - When scaffold needs auth/guards
    - `references/TYPEORM_CONVENTION.md` - When scaffold includes Entity
    - `references/DATABASE_CONVENTION.md` - When scaffold includes DB modeling
+   - `references/PRISMA_CONVENTION.md` - When scaffold uses Prisma instead of TypeORM
 
 ### For Next.js Page Scaffold
 1. **Always read first**:
@@ -454,3 +455,4 @@ After generating files, present:
 - **Next.js data layer**: Use the `nextjs-data-provider` skill
 - **Next.js UI components**: Use the `nextjs-ui-dev` skill
 - **Full feature orchestration**: Use the `nextjs-dev-orchestration` skill
+- **Entity/Prisma work**: Use the `prisma-dev` skill

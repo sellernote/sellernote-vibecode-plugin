@@ -26,6 +26,7 @@ Conventions are loaded dynamically based on the target files. Before starting, R
    - `references/TYPEORM_CONVENTION.md` - Entity patterns
    - `references/DATABASE_CONVENTION.md` - DB modeling
    - `references/MYSQL_CONVENTION.md` - MySQL-specific rules
+   - `references/PRISMA_CONVENTION.md` - Prisma schema patterns, client usage
 
 3. **Read when refactoring frontend files**:
    - `references/FRONTEND_CONVENTION.md` - Frontend common rules
@@ -163,6 +164,27 @@ After:  Custom BaseEntity, varchar enum, Relation<T> wrapper
 - Wrap relation types: `user: User` -> `user: Relation<User>`
 - Add `DecimalTransformer` to decimal columns
 
+**Prisma schema convention alignment:**
+```
+Before: Schema without @db.* types, missing @@map, missing @@index on FK
+After:  All fields have @db.*, @@map on models/fields, @@index on all FK columns
+```
+- Add `@db.*` native type annotations to all fields
+- Add `@@map("snake_case")` to models and `@map("snake_case")` to fields
+- Add `@@index([fkField])` for every FK column
+- Replace implicit many-to-many with explicit join model
+
+**TypeORM to Prisma migration:**
+```
+Before: TypeORM entities with @Entity, @Column, BaseEntity inheritance
+After:  Prisma schema models with @@map, @db.*, 공통 필드 반복 정의
+```
+- Convert TypeORM Entity class to Prisma model in schema.prisma
+- Replace BaseEntity inheritance with 공통 필드 반복 정의
+- Replace `DecimalTransformer` with Prisma.Decimal handling in service
+- Replace `@Transactional()` with `prisma.$transaction()`
+- Replace Repository pattern with direct PrismaService usage
+
 #### Frontend Refactoring Patterns
 
 **Component type-location alignment:**
@@ -262,3 +284,4 @@ If money fields changed from `number` to `string`, explicitly note this as an **
 - **Entity/TypeORM patterns**: Use `typeorm-dev` for Entity refactoring details
 - **Frontend UI patterns**: Use `nextjs-ui-dev` for correct component patterns
 - **Data layer patterns**: Use `nextjs-data-provider` for query/state refactoring
+- **Prisma schema/client patterns**: Use `prisma-dev` for Prisma-specific refactoring

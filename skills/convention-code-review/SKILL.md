@@ -26,6 +26,7 @@ Conventions are loaded dynamically based on what files were changed. Before star
    - `references/TYPEORM_CONVENTION.md` - Entity patterns, relations, migrations
    - `references/DATABASE_CONVENTION.md` - DB modeling, indexing
    - `references/MYSQL_CONVENTION.md` - MySQL-specific rules
+   - `references/PRISMA_CONVENTION.md` - Prisma schema, client patterns, NestJS integration
 
 3. **Read when frontend files changed** (files in `app/`, `components/`, `hooks/`, `queries/`, `store/`, `actions/`, `*.tsx`, `*.stories.tsx`):
    - `references/FRONTEND_CONVENTION.md` - Frontend common rules
@@ -67,6 +68,10 @@ Map each changed file to its domain to determine which conventions to load:
 | `*.guard.ts`, `*.interceptor.ts` | Backend/Security | NESTJS, SECURITY |
 | `*.module.ts` (NestJS) | Backend/Module | NESTJS |
 | `*.migration.ts` | Database | DATABASE, MYSQL, TYPEORM |
+| `*.prisma`, `schema.prisma` | Backend/Prisma | PRISMA, DATABASE |
+| `prisma.service.ts`, `prisma.module.ts` | Backend/Prisma | PRISMA, NESTJS |
+| `prisma-exception.filter.ts` | Backend/Prisma | PRISMA, NESTJS |
+| `prisma/migrations/**` | Database/Prisma | PRISMA, DATABASE, MYSQL |
 | `app/**/*.tsx` | Frontend/Route | NEXTJS, FRONTEND_ARCHITECTURE |
 | `components/ui/**` | Frontend/UI | FRONTEND_ARCHITECTURE, STYLING |
 | `components/feature/**` | Frontend/Feature | FRONTEND_ARCHITECTURE, NEXTJS, STATE |
@@ -103,6 +108,20 @@ Review each changed file against loaded conventions. Check these categories:
 - [ ] Enum columns use `varchar` (not MySQL `enum` type)
 - [ ] Decimal columns have `DecimalTransformer`
 - [ ] Domain Model Interface (`I{Feature}Model`) exists and Entity implements it
+
+**Prisma Schema (PRISMA_CONVENTION)**
+- [ ] All models have 공통 필드 (id, no, createdAt, updatedAt, deletedAt)
+- [ ] All fields have `@db.*` native type annotations (except BigInt)
+- [ ] Models use `@@map("snake_case")` for table names
+- [ ] Fields use `@map("snake_case")` for column names
+- [ ] FK fields have `@@index()` defined
+- [ ] M:N relations use explicit join model (no implicit many-to-many)
+- [ ] Enum values are lowercase snake_case
+- [ ] PrismaService extends PrismaClient with OnModuleInit/OnModuleDestroy
+- [ ] PrismaModule uses @Global() decorator
+- [ ] No `$queryRawUnsafe` with user input interpolation
+- [ ] No `Promise.all` inside Interactive Transaction
+- [ ] findUnique used for PK/@unique lookups (not findFirst)
 
 **API Design (API_SPEC_CONVENTION)**
 - [ ] Response format: `{ success, data, error }`
@@ -238,3 +257,4 @@ This skill does NOT modify files. For applying fixes, delegate to `convention-re
 - **Entity patterns**: Use `typeorm-dev` for TypeORM conventions
 - **Frontend implementation**: Use `nextjs-ui-dev` for component patterns
 - **Data layer**: Use `nextjs-data-provider` for query/state patterns
+- **Prisma patterns**: Use `prisma-dev` for Prisma schema, client patterns, and NestJS integration
