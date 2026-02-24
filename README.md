@@ -18,6 +18,7 @@
 | `react-dev` | React 19 컴포넌트, 훅, 성능 최적화 개발 (순수 React 패턴) | "React 컴포넌트 만들어줘", "훅 만들어줘", "성능 최적화해줘" |
 | `nestjs-testing` | NestJS 백엔드 테스트 작성 (unit/integration/e2e) | "테스트 작성해줘", "서비스 테스트 만들어줘" |
 | `project-scaffold` | 새 모듈/페이지 컨벤션 준수 구조 자동 생성 | "새 모듈 만들어줘", "scaffold해줘" |
+| `github-pr` | base 브랜치 대비 diff 분석 후 GitHub PR 자동 생성 (Jira 티켓 자동 연동) | "PR 만들어줘", "PR 등록해줘" |
 
 ## 설치
 
@@ -145,6 +146,10 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 # 컨벤션 맞춤 리팩토링 (convention-refactor 자동 트리거)
 "컨벤션에 맞게 리팩토링해줘"
 "패턴 적용해줘"
+
+# GitHub PR 생성 (github-pr 자동 트리거)
+"PR 만들어줘"
+"PR 등록해줘"
 ```
 
 ### 테스트 & 스캐폴딩
@@ -175,6 +180,7 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 /sellernote-vibecode:convention-refactor
 /sellernote-vibecode:nestjs-testing
 /sellernote-vibecode:project-scaffold
+/sellernote-vibecode:github-pr
 ```
 
 ## 포함된 컨벤션 문서
@@ -237,6 +243,9 @@ skills/nestjs-testing/references/
 
 skills/project-scaffold/references/
   ├── (15개 컨벤션 문서)            # 스캐폴드 타입에 따라 동적 로딩
+
+skills/github-pr/
+  └── SKILL.md                      # 컨벤션 문서 불필요 (diff 분석 + PR 생성 전용)
 ```
 
 ## 컨벤션 업데이트
@@ -312,7 +321,8 @@ sellernote-vibecode-plugin/
 │   ├── convention-code-review/  # 컨벤션 기반 코드 리뷰 skill
 │   ├── convention-refactor/     # 컨벤션 맞춤 리팩토링 skill
 │   ├── nestjs-testing/          # NestJS 테스트 작성 skill
-│   └── project-scaffold/        # 모듈/페이지 스캐폴딩 skill
+│   ├── project-scaffold/        # 모듈/페이지 스캐폴딩 skill
+│   └── github-pr/               # GitHub PR 자동 생성 skill
 ├── scripts/
 │   └── sync-conventions.mjs     # 컨벤션 문서 동기화 스크립트 (cross-platform)
 └── README.md
