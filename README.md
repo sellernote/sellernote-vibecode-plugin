@@ -12,6 +12,10 @@
 | `nextjs-data-provider` | TanStack Query, Server Actions, Zustand 상태 관리 | "데이터 fetching 구현해줘", "쿼리 훅 만들어줘" |
 | `nextjs-ui-dev` | MUI v6 컴포넌트, React Hook Form + Zod, Storybook, 테스트 | "컴포넌트 만들어줘", "폼 구현해줘" |
 | `nextjs-dev-orchestration` | data-provider + ui-dev 스킬을 조합한 전체 기능 개발 오케스트레이션 | "새 페이지 만들어줘", "기능 개발해줘" |
+| `convention-code-review` | git diff 기반 컨벤션 위반 자동 체크 (read-only) | "코드 리뷰해줘", "컨벤션 체크해줘" |
+| `convention-refactor` | 기존 코드를 컨벤션에 맞게 리팩토링 | "컨벤션에 맞게 리팩토링해줘", "패턴 적용해줘" |
+| `nestjs-testing` | NestJS 백엔드 테스트 작성 (unit/integration/e2e) | "테스트 작성해줘", "서비스 테스트 만들어줘" |
+| `project-scaffold` | 새 모듈/페이지 컨벤션 준수 구조 자동 생성 | "새 모듈 만들어줘", "scaffold해줘" |
 
 ## 설치
 
@@ -118,6 +122,31 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 "새 기능 개발해줘"
 ```
 
+### 코드 리뷰 & 리팩토링
+
+```
+# 컨벤션 기반 코드 리뷰 (convention-code-review 자동 트리거)
+"코드 리뷰해줘"
+"컨벤션 체크해줘"
+"PR 리뷰해줘"
+
+# 컨벤션 맞춤 리팩토링 (convention-refactor 자동 트리거)
+"컨벤션에 맞게 리팩토링해줘"
+"패턴 적용해줘"
+```
+
+### 테스트 & 스캐폴딩
+
+```
+# NestJS 테스트 작성 (nestjs-testing 자동 트리거)
+"서비스 테스트 작성해줘"
+"e2e 테스트 만들어줘"
+
+# 새 모듈/페이지 스캐폴딩 (project-scaffold 자동 트리거)
+"새 모듈 만들어줘"
+"scaffold해줘"
+```
+
 ### Skill 직접 호출
 
 자동 트리거 외에 명시적으로 skill을 호출할 수도 있습니다:
@@ -128,6 +157,10 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 /sellernote-vibecode:nextjs-data-provider
 /sellernote-vibecode:nextjs-ui-dev
 /sellernote-vibecode:nextjs-dev-orchestration
+/sellernote-vibecode:convention-code-review
+/sellernote-vibecode:convention-refactor
+/sellernote-vibecode:nestjs-testing
+/sellernote-vibecode:project-scaffold
 ```
 
 ## 포함된 컨벤션 문서
@@ -164,6 +197,22 @@ skills/nextjs-ui-dev/references/
 skills/nextjs-dev-orchestration/references/
   ├── FRONTEND_ARCHITECTURE_CONVENTION.md  # 컴포넌트 트리 설계
   └── NEXTJS_CONVENTION.md          # 라우팅, 레이아웃, 미들웨어
+
+skills/convention-code-review/references/
+  ├── (전체 17개 컨벤션 문서)       # 변경 파일 타입에 따라 동적 로딩
+
+skills/convention-refactor/references/
+  ├── (전체 17개 컨벤션 문서)       # 리팩토링 대상에 따라 동적 로딩
+
+skills/nestjs-testing/references/
+  ├── COMMON_CONVENTION.md          # 공통 규칙
+  ├── TYPESCRIPT_CONVENTION.md      # TypeScript 코딩 규칙
+  ├── BACKEND_CONVENTION.md         # 백엔드 3-layer 아키텍처
+  ├── BACKEND_ARCHITECTURE_CONVENTION.md  # 레이어 책임 (모킹 경계)
+  └── NESTJS_CONVENTION.md          # NestJS 패턴, DI, 테스트 규칙
+
+skills/project-scaffold/references/
+  ├── (15개 컨벤션 문서)            # 스캐폴드 타입에 따라 동적 로딩
 ```
 
 ## 컨벤션 업데이트
@@ -232,7 +281,11 @@ sellernote-vibecode-plugin/
 │   ├── typeorm-dev/             # TypeORM 개발 skill
 │   ├── nextjs-data-provider/    # Next.js 데이터 레이어 skill
 │   ├── nextjs-ui-dev/           # Next.js UI 개발 skill
-│   └── nextjs-dev-orchestration/ # 전체 기능 개발 오케스트레이션 skill
+│   ├── nextjs-dev-orchestration/ # 전체 기능 개발 오케스트레이션 skill
+│   ├── convention-code-review/  # 컨벤션 기반 코드 리뷰 skill
+│   ├── convention-refactor/     # 컨벤션 맞춤 리팩토링 skill
+│   ├── nestjs-testing/          # NestJS 테스트 작성 skill
+│   └── project-scaffold/        # 모듈/페이지 스캐폴딩 skill
 ├── scripts/
 │   └── sync-conventions.mjs     # 컨벤션 문서 동기화 스크립트 (cross-platform)
 └── README.md

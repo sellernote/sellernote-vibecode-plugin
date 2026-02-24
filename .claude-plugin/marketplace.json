@@ -10,7 +10,7 @@
     {
       "name": "sellernote-vibecode",
       "source": ".",
-      "description": "Convention-based development skills for NestJS API, TypeORM, Next.js data provider, UI, and orchestration",
+      "description": "Convention-based development skills for NestJS API, TypeORM, Next.js data provider, UI, orchestration, code review, refactoring, testing, and scaffolding",
       "version": "1.0.0"
     }
   ]
