@@ -22,6 +22,7 @@ Before starting any work, Read the relevant reference files from `references/` w
    - `references/TESTING_CONVENTION.md` - Storybook, Jest, E2E tests
    - `references/COMMON_CONVENTION.md` - Naming, git, error codes
    - `references/TYPESCRIPT_CONVENTION.md` - TS style, imports, types
+   - `references/REACT_CONVENTION.md` - React 19 패턴, Hooks 규칙, 성능 최적화, Error Boundary
 
 ## Workflow
 
