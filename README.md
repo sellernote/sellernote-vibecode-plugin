@@ -85,17 +85,11 @@ Claude Code에서 다음 명령어를 실행합니다:
 
 ### 3. 플러그인 업데이트
 
-> **알려진 이슈**: Claude Code의 `/plugin update` 명령이 플러그인 캐시를 갱신하지 않는 버그가 있습니다 ([#14061](https://github.com/anthropics/claude-code/issues/14061)). 아래 워크어라운드를 사용해주세요.
+Claude Code에서 다음 명령어를 실행합니다:
 
-```bash
-# macOS / Linux
-rm -rf ~/.claude/plugins/cache/sellernote-vibecode-plugin/
-
-# Windows (PowerShell)
-Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\plugins\cache\sellernote-vibecode-plugin\"
 ```
-
-캐시 삭제 후 Claude Code를 재시작하면 최신 버전이 자동으로 다운로드됩니다.
+/plugin update sellernote-vibecode@sellernote-vibecode-plugin
+```
 
 ### 로컬 개발/테스트
 
