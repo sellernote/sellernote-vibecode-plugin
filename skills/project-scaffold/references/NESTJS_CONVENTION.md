@@ -45,9 +45,10 @@ src/
 ├── modules/                         # 기능 모듈
 │   ├── auth/                        # 인증 모듈
 │   │   ├── auth.module.ts
-│   │   ├── auth.controller.ts
-│   │   ├── auth.service.ts
-│   │   ├── auth.guard.ts
+│   │   ├── controllers/
+│   │   │   └── auth.controller.ts
+│   │   ├── services/
+│   │   │   └── auth.service.ts
 │   │   ├── dto/
 │   │   │   ├── login.dto.ts
 │   │   │   └── register.dto.ts
@@ -55,9 +56,12 @@ src/
 │   │
 │   ├── user/                        # 사용자 모듈
 │   │   ├── user.module.ts
-│   │   ├── user.controller.ts
-│   │   ├── user.service.ts
-│   │   ├── user.repository.ts
+│   │   ├── controllers/
+│   │   │   └── user.controller.ts
+│   │   ├── services/
+│   │   │   └── user.service.ts
+│   │   ├── repositories/
+│   │   │   └── user.repository.ts
 │   │   ├── entities/
 │   │   │   └── user.entity.ts
 │   │   ├── dto/
@@ -85,7 +89,9 @@ src/
 |------|------|------|
 | 모듈 | `[name].module.ts` | `order.module.ts` |
 | 컨트롤러 | `[name].controller.ts` | `order.controller.ts` |
+| 컨트롤러 (분할) | `[기능]-[name].controller.ts` | `order-crud.controller.ts` |
 | 서비스 | `[name].service.ts` | `order.service.ts` |
+| 서비스 (분할) | `[기능]-[name].service.ts` | `order-fulfillment.service.ts` |
 | 리포지토리 | `[name].repository.ts` | `order.repository.ts` |
 | 엔티티 | `[name].entity.ts` | `order.entity.ts` |
 | DTO | `[동작]-[name].dto.ts` | `create-order.dto.ts` |
@@ -216,6 +222,13 @@ src/
 - **좋은 예시**:
   ```
   modules/order/
+  ├── order.module.ts
+  ├── controllers/
+  │   └── order.controller.ts            # Controller
+  ├── services/
+  │   └── order.service.ts               # Service
+  ├── repositories/
+  │   └── order.repository.ts            # Repository
   ├── interfaces/
   │   ├── order.model.interface.ts       # Domain Model Interface
   │   └── order-model-relation.interface.ts  # Relation Interface (선택)
@@ -224,11 +237,8 @@ src/
   ├── dto/
   │   ├── create-order.dto.ts
   │   └── order-response.dto.ts
-  ├── mappers/
-  │   └── order.mapper.ts                # DTO ↔ Domain 매핑
-  ├── order.module.ts
-  ├── order.controller.ts
-  └── order.service.ts
+  └── mappers/
+      └── order.mapper.ts                # DTO ↔ Domain 매핑
   ```
 
 ## 금액 처리
@@ -350,6 +360,157 @@ src/
   }
   ```
 
+## Controller / Service / Repository 분할
+
+### 분할 원칙
+
+- **규칙**: [MUST] 모든 feature module은 `controllers/`, `services/`, `repositories/` 디렉토리를 사용하여 Controller, Service, Repository 파일을 배치한다.
+- **이유**: 디렉토리 구조가 일관되면 파일 탐색이 빠르고, 모듈이 성장할 때 파일을 추가하기만 하면 되므로 구조 변경이 필요 없다.
+
+### Controller 분할
+
+- **규칙**: [SHOULD] Controller가 여러 비즈니스 기능을 다루어 비대해지면, 기능별로 Controller를 분할한다.
+- **이유**: 하나의 Controller가 모든 엔드포인트를 담당하면 파일이 비대해지고, 코드 리뷰와 변경 추적이 어려워진다.
+- **좋은 예시**:
+  ```
+  controllers/
+  ├── order-crud.controller.ts          # 주문 CRUD 엔드포인트
+  └── order-fulfillment.controller.ts   # 출고/배송 관련 엔드포인트
+  ```
+  ```typescript
+  // controllers/order-crud.controller.ts
+  @Controller('orders')
+  export class OrderCrudController {
+    constructor(private readonly orderCrudService: OrderCrudService) {}
+
+    @Post()
+    create(@Body() dto: CreateOrderDto) {
+      return this.orderCrudService.create(dto);
+    }
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+      return this.orderCrudService.findOne(id);
+    }
+  }
+
+  // controllers/order-fulfillment.controller.ts
+  @Controller('orders')
+  export class OrderFulfillmentController {
+    constructor(
+      private readonly orderFulfillmentService: OrderFulfillmentService,
+    ) {}
+
+    @Post(':id/ship')
+    ship(@Param('id') id: string, @Body() dto: ShipOrderDto) {
+      return this.orderFulfillmentService.ship(id, dto);
+    }
+  }
+  ```
+- **나쁜 예시**:
+  ```typescript
+  // 하나의 Controller가 모든 기능을 담당 — 비대해짐
+  @Controller('orders')
+  export class OrderController {
+    @Post() create() { ... }
+    @Get(':id') findOne() { ... }
+    @Put(':id') update() { ... }
+    @Delete(':id') remove() { ... }
+    @Post(':id/ship') ship() { ... }
+    @Post(':id/cancel') cancel() { ... }
+    @Post(':id/refund') refund() { ... }
+    @Get(':id/tracking') tracking() { ... }
+    // ... 수십 개의 메서드
+  }
+  ```
+
+### Service 분할
+
+- **규칙**: [SHOULD] Service가 비대해지면, 비즈니스 기능별로 독립적인 Service로 분할한다. 각 Controller는 필요한 Service를 직접 주입받는다.
+- **이유**: 단일 책임 원칙(SRP)을 지켜 코드 변경 시 영향 범위를 줄이고, 테스트 단위를 명확히 한다.
+- **좋은 예시**:
+  ```
+  services/
+  ├── order-crud.service.ts             # 주문 CRUD 비즈니스 로직
+  ├── order-fulfillment.service.ts      # 출고/배송 비즈니스 로직
+  └── order-calculation.service.ts      # 금액 계산 로직
+  ```
+  ```typescript
+  // services/order-crud.service.ts
+  @Injectable()
+  export class OrderCrudService {
+    constructor(private readonly orderRepository: OrderRepository) {}
+
+    async create(dto: CreateOrderDto): Promise<Order> { ... }
+    async findOne(id: string): Promise<Order> { ... }
+  }
+
+  // services/order-fulfillment.service.ts
+  @Injectable()
+  export class OrderFulfillmentService {
+    constructor(private readonly orderRepository: OrderRepository) {}
+
+    async ship(id: string, dto: ShipOrderDto): Promise<Order> { ... }
+  }
+  ```
+- **나쁜 예시**:
+  ```typescript
+  // 하나의 Service가 모든 책임을 짐 — God Service
+  @Injectable()
+  export class OrderService {
+    create() { ... }
+    findOne() { ... }
+    update() { ... }
+    remove() { ... }
+    ship() { ... }
+    cancel() { ... }
+    refund() { ... }
+    calculateTotal() { ... }
+    // ... 수십 개의 메서드
+  }
+  ```
+
+### Repository 분할
+
+- **규칙**: [MUST] Repository는 Entity와 1:1로 매핑하여 `repositories/` 디렉토리에 배치한다.
+- **이유**: 각 Entity의 데이터 접근 로직이 명확히 분리되어, 쿼리의 위치를 예측할 수 있다.
+- **좋은 예시**:
+  ```
+  repositories/
+  ├── order.repository.ts               # Order entity 데이터 접근
+  └── order-item.repository.ts          # OrderItem entity 데이터 접근
+  ```
+- **나쁜 예시**:
+  ```typescript
+  // 하나의 Repository에서 여러 Entity를 처리
+  @Injectable()
+  export class OrderRepository {
+    findOrder(id: string) { ... }
+    findOrderItems(orderId: string) { ... }  // OrderItem은 별도 Repository로
+    saveOrderItem(item: OrderItem) { ... }   // 분리해야 한다
+  }
+  ```
+
+### Module 등록 (분할 시)
+
+- **규칙**: [MUST] 분할된 Controller, Service, Repository는 모두 해당 Feature Module의 `@Module()` 데코레이터에 등록한다.
+- **좋은 예시**:
+  ```typescript
+  @Module({
+    imports: [TypeOrmModule.forFeature([Order, OrderItem])],
+    controllers: [OrderCrudController, OrderFulfillmentController],
+    providers: [
+      OrderCrudService,
+      OrderFulfillmentService,
+      OrderCalculationService,
+      OrderRepository,
+      OrderItemRepository,
+    ],
+    exports: [OrderCrudService, OrderFulfillmentService],
+  })
+  export class OrderModule {}
+  ```
+
 ## 모듈 구성
 
 ### Feature Module
@@ -360,9 +521,9 @@ src/
   ```typescript
   @Module({
     imports: [TypeOrmModule.forFeature([Order])],
-    controllers: [OrderController],
-    providers: [OrderService, OrderRepository],
-    exports: [OrderService], // 다른 모듈에서 사용할 수 있도록 export
+    controllers: [OrderController],              // controllers/ 디렉토리에서 import
+    providers: [OrderService, OrderRepository],   // services/, repositories/ 디렉토리에서 import
+    exports: [OrderService],
   })
   export class OrderModule {}
   ```
