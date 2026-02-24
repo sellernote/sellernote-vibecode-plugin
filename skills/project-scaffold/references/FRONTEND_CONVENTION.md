@@ -4,6 +4,7 @@
 > 특정 도구/카테고리에 종속적인 규칙은 하위 폴더의 문서를 참조하세요.
 >
 > - [아키텍처 컨벤션](architecture/ARCHITECTURE_CONVENTION.md)
+> - [React 컨벤션](react/REACT_CONVENTION.md)
 > - [상태 관리 컨벤션](state/STATE_CONVENTION.md)
 > - [스타일링 컨벤션](styling/STYLING_CONVENTION.md)
 > - [테스트 컨벤션](testing/TESTING_CONVENTION.md)
@@ -21,7 +22,7 @@
 | 언어 | TypeScript | 최신 안정 버전 |
 | 클라이언트 상태 | Zustand | 최신 안정 버전 |
 | 서버 상태 | TanStack Query | v5 |
-| UI 컴포넌트 | MUI | v6 |
+| UI 컴포넌트 | shadcn/ui + Tailwind CSS | 최신 안정 버전 |
 | 컴포넌트 문서화 | Storybook | 8 |
 | 폼/유효성검사 | React Hook Form + Zod | 최신 안정 버전 |
 | 테스트 | Jest + React Testing Library | 최신 안정 버전 |
@@ -192,7 +193,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 // 2) 내부 모듈
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
 // 3) 상대 경로
@@ -208,7 +209,7 @@ import type { Product } from "@/types/Product.types";
 import type { Product } from "@/types/Product.types";
 import { formatPrice } from "./utils";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 ```
 
 ### 배럴 파일 사용 범위
@@ -305,7 +306,7 @@ function ProductList({ products }: ProductListProps) {
 import dynamic from "next/dynamic";
 
 const HeavyChart = dynamic(() => import("@/components/HeavyChart"), {
-  loading: () => <Skeleton variant="rectangular" height={400} />,
+  loading: () => <div className="h-[400px] w-full animate-pulse rounded-md bg-muted" />,
   ssr: false,
 });
 

@@ -70,53 +70,58 @@ interface CreateUserFormData {
 
 ---
 
-## 3. React Hook Form + MUI 연동
+## 3. React Hook Form + shadcn/ui 연동
 
-- **규칙**: [MUST] MUI 컴포넌트는 React Hook Form의 `Controller`로 래핑하여 사용한다
-- **이유**: MUI의 `TextField`, `Select` 등은 제어 컴포넌트로 동작하므로, React Hook Form의 비제어 방식(`register`)과 직접 호환되지 않는다. `Controller`를 통해 올바르게 연결한다.
+- **규칙**: [MUST] shadcn/ui의 Form 컴포넌트 또는 React Hook Form의 `Controller`를 사용하여 폼 필드를 연결한다
+- **이유**: shadcn/ui의 `Input`, `Select` 등은 네이티브 HTML 요소 기반으로 동작하여 React Hook Form의 `register`와 직접 호환된다. 복잡한 컴포넌트(Select, DatePicker 등)는 `Controller`를 사용한다.
 - **규칙**: [MUST] `useForm`에 `zodResolver`를 설정하고, `mode: 'onBlur'`를 기본으로 사용한다
 - **이유**: `zodResolver`는 Zod 스키마를 React Hook Form의 유효성 검사 체계에 연결한다. `mode: 'onBlur'`는 사용자가 필드를 떠날 때 검증하여 입력 중 피로감을 줄이면서도 제출 전 피드백을 제공한다.
 - **좋은 예시**:
 ```typescript
 "use client";
-import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TextField, Button, Box } from "@mui/material";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { emailSchema, passwordSchema } from "@/lib/schemas/common";
 
 const LoginSchema = z.object({ email: emailSchema, password: passwordSchema });
 type LoginFormData = z.infer<typeof LoginSchema>;
 
 export function LoginForm() {
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
     resolver: zodResolver(LoginSchema),
     mode: "onBlur",
     defaultValues: { email: "", password: "" },
   });
   return (
-    <Box component="form" onSubmit={handleSubmit((data) => login(data))} noValidate>
-      <Controller name="email" control={control} render={({ field }) => (
-        <TextField {...field} label="이메일" type="email"
-          error={!!errors.email} helperText={errors.email?.message} fullWidth margin="normal" />
-      )} />
-      <Controller name="password" control={control} render={({ field }) => (
-        <TextField {...field} label="비밀번호" type="password"
-          error={!!errors.password} helperText={errors.password?.message} fullWidth margin="normal" />
-      )} />
-      <Button type="submit" variant="contained" fullWidth disabled={isSubmitting}>
+    <form onSubmit={handleSubmit((data) => login(data))} noValidate>
+      <div>
+        <Label htmlFor="email">이메일</Label>
+        <Input id="email" type="email" {...register("email")} />
+        {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
+      </div>
+      <div>
+        <Label htmlFor="password">비밀번호</Label>
+        <Input id="password" type="password" {...register("password")} />
+        {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
+      </div>
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "로그인 중..." : "로그인"}
       </Button>
-    </Box>
+    </form>
   );
 }
 ```
 - **나쁜 예시**:
 ```typescript
-// register를 MUI TextField에 직접 사용 — ref 전달이 올바르게 동작하지 않음
+// zodResolver 없이 useForm을 사용 — 타입 안전한 검증이 누락됨
 const { register, handleSubmit } = useForm<LoginFormData>();
 return (
   <form onSubmit={handleSubmit(onSubmit)}>
-    <TextField {...register("email")} label="이메일" />
+    <Input {...register("email")} placeholder="이메일" />
   </form>
 );
 ```
@@ -140,27 +145,35 @@ return (
 
 ### 필드별 인라인 에러
 
-- **규칙**: [MUST] 필드별 에러는 MUI `TextField`의 `error`와 `helperText` props를 사용하여 해당 필드 바로 아래에 표시한다
+- **규칙**: [MUST] 필드별 에러는 해당 필드 아래에 에러 메시지 컴포넌트로 표시한다
 - **이유**: 에러 메시지가 해당 필드에 인접해 있어야 사용자가 어떤 필드에 문제가 있는지 즉시 파악할 수 있다.
 - **좋은 예시**:
 ```typescript
-<Controller name="email" control={control} render={({ field }) => (
-  <TextField {...field} label="이메일" error={!!errors.email} helperText={errors.email?.message} />
-)} />
+<div>
+  <Label htmlFor="email">이메일</Label>
+  <Input id="email" type="email" {...register("email")} />
+  {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
+</div>
 ```
 
 ### 폼 레벨 에러
 
-- **규칙**: [SHOULD] 서버 에러, 네트워크 에러 등 특정 필드에 귀속되지 않는 에러는 MUI `Alert` 컴포넌트로 폼 상단에 표시한다
+- **규칙**: [SHOULD] 서버 에러, 네트워크 에러 등 특정 필드에 귀속되지 않는 에러는 shadcn/ui `Alert` 컴포넌트로 폼 상단에 표시한다
 - **이유**: 폼 레벨 에러는 개별 필드와 연결할 수 없으므로, 폼 전체에 대한 에러임을 명확히 전달하는 별도의 영역이 필요하다.
 - **좋은 예시**:
 ```typescript
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 const [formError, setFormError] = useState<string | null>(null);
 return (
-  <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-    {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
+  <form onSubmit={handleSubmit(onSubmit)}>
+    {formError && (
+      <Alert variant="destructive" className="mb-4">
+        <AlertDescription>{formError}</AlertDescription>
+      </Alert>
+    )}
     {/* 폼 필드들 */}
-  </Box>
+  </form>
 );
 ```
 
@@ -266,16 +279,18 @@ export function OrderForm() {
   });
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit)}>
       {fields.map((field, index) => (
-        <Box key={field.id} sx={{ display: "flex", gap: 2 }}>
+        <div key={field.id} className="flex gap-4 items-center">
           <Controller name={`items.${index}.name`} control={control}
-            render={({ field }) => <TextField {...field} label="상품명" />} />
-          <IconButton onClick={() => remove(index)} disabled={fields.length === 1}><DeleteIcon /></IconButton>
-        </Box>
+            render={({ field }) => <Input {...field} placeholder="상품명" />} />
+          <Button variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length === 1}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       ))}
-      <Button onClick={() => append({ name: "", quantity: 1 })}>상품 추가</Button>
-    </Box>
+      <Button type="button" variant="outline" onClick={() => append({ name: "", quantity: 1 })}>상품 추가</Button>
+    </form>
   );
 }
 ```
@@ -295,17 +310,21 @@ export function ShippingForm() {
   const { control, watch } = useForm({ resolver: zodResolver(ShippingSchema) });
   const method = watch("method");
   return (
-    <Box component="form">
+    <form>
       {/* RadioGroup으로 method 선택 */}
       {method === "delivery" && (
-        <Controller name="address" control={control}
-          render={({ field }) => <TextField {...field} label="배송 주소" fullWidth />} />
+        <div>
+          <Label>배송 주소</Label>
+          <Input {...register("address")} placeholder="배송 주소" />
+        </div>
       )}
       {method === "pickup" && (
-        <Controller name="storeId" control={control}
-          render={({ field }) => <TextField {...field} label="매장 선택" fullWidth />} />
+        <div>
+          <Label>매장 선택</Label>
+          <Input {...register("storeId")} placeholder="매장을 선택해주세요" />
+        </div>
       )}
-    </Box>
+    </form>
   );
 }
 ```
@@ -350,7 +369,7 @@ catch (error) { setFormError("요청 처리 중 오류가 발생했습니다. �
 const useFormStore = create((set) => ({ email: "", setEmail: (email: string) => set({ email }) }));
 export function LoginForm() {
   const { email, setEmail } = useFormStore();
-  return <TextField value={email} onChange={(e) => setEmail(e.target.value)} />; // 동기화 문제 발생
+  return <Input value={email} onChange={(e) => setEmail(e.target.value)} />; // 동기화 문제 발생
 }
 ```
 
@@ -360,7 +379,7 @@ export function LoginForm() {
 - **이유**: 매 키 입력마다 API를 호출하면 불필요한 네트워크 요청이 대량 발생하고, 응답 순서가 보장되지 않아 race condition이 발생할 수 있다.
 - **나쁜 예시**:
 ```typescript
-<TextField onChange={async (e) => {
+<Input onChange={async (e) => {
   const exists = await checkEmailExists(e.target.value); // 매 키 입력마다 호출
 }} />
 ```
@@ -379,5 +398,5 @@ const debouncedCheck = useDebouncedCallback(async (value: string) => {
 
 - [React Hook Form 공식 문서](https://react-hook-form.com)
 - [Zod 공식 문서](https://zod.dev)
-- [MUI TextField API](https://mui.com/material-ui/api/text-field/)
+- [shadcn/ui Form Components](https://ui.shadcn.com/docs/components/form)
 - [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)

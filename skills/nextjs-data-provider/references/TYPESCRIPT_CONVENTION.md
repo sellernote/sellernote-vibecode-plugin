@@ -244,8 +244,8 @@
 
 ### Enum / as const 네이밍 규칙
 
-- **규칙**: [MUST] enum 및 `as const` 객체의 key는 **PascalCase**, value는 **camelCase**를 사용한다.
-- **이유**: key는 상수 식별자로서 PascalCase를 사용하여 일반 변수와 구분하고, value는 애플리케이션 내부에서 사용되는 문자열이므로 camelCase로 통일한다.
+- **규칙**: [MUST] enum 및 `as const` 객체의 key는 **PascalCase**, value는 **소문자 snake_case**를 사용한다.
+- **이유**: key는 상수 식별자로서 PascalCase를 사용하여 일반 변수와 구분하고, value는 API 응답, DB 저장값 등 외부 시스템과의 인터페이스에서 사용되므로 소문자 snake_case로 통일한다.
 - **좋은 예시**:
   ```typescript
   // as const 객체
@@ -258,9 +258,9 @@
 
   // enum
   enum PaymentMethod {
-    CreditCard = 'creditCard',
-    BankTransfer = 'bankTransfer',
-    VirtualAccount = 'virtualAccount',
+    CreditCard = 'credit_card',
+    BankTransfer = 'bank_transfer',
+    VirtualAccount = 'virtual_account',
   }
   ```
 - **나쁜 예시**:
@@ -271,10 +271,16 @@
     PROCESSING: 'processing',
   } as const;
 
-  // UPPER_CASE value — camelCase를 사용해야 함
+  // UPPER_CASE value — 소문자 snake_case를 사용해야 함
   enum OrderStatus {
     Pending = 'PENDING',
     Processing = 'PROCESSING',
+  }
+
+  // camelCase value — 소문자 snake_case를 사용해야 함
+  enum PaymentMethod {
+    CreditCard = 'creditCard',
+    BankTransfer = 'bankTransfer',
   }
 
   // camelCase key — PascalCase를 사용해야 함
@@ -306,7 +312,7 @@
     Processing: 'processing',
     Shipped: 'shipped',
     Delivered: 'delivered',
-  } as const;
+  } as const;  // value가 단일 단어인 경우 snake_case와 동일
 
   type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 

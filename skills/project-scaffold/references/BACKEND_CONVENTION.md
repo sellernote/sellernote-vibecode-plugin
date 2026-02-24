@@ -9,6 +9,7 @@
 > - [NestJS 컨벤션](nestjs/NESTJS_CONVENTION.md)
 > - [Spring 컨벤션](spring/SPRING_CONVENTION.md)
 > - [TypeORM 컨벤션](typeorm/TYPEORM_CONVENTION.md)
+> - [Prisma 컨벤션](prisma/PRISMA_CONVENTION.md)
 
 ## 아키텍처
 

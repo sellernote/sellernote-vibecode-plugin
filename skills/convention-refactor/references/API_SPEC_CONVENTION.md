@@ -245,7 +245,7 @@
 | 새 응답 필드 추가 | `estimatedDeliveryDate` 추가 |
 | 새 엔드포인트 추가 | `GET /api/v1/orders/summary` 추가 |
 | 새 선택적 쿼리 파라미터 추가 | `?includeItems=true` 추가 |
-| 새 enum 값 추가 | `OrderStatus`에 `RETURNED` 추가 |
+| 새 enum 값 추가 | `OrderStatus`에 `returned` 추가 |
 | 검증 완화 | `maxLength(50)` → `maxLength(100)` |
 
 ### 하위호환성 규칙

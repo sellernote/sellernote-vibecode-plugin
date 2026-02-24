@@ -1,53 +1,145 @@
 # 스타일링 컨벤션
 
-> 이 문서는 MUI 기반 스타일링과 디자인 시스템 규칙을 정의합니다.
+> 이 문서는 shadcn/ui + Tailwind CSS 기반 스타일링과 디자인 시스템 규칙을 정의합니다.
 > 상위 규칙: [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)
 
 ---
 
-## 1. MUI + Next.js 15 설정
+## 1. shadcn/ui + Next.js 15 설정
 
-### AppRouterCacheProvider 사용
+### 의존성
 
-- **규칙**: [MUST] `@mui/material-nextjs/v15-appRouter`의 `AppRouterCacheProvider`를 사용한다
-- **이유**: Next.js App Router 환경에서 Emotion 스타일이 SSR 시 올바르게 삽입되려면 전용 캐시 프로바이더가 필요하다. 이를 사용하지 않으면 서버에서 렌더링된 HTML과 클라이언트 스타일이 불일치하여 FOUC(Flash of Unstyled Content)가 발생한다.
+- **규칙**: [MUST] shadcn/ui 프로젝트에 다음 핵심 의존성을 설치한다
+- **이유**: shadcn/ui는 Radix UI primitives 위에 Tailwind CSS로 스타일링된 컴포넌트를 제공한다. 각 의존성은 컴포넌트 시스템의 필수 요소이다.
 
-### CSS Variables 활성화
+| 패키지 | 역할 |
+|--------|------|
+| `tailwindcss` | 유틸리티 기반 CSS 프레임워크 |
+| `class-variance-authority` | 컴포넌트 변형(variants) 타입 안전 관리 |
+| `clsx` | 조건부 className 결합 |
+| `tailwind-merge` | Tailwind 클래스 충돌 해결 |
+| `lucide-react` | 아이콘 라이브러리 |
+| `tw-animate-css` | 애니메이션 유틸리티 |
 
-- **규칙**: [MUST] `createTheme`에 `cssVariables: true` 옵션을 설정한다
-- **이유**: CSS variables를 활성화하면 서버와 클라이언트 간 테마 값이 CSS 변수로 동기화되어, SSR 시 발생하는 다크모드 깜빡임(flash) 현상을 방지한다. JavaScript 런타임에 의존하지 않고 CSS 레벨에서 테마 값을 적용할 수 있다.
+```bash
+npm install class-variance-authority clsx tailwind-merge lucide-react tw-animate-css
+```
+
+### components.json
+
+- **규칙**: [MUST] 프로젝트 루트에 `components.json` 파일을 생성하여 shadcn/ui 설정을 정의한다
+- **이유**: `components.json`은 shadcn CLI가 컴포넌트를 추가할 때 참조하는 설정 파일이다. import 경로, 스타일 방식, 아이콘 라이브러리 등을 한 곳에서 관리한다.
+
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "iconLibrary": "lucide"
+}
+```
+
+### cn() 유틸리티 함수
+
+- **규칙**: [MUST] `lib/utils.ts`에 `cn()` 유틸리티 함수를 정의하고, 모든 className 조합에 사용한다
+- **이유**: `cn()`은 `clsx`(조건부 클래스 결합)와 `tailwind-merge`(Tailwind 클래스 충돌 해결)를 결합한 함수이다. 이를 통해 `p-4`와 `p-2`가 동시에 적용될 때 후자만 유지되는 등 Tailwind 특유의 클래스 충돌 문제를 자동으로 해결한다.
+
+```typescript
+// lib/utils.ts
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+- **좋은 예시**:
+
+```typescript
+import { cn } from "@/lib/utils";
+
+interface CardProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+function Card({ className, children }: CardProps) {
+  return (
+    <div className={cn("rounded-lg border bg-card p-6 shadow-sm", className)}>
+      {children}
+    </div>
+  );
+}
+
+// 사용: 기본 스타일을 유지하면서 외부에서 커스터마이징 가능
+<Card className="p-4"> {/* p-6이 p-4로 올바르게 오버라이드됨 */}
+  <p>내용</p>
+</Card>
+```
+
+- **나쁜 예시**:
+
+```typescript
+// cn() 없이 템플릿 리터럴로 직접 결합 — Tailwind 클래스 충돌 미해결
+function Card({ className, children }: CardProps) {
+  return (
+    <div className={`rounded-lg border bg-card p-6 shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// p-6과 p-4가 모두 적용되어 예측 불가능한 결과
+<Card className="p-4">내용</Card>
+```
 
 ### next/font 연동
 
-- **규칙**: [MUST] `next/font`로 폰트를 설정하고, CSS variable로 MUI 테마에 연동한다
-- **이유**: `next/font`는 빌드 타임에 폰트를 최적화하여 Layout Shift를 방지하고, self-hosting으로 외부 네트워크 요청을 제거한다. CSS variable을 통해 MUI typography에 연동하면 폰트 로딩 최적화와 테마 일관성을 동시에 확보한다.
+- **규칙**: [MUST] `next/font`로 폰트를 설정하고, CSS variable로 Tailwind에 연동한다
+- **이유**: `next/font`는 빌드 타임에 폰트를 최적화하여 Layout Shift를 방지하고, self-hosting으로 외부 네트워크 요청을 제거한다.
 - **좋은 예시**:
 
 ```typescript
 // app/layout.tsx
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { Noto_Sans_KR } from 'next/font/google';
-import theme from '@/theme';
+import { Noto_Sans_KR } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
+import "@/app/globals.css";
 
 const notoSansKR = Noto_Sans_KR({
-  weight: ['300', '400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-noto-sans-kr',
+  weight: ["300", "400", "500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-noto-sans-kr",
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className={notoSansKR.variable}>
-        <AppRouterCacheProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-          </ThemeProvider>
-        </AppRouterCacheProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
@@ -57,179 +149,172 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 - **나쁜 예시**:
 
 ```typescript
-// AppRouterCacheProvider 없이 직접 ThemeProvider만 사용
-// SSR 시 스타일이 누락되어 FOUC 발생
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="ko">
-      <body>
-        {/* AppRouterCacheProvider 누락 */}
-        <ThemeProvider theme={theme}>
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
-  );
-}
+// 외부 CDN 직접 로드 — FOUT 발생, 외부 의존성
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR" rel="stylesheet" />
 ```
 
 ---
 
 ## 2. 테마 구조
 
-### 테마 디렉토리 분리
+### CSS Variables 기반 디자인 토큰
 
-- **규칙**: [MUST] `theme/` 디렉토리에 테마 설정을 분리한다
-- **이유**: 디자인 토큰과 테마 생성 로직을 분리하면, 디자인 시스템 변경 시 영향 범위를 최소화할 수 있다. 토큰 파일은 디자이너와 협업하는 접점이 되고, 테마 파일은 MUI 구현 세부사항을 캡슐화한다.
+- **규칙**: [MUST] 디자인 토큰은 `globals.css`의 CSS Variables로 정의하고, `:root`(라이트모드)와 `.dark`(다크모드)에서 각각 값을 설정한다
 
-디렉토리 구조:
+> **주의**: 아래 CSS 예시는 **Tailwind CSS v4** 문법을 기반으로 한다.
+> `@import "tailwindcss"`, `@theme inline`, `@custom-variant` 등은 v4에서만 동작한다.
+> v3 프로젝트에서는 `tailwind.config.ts`와 `@tailwind base/components/utilities` 지시어를 사용한다.
+- **이유**: CSS Variables를 사용하면 JavaScript 런타임 없이 테마 전환이 가능하고, Tailwind의 유틸리티 클래스와 자연스럽게 통합된다. 다크모드 전환 시 깜빡임(flash)이 발생하지 않는다.
 
+```css
+/* app/globals.css */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
 ```
-theme/
-  tokens.ts     # 디자인 토큰 (색상, 타이포그래피, 간격)
-  index.ts      # createTheme으로 테마 생성
-```
 
+### 시맨틱 컬러 시스템
+
+- **규칙**: [MUST] shadcn/ui의 시맨틱 컬러 시스템을 이해하고 올바르게 사용한다
+- **이유**: 각 시맨틱 컬러는 용도가 명확히 정의되어 있으며, 다크모드 전환 시 자동으로 적절한 값으로 변경된다.
+
+| 토큰 | 용도 | Tailwind 클래스 |
+|------|------|-----------------|
+| `background` / `foreground` | 페이지 배경과 기본 텍스트 | `bg-background`, `text-foreground` |
+| `card` / `card-foreground` | 카드 컴포넌트 | `bg-card`, `text-card-foreground` |
+| `primary` / `primary-foreground` | 주요 액션 버튼, 강조 | `bg-primary`, `text-primary-foreground` |
+| `secondary` / `secondary-foreground` | 보조 액션 | `bg-secondary`, `text-secondary-foreground` |
+| `muted` / `muted-foreground` | 비활성 영역, 보조 텍스트 | `bg-muted`, `text-muted-foreground` |
+| `accent` / `accent-foreground` | 호버, 선택 강조 | `bg-accent`, `text-accent-foreground` |
+| `destructive` / `destructive-foreground` | 삭제, 에러 | `bg-destructive`, `text-destructive`, `text-destructive-foreground` |
+| `border` | 테두리 | `border-border` |
+| `input` | 입력 필드 테두리 | `border-input` |
+| `ring` | 포커스 링 | `ring-ring` |
+
+### 커스텀 컬러 확장
+
+- **규칙**: [SHOULD] 프로젝트 고유 컬러가 필요하면 동일한 CSS Variables 패턴으로 확장한다
+- **이유**: 기존 시맨틱 컬러 패턴을 따르면 다크모드 지원이 자동으로 이루어지고, 팀원 간 일관된 방식으로 컬러를 관리할 수 있다.
 - **좋은 예시**:
 
-```typescript
-// theme/tokens.ts
-export const colors = {
-  primary: {
-    main: '#1976d2',
-    light: '#42a5f5',
-    dark: '#1565c0',
-    contrastText: '#ffffff',
-  },
-  secondary: {
-    main: '#9c27b0',
-    light: '#ba68c8',
-    dark: '#7b1fa2',
-    contrastText: '#ffffff',
-  },
-  error: {
-    main: '#d32f2f',
-    light: '#ef5350',
-    dark: '#c62828',
-  },
-  warning: {
-    main: '#ed6c02',
-    light: '#ff9800',
-    dark: '#e65100',
-  },
-  success: {
-    main: '#2e7d32',
-    light: '#4caf50',
-    dark: '#1b5e20',
-  },
-  grey: {
-    50: '#fafafa',
-    100: '#f5f5f5',
-    200: '#eeeeee',
-    300: '#e0e0e0',
-    400: '#bdbdbd',
-    500: '#9e9e9e',
-    600: '#757575',
-    700: '#616161',
-    800: '#424242',
-    900: '#212121',
-  },
-} as const;
+```css
+/* globals.css에 커스텀 컬러 추가 */
+:root {
+  /* 기존 변수들... */
+  --success: oklch(0.62 0.19 145);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.75 0.18 85);
+  --warning-foreground: oklch(0.145 0 0);
+}
 
-export const typography = {
-  fontFamily: 'var(--font-noto-sans-kr), "Helvetica", "Arial", sans-serif',
-  h1: { fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.2 },
-  h2: { fontSize: '2rem', fontWeight: 700, lineHeight: 1.3 },
-  h3: { fontSize: '1.75rem', fontWeight: 600, lineHeight: 1.3 },
-  h4: { fontSize: '1.5rem', fontWeight: 600, lineHeight: 1.4 },
-  h5: { fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.4 },
-  h6: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.5 },
-  body1: { fontSize: '1rem', lineHeight: 1.6 },
-  body2: { fontSize: '0.875rem', lineHeight: 1.6 },
-  caption: { fontSize: '0.75rem', lineHeight: 1.5 },
-} as const;
-
-export const spacing = {
-  unit: 8, // 기본 spacing 단위 (px)
-} as const;
-
-export const shape = {
-  borderRadius: 8,
-} as const;
+.dark {
+  /* 기존 변수들... */
+  --success: oklch(0.72 0.19 145);
+  --success-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.85 0.18 85);
+  --warning-foreground: oklch(0.145 0 0);
+}
 ```
 
-```typescript
-// theme/index.ts
-'use client';
-
-import { createTheme } from '@mui/material/styles';
-import { colors, typography, spacing, shape } from './tokens';
-
-const theme = createTheme({
-  cssVariables: true,
-  palette: {
-    primary: colors.primary,
-    secondary: colors.secondary,
-    error: colors.error,
-    warning: colors.warning,
-    success: colors.success,
-    grey: colors.grey,
-  },
-  typography: {
-    fontFamily: typography.fontFamily,
-    h1: typography.h1,
-    h2: typography.h2,
-    h3: typography.h3,
-    h4: typography.h4,
-    h5: typography.h5,
-    h6: typography.h6,
-    body1: typography.body1,
-    body2: typography.body2,
-    caption: typography.caption,
-  },
-  spacing: spacing.unit,
-  shape: {
-    borderRadius: shape.borderRadius,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none', // MUI 기본 대문자 변환 비활성화
-          fontWeight: 600,
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundImage: 'none', // 기본 배경 그라데이션 제거
-        },
-      },
-    },
-    MuiTextField: {
-      defaultProps: {
-        size: 'small',
-        variant: 'outlined',
-      },
-    },
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          scrollbarWidth: 'thin',
-        },
-      },
-    },
-  },
-});
-
-export default theme;
+```css
+/* @theme inline에 등록 */
+@theme inline {
+  /* 기존 매핑들... */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+}
 ```
 
-### 컴포넌트 기본 스타일 오버라이드
+- **나쁜 예시**:
 
-- **규칙**: [SHOULD] 프로젝트 전반에 적용되는 MUI 컴포넌트 기본 스타일은 테마의 `components` 속성에서 오버라이드한다
-- **이유**: 개별 컴포넌트마다 반복적으로 동일한 스타일을 적용하면 일관성이 깨지기 쉽고 유지보수 비용이 증가한다. 테마 오버라이드를 통해 한 곳에서 전역 스타일을 관리하면 디자인 시스템의 일관성을 보장할 수 있다.
+```typescript
+// CSS Variables에 정의하지 않고 Tailwind 임의 값으로 직접 사용
+<div className="bg-[#2e7d32] text-white dark:bg-[#4caf50]">
+  성공 메시지
+</div>
+```
 
 ---
 
@@ -239,78 +324,107 @@ export default theme;
 
 | 질문 | 답변 | 방법 |
 |------|------|------|
-| 이 스타일이 모든 인스턴스에 전역적으로 적용되어야 하는가? | 예 | Theme component overrides |
-| 이 스타일이 여러 곳에서 재사용되는가? | 예 | `styled()` 컴포넌트 |
-| 이 스타일이 특정 위치에서 일회성으로 필요한가? | 예 | `sx` prop |
+| shadcn/ui에 해당 컴포넌트가 있는가? | 예 | shadcn/ui 컴포넌트 사용 |
+| 재사용 가능한 커스텀 컴포넌트인가? | 예 | `cva()` + `cn()`으로 변형 관리 |
+| 일회성 스타일링인가? | 예 | Tailwind utility classes 직접 사용 |
 
-### 1순위: Theme component overrides
+### 1순위: shadcn/ui 컴포넌트
 
-- **규칙**: [SHOULD] 전역 일관성이 필요한 스타일은 테마의 `components` 속성에서 오버라이드한다
-- **이유**: 모든 인스턴스에 동일한 스타일을 보장하며, 디자인 변경 시 한 곳만 수정하면 된다.
+- **규칙**: [SHOULD] UI 구현 시 shadcn/ui에서 제공하는 컴포넌트를 우선 사용한다
+- **이유**: shadcn/ui 컴포넌트는 Radix UI primitives 기반으로 접근성(WAI-ARIA)이 내장되어 있고, 키보드 내비게이션, 포커스 관리, 스크린 리더 지원이 기본 제공된다.
 - **좋은 예시**:
 
 ```typescript
-// theme/index.ts - 모든 Button에 대문자 변환 제거
-const theme = createTheme({
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          borderRadius: 8,
-        },
-      },
-    },
-  },
-});
-```
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-### 2순위: styled()
-
-- **규칙**: [SHOULD] 재사용 가능한 커스텀 컴포넌트는 `styled()`로 생성한다
-- **이유**: 의미 있는 이름을 가진 컴포넌트로 추상화되므로, JSX에서 역할이 명확하게 드러나고 여러 곳에서 일관되게 재사용할 수 있다.
-- **좋은 예시**:
-
-```typescript
-import { styled } from '@mui/material/styles';
-import Card from '@mui/material/Card';
-
-const StyledCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius * 2,
-  boxShadow: theme.shadows[2],
-  transition: 'box-shadow 0.2s ease-in-out',
-  '&:hover': {
-    boxShadow: theme.shadows[6],
-  },
-}));
-
-// 사용
 function ProductCard({ product }: ProductCardProps) {
   return (
-    <StyledCard>
-      <Typography variant="h6">{product.name}</Typography>
-      <Typography variant="body2">{product.description}</Typography>
-    </StyledCard>
+    <Card>
+      <CardHeader>
+        <CardTitle>{product.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground">{product.description}</p>
+        <Button className="mt-4">구매하기</Button>
+      </CardContent>
+    </Card>
   );
 }
 ```
 
-### 3순위: sx prop
+### 2순위: cva() + cn()으로 변형 관리
 
-- **규칙**: [MAY] 일회성 레이아웃/간격 조정에 `sx` prop을 사용한다
-- **이유**: 별도 컴포넌트를 생성할 필요 없이 간단한 스타일을 인라인으로 적용할 수 있다. 테마 토큰에 직접 접근하므로 디자인 시스템과의 일관성을 유지한다.
+- **규칙**: [SHOULD] 재사용 가능한 커스텀 컴포넌트의 변형(variants)은 `class-variance-authority(cva)`로 관리한다
+- **이유**: `cva()`는 컴포넌트의 변형을 타입 안전하게 정의할 수 있으며, 기본 스타일과 변형별 스타일을 선언적으로 관리할 수 있다.
 - **좋은 예시**:
 
 ```typescript
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors",
+  {
+    variants: {
+      variant: {
+        default: "border-transparent bg-primary text-primary-foreground",
+        secondary: "border-transparent bg-secondary text-secondary-foreground",
+        destructive: "border-transparent bg-destructive text-destructive-foreground",
+        outline: "text-foreground",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  return (
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  );
+}
+
+// 사용
+<Badge variant="destructive">에러</Badge>
+<Badge variant="outline">대기중</Badge>
+```
+
+- **나쁜 예시**:
+
+```typescript
+// 조건부 클래스를 직접 나열 — 변형이 많아질수록 복잡해짐
+function Badge({ variant, className }: BadgeProps) {
+  return (
+    <div
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold
+        ${variant === "default" ? "bg-primary text-primary-foreground" : ""}
+        ${variant === "destructive" ? "bg-destructive text-destructive-foreground" : ""}
+        ${variant === "outline" ? "text-foreground" : ""}
+        ${className}`}
+    />
+  );
+}
+```
+
+### 3순위: Tailwind utility classes
+
+- **규칙**: [MAY] 일회성 레이아웃/간격 조정에 Tailwind utility classes를 직접 사용한다
+- **이유**: 별도 컴포넌트를 생성할 필요 없이 간단한 스타일을 인라인으로 적용할 수 있다. 시맨틱 토큰에 직접 접근하므로 디자인 시스템과의 일관성을 유지한다.
+- **좋은 예시**:
+
+```typescript
 function PageHeader({ title }: { title: string }) {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-      <Typography variant="h4">{title}</Typography>
-    </Box>
+    <div className="flex items-center gap-4 mb-6">
+      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+    </div>
   );
 }
 ```
@@ -318,27 +432,46 @@ function PageHeader({ title }: { title: string }) {
 - **나쁜 예시**:
 
 ```typescript
-// sx prop에 과도하게 많은 스타일을 적용 -> styled()로 분리해야 함
+// 과도하게 많은 utility classes — cva()로 분리해야 함
 function ProductCard({ product }: ProductCardProps) {
   return (
-    <Box
-      sx={{
-        p: 3,
-        borderRadius: 2,
-        boxShadow: 2,
-        transition: 'box-shadow 0.2s ease-in-out',
-        '&:hover': { boxShadow: 6 },
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        backgroundColor: 'background.paper',
-      }}
-    >
-      {/* 이 수준의 스타일은 styled()로 분리하는 것이 적절하다 */}
-    </Box>
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer relative overflow-hidden">
+      {/* 이 수준의 스타일은 cva() 또는 shadcn Card 컴포넌트로 분리하는 것이 적절하다 */}
+    </div>
   );
+}
+```
+
+### shadcn/ui 컴포넌트 커스터마이징
+
+- **규칙**: [SHOULD] shadcn/ui 컴포넌트의 기본 스타일을 변경해야 할 때는 `components/ui/` 내의 소스 파일을 직접 수정한다
+- **이유**: shadcn/ui 컴포넌트는 프로젝트에 복사되어 로컬 소유된다. npm 패키지와 달리 업데이트 시 덮어씌워지지 않으므로, 소스 코드를 직접 수정하는 것이 의도된 사용 방법이다.
+- **좋은 예시**:
+
+```typescript
+// components/ui/button.tsx — 프로젝트 전역 기본 스타일 수정
+const buttonVariants = cva(
+  // 프로젝트에 맞게 기본 스타일 수정 가능
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        // 프로젝트 고유 변형 추가 가능
+        success: "bg-success text-success-foreground hover:bg-success/90",
+      },
+      // ...
+    },
+  }
+);
+```
+
+- **나쁜 예시**:
+
+```typescript
+// shadcn 컴포넌트를 래핑하여 스타일을 오버라이드 — 불필요한 추상화 계층
+function CustomButton({ className, ...props }: ButtonProps) {
+  return <Button className={cn("my-custom-styles", className)} {...props} />;
 }
 ```
 
@@ -346,40 +479,34 @@ function ProductCard({ product }: ProductCardProps) {
 
 ## 4. 반응형 디자인
 
-### MUI Breakpoints 시스템 활용
+### Tailwind Breakpoints 시스템 활용
 
-- **규칙**: [MUST] 반응형 레이아웃에 MUI breakpoints 시스템(xs, sm, md, lg, xl)을 활용한다
-- **이유**: MUI의 breakpoints는 테마에 정의된 중앙 관리되는 중단점 값을 사용하므로, 프로젝트 전체에서 일관된 반응형 기준을 보장한다.
+- **규칙**: [MUST] 반응형 레이아웃에 Tailwind의 breakpoint 접두사(sm, md, lg, xl, 2xl)를 사용한다
+- **이유**: Tailwind의 breakpoints는 일관된 중단점 값을 제공하며, mobile-first 접근법으로 설계되어 있다. 모바일 스타일을 기본으로 작성하고, 큰 화면에서 스타일을 추가하는 방식이다.
 
-### sx prop 객체 표기법
+| Breakpoint | 최소 너비 | 적용 대상 |
+|-----------|----------|-----------|
+| (기본) | 0px | 모바일 |
+| `sm` | 640px | 소형 태블릿 |
+| `md` | 768px | 태블릿 |
+| `lg` | 1024px | 소형 데스크톱 |
+| `xl` | 1280px | 데스크톱 |
+| `2xl` | 1536px | 대형 데스크톱 |
 
-- **규칙**: [MUST] `sx` prop에서 반응형 값은 breakpoint 객체 표기법으로 지정한다
-- **이유**: 객체 표기법은 각 breakpoint별 값을 선언적으로 표현하여, 미디어 쿼리를 직접 작성하는 것보다 간결하고 실수가 적다.
+### Mobile-first 접근
+
+- **규칙**: [MUST] 스타일은 mobile-first로 작성한다. 기본 클래스에 모바일 스타일을 적용하고, `sm:`, `md:`, `lg:` 등 breakpoint 접두사로 큰 화면 스타일을 추가한다.
+- **이유**: mobile-first 접근은 가장 작은 화면에서부터 점진적으로 레이아웃을 확장하므로, 모바일 사용자에게 불필요한 스타일이 로드되지 않고, CSS 규칙이 더 간결해진다.
 - **좋은 예시**:
 
 ```typescript
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-
 function ResponsiveSection() {
   return (
-    <Box
-      sx={{
-        p: { xs: 2, md: 3, lg: 4 },
-        maxWidth: { xs: '100%', md: 800, lg: 1200 },
-        mx: 'auto',
-      }}
-    >
-      <Typography
-        variant="h4"
-        sx={{
-          fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
-          textAlign: { xs: 'center', md: 'left' },
-        }}
-      >
+    <div className="p-4 md:p-6 lg:p-8 max-w-full md:max-w-3xl lg:max-w-5xl mx-auto">
+      <h2 className="text-xl sm:text-2xl md:text-3xl text-center md:text-left font-bold">
         반응형 제목
-      </Typography>
-    </Box>
+      </h2>
+    </div>
   );
 }
 ```
@@ -387,178 +514,187 @@ function ResponsiveSection() {
 - **나쁜 예시**:
 
 ```typescript
-// 미디어 쿼리를 직접 작성 - MUI breakpoints를 사용해야 함
-<Box
-  sx={{
-    padding: '16px',
-    '@media (min-width: 768px)': {
-      padding: '24px',
-    },
-    '@media (min-width: 1024px)': {
-      padding: '32px',
-    },
-  }}
->
+// desktop-first로 작성하여 max 접두사 남용
+<div className="max-lg:p-4 max-md:p-2 p-8">
+  <h2 className="max-md:text-xl max-sm:text-lg text-3xl">제목</h2>
+</div>
 ```
 
-### Grid v2 사용
+### 반응형 그리드
 
-- **규칙**: [SHOULD] 레이아웃 그리드에 MUI Grid v2를 사용한다
-- **이유**: Grid v2는 CSS Flexbox 기반으로 `size`, `offset` 등 직관적인 prop을 제공하며, breakpoint별 반응형 레이아웃을 선언적으로 구성할 수 있다.
+- **규칙**: [SHOULD] 그리드 레이아웃에 Tailwind의 CSS Grid utility classes를 사용한다
+- **이유**: CSS Grid는 2차원 레이아웃에 적합하며, Tailwind의 `grid-cols-*` 클래스와 breakpoint 접두사를 조합하면 간결하게 반응형 그리드를 구현할 수 있다.
 - **좋은 예시**:
 
 ```typescript
-import Grid from '@mui/material/Grid';
-
 function ProductGrid({ products }: { products: Product[] }) {
   return (
-    <Grid container spacing={{ xs: 2, md: 3 }}>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
-        <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-          <ProductCard product={product} />
-        </Grid>
+        <ProductCard key={product.id} product={product} />
       ))}
-    </Grid>
+    </div>
   );
 }
 ```
 
 ### 미디어 쿼리 직접 작성 금지
 
-- **규칙**: [MUST NOT] CSS 미디어 쿼리를 직접 작성하지 않는다. `theme.breakpoints` 또는 `sx` prop의 breakpoint 객체를 사용한다.
-- **이유**: 하드코딩된 미디어 쿼리는 테마에 정의된 breakpoint 값과 불일치할 수 있으며, 중단점 변경 시 모든 미디어 쿼리를 수동으로 수정해야 한다.
+- **규칙**: [MUST NOT] CSS 미디어 쿼리를 직접 작성하지 않는다. Tailwind breakpoint 접두사를 사용한다.
+- **이유**: 하드코딩된 미디어 쿼리는 Tailwind에 정의된 breakpoint 값과 불일치할 수 있으며, 중단점 변경 시 모든 미디어 쿼리를 수동으로 수정해야 한다.
 - **좋은 예시**:
 
 ```typescript
-// styled()에서 theme.breakpoints 사용
-const ResponsiveContainer = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  [theme.breakpoints.up('md')]: {
-    padding: theme.spacing(4),
-  },
-}));
+<div className="hidden md:block">데스크톱에서만 표시</div>
+<div className="md:hidden">모바일에서만 표시</div>
 ```
 
 - **나쁜 예시**:
 
-```typescript
-// 매직 넘버로 미디어 쿼리 하드코딩
-const ResponsiveContainer = styled(Box)({
-  padding: '16px',
-  '@media (min-width: 900px)': { // 테마 breakpoint와 불일치 위험
-    padding: '32px',
-  },
-});
+```css
+/* 매직 넘버로 미디어 쿼리 하드코딩 */
+@media (min-width: 768px) {
+  .desktop-only { display: block; }
+}
 ```
 
 ---
 
 ## 5. 다크모드/라이트모드
 
-### colorSchemes 활용
+### next-themes 설정
 
-- **규칙**: [SHOULD] MUI의 `colorSchemes` 옵션을 활용하여 다크/라이트 모드를 지원한다
-- **이유**: `colorSchemes`를 사용하면 CSS variables 기반으로 모드 전환이 이루어지므로, JavaScript 없이도 모드가 적용되어 SSR 환경에서 깜빡임이 발생하지 않는다.
-- **좋은 예시**:
+- **규칙**: [MUST] 다크모드는 `next-themes` 라이브러리와 class 기반 전환을 사용한다
+- **이유**: `next-themes`는 시스템 설정 감지, localStorage 저장, SSR 호환 등을 자동 처리한다. class 기반 전환은 Tailwind의 `dark:` variant와 직접 연동되어 추가 설정 없이 동작한다.
 
-```typescript
-// theme/index.ts
-import { createTheme } from '@mui/material/styles';
-
-const theme = createTheme({
-  cssVariables: true,
-  colorSchemes: {
-    light: {
-      palette: {
-        primary: { main: '#1976d2' },
-        background: { default: '#ffffff', paper: '#f5f5f5' },
-      },
-    },
-    dark: {
-      palette: {
-        primary: { main: '#90caf9' },
-        background: { default: '#121212', paper: '#1e1e1e' },
-      },
-    },
-  },
-});
-
-export default theme;
+```bash
+npm install next-themes
 ```
 
 ```typescript
-// 테마 전환 컴포넌트
-'use client';
+// components/theme-provider.tsx
+"use client";
 
-import { useColorScheme } from '@mui/material/styles';
-import IconButton from '@mui/material/IconButton';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
-function ThemeToggle() {
-  const { mode, setMode } = useColorScheme();
-
-  return (
-    <IconButton
-      onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
-      aria-label={mode === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
-    >
-      {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
-    </IconButton>
-  );
+export function ThemeProvider({
+  children,
+  ...props
+}: React.ComponentProps<typeof NextThemesProvider>) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
 }
 ```
 
-### theme.palette 사용 강제
+### dark: variant 사용
 
-- **규칙**: [MUST] 색상은 항상 `theme.palette`를 통해 참조한다. hex 값 등을 직접 하드코딩하지 않는다.
-- **이유**: 하드코딩된 색상은 다크모드 전환 시 자동으로 변경되지 않아 UI가 깨진다. `theme.palette`를 사용하면 모드별로 적절한 색상이 자동 적용된다.
+- **규칙**: [SHOULD] 시맨틱 컬러 토큰(`bg-background`, `text-foreground` 등)을 사용하면 `dark:` 접두사 없이도 자동으로 다크모드가 적용된다. 시맨틱 토큰으로 해결되지 않는 경우에만 `dark:` variant를 사용한다.
+- **이유**: CSS Variables 기반 시맨틱 컬러는 `.dark` 클래스에 따라 자동으로 값이 전환된다. 대부분의 경우 `dark:` 접두사가 불필요하며, 이를 남용하면 코드가 불필요하게 길어진다.
 - **좋은 예시**:
 
 ```typescript
-<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }}>
-  <Typography sx={{ color: 'primary.main' }}>테마 색상 사용</Typography>
-</Box>
+// 시맨틱 토큰 사용 — dark: 접두사 불필요
+<div className="bg-background text-foreground border-border">
+  <p className="text-muted-foreground">보조 텍스트</p>
+</div>
+
+// 시맨틱 토큰으로 해결되지 않는 특수한 경우에만 dark: 사용
+<div className="bg-white dark:bg-slate-900">
+  <p className="text-gray-900 dark:text-gray-100">특수 스타일</p>
+</div>
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-// 하드코딩된 색상 - 다크모드에서 깨짐
-<Box sx={{ backgroundColor: '#ffffff', color: '#212121' }}>
-  <Typography sx={{ color: '#1976d2' }}>하드코딩 색상</Typography>
-</Box>
+// 시맨틱 토큰이 있는데 dark: variant를 중복 사용
+<div className="bg-background dark:bg-background text-foreground dark:text-foreground">
+  불필요한 dark: 접두사
+</div>
+```
+
+### 테마 전환 컴포넌트
+
+- **규칙**: [SHOULD] 테마 전환 UI는 `next-themes`의 `useTheme` 훅을 사용한다
+- **이유**: `useTheme`은 현재 테마 상태와 전환 함수를 제공하며, 마운트 전 hydration 불일치를 방지하기 위해 `mounted` 체크가 필요하다.
+- **좋은 예시**:
+
+```typescript
+"use client";
+
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+function ThemeToggle() {
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      aria-label={theme === "light" ? "다크 모드로 전환" : "라이트 모드로 전환"}
+    >
+      {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+    </Button>
+  );
+}
+```
+
+### 색상 하드코딩 금지
+
+- **규칙**: [MUST] 색상은 항상 시맨틱 토큰(`bg-primary`, `text-foreground` 등)을 통해 참조한다. hex 값이나 Tailwind의 기본 palette를 직접 사용하지 않는다.
+- **이유**: 하드코딩된 색상은 다크모드 전환 시 자동으로 변경되지 않아 UI가 깨진다. 시맨틱 토큰을 사용하면 모드별로 적절한 색상이 자동 적용된다.
+- **좋은 예시**:
+
+```typescript
+<div className="bg-card text-card-foreground border-border">
+  <p className="text-primary">테마 색상 사용</p>
+</div>
+```
+
+- **나쁜 예시**:
+
+```typescript
+// 하드코딩된 색상 — 다크모드에서 깨짐
+<div className="bg-white text-gray-900 border-gray-200">
+  <p className="text-blue-600">하드코딩 색상</p>
+</div>
 ```
 
 ---
 
 ## 6. 아이콘
 
-### MUI Icons 사용
+### Lucide React 사용
 
-- **규칙**: [SHOULD] 아이콘은 `@mui/icons-material` 패키지를 사용한다
-- **이유**: MUI 아이콘은 테마 색상과 크기 시스템에 자동으로 연동되며, tree-shaking을 지원하여 사용하지 않는 아이콘은 번들에 포함되지 않는다.
-
-### 커스텀 아이콘 래핑
-
-- **규칙**: [SHOULD] 커스텀 아이콘은 SVG를 MUI `SvgIcon`으로 래핑하여 사용한다
-- **이유**: `SvgIcon`으로 래핑하면 MUI의 `color`, `fontSize` prop이 일관되게 적용되고, 다른 MUI 아이콘과 동일한 인터페이스로 사용할 수 있다.
+- **규칙**: [SHOULD] 아이콘은 `lucide-react` 패키지를 사용한다
+- **이유**: Lucide React는 shadcn/ui의 기본 아이콘 라이브러리이며, tree-shaking을 지원하여 사용하지 않는 아이콘은 번들에 포함되지 않는다. 1000개 이상의 일관된 디자인 아이콘을 제공한다.
 - **좋은 예시**:
 
 ```typescript
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { Search, Plus, Trash2, ChevronRight } from "lucide-react";
 
-function CustomLogo(props: SvgIconProps) {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
-      <path d="M12 2L2 22h20L12 2zm0 4l7 14H5l7-14z" />
-    </SvgIcon>
-  );
-}
-
-// 사용 - MUI 아이콘과 동일한 인터페이스
-<CustomLogo color="primary" fontSize="large" />
+<Search className="h-4 w-4" />
+<Plus className="h-5 w-5 text-primary" />
 ```
+
+### 아이콘 크기 규칙
+
+- **규칙**: [SHOULD] 아이콘 크기는 Tailwind의 width/height 클래스로 지정하며, 컨텍스트에 맞는 일관된 크기를 사용한다
+- **이유**: 일관된 크기 체계를 사용하면 UI 전체에서 아이콘이 균일하게 표시된다.
+
+| 용도 | 클래스 | 크기 |
+|------|--------|------|
+| 인라인 텍스트 | `h-4 w-4` | 16px |
+| 버튼 내부 | `h-4 w-4` 또는 `h-5 w-5` | 16px / 20px |
+| 독립 아이콘 버튼 | `h-5 w-5` | 20px |
+| 히어로/강조 | `h-6 w-6` 이상 | 24px+ |
 
 ### 아이콘 접근성
 
@@ -567,28 +703,28 @@ function CustomLogo(props: SvgIconProps) {
 - **좋은 예시**:
 
 ```typescript
-import DeleteIcon from '@mui/icons-material/Delete';
-import StarIcon from '@mui/icons-material/Star';
+import { Trash2, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-// 기능 아이콘 - 의미를 전달해야 함
-<IconButton aria-label="삭제">
-  <DeleteIcon />
-</IconButton>
+// 기능 아이콘 — 의미를 전달해야 함
+<Button variant="ghost" size="icon" aria-label="삭제">
+  <Trash2 className="h-4 w-4" />
+</Button>
 
-// 텍스트와 함께 사용되는 장식 아이콘 - 숨김 처리
-<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-  <StarIcon aria-hidden="true" />
-  <Typography>즐겨찾기</Typography>
-</Box>
+// 텍스트와 함께 사용되는 장식 아이콘 — 숨김 처리
+<div className="flex items-center gap-2">
+  <Star className="h-4 w-4" aria-hidden="true" />
+  <span>즐겨찾기</span>
+</div>
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-// aria 속성 없이 아이콘만 사용 - 스크린 리더가 의미를 알 수 없음
-<IconButton>
-  <DeleteIcon />
-</IconButton>
+// aria 속성 없이 아이콘만 사용 — 스크린 리더가 의미를 알 수 없음
+<Button variant="ghost" size="icon">
+  <Trash2 className="h-4 w-4" />
+</Button>
 ```
 
 ---
@@ -597,148 +733,95 @@ import StarIcon from '@mui/icons-material/Star';
 
 ### 인라인 style 사용 금지
 
-- **규칙**: [MUST NOT] 인라인 `style={{}}` 속성을 사용하지 않는다. MUI `sx` prop 또는 `styled()`를 사용한다.
-- **이유**: 인라인 style은 테마 토큰에 접근할 수 없고, 반응형 값을 지원하지 않으며, 의사 클래스(`:hover`, `:focus`)나 미디어 쿼리를 사용할 수 없다. MUI의 스타일 시스템을 우회하므로 일관성이 깨진다.
+- **규칙**: [MUST NOT] 인라인 `style={{}}` 속성을 사용하지 않는다. Tailwind utility classes를 사용한다.
+- **이유**: 인라인 style은 Tailwind의 디자인 시스템과 분리되고, 반응형 값과 다크모드 `dark:` variant를 지원하지 않으며, 의사 클래스(`:hover`, `:focus`)를 사용할 수 없다.
 - **좋은 예시**:
 
 ```typescript
-<Box sx={{ display: 'flex', gap: 2, p: 3, backgroundColor: 'background.paper' }}>
-  <Typography variant="h6" sx={{ color: 'text.primary' }}>제목</Typography>
-</Box>
+<div className="flex gap-4 p-6 bg-card">
+  <h2 className="text-xl font-semibold text-foreground">제목</h2>
+</div>
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-<div style={{ display: 'flex', gap: '16px', padding: '24px', backgroundColor: '#ffffff' }}>
-  <span style={{ fontSize: '20px', fontWeight: 600, color: '#212121' }}>제목</span>
+<div style={{ display: "flex", gap: "16px", padding: "24px", backgroundColor: "#ffffff" }}>
+  <span style={{ fontSize: "20px", fontWeight: 600, color: "#212121" }}>제목</span>
 </div>
 ```
 
 ### !important 사용 금지
 
-- **규칙**: [MUST NOT] `!important`를 사용하지 않는다. 테마 오버라이드 또는 specificity 조정으로 해결한다.
-- **이유**: `!important`는 CSS 우선순위 체계를 무력화하여 스타일 디버깅을 극도로 어렵게 만든다. 하나의 `!important`는 연쇄적으로 더 많은 `!important`를 유발하여 유지보수 불가능한 코드로 이어진다.
-- **좋은 예시**:
-
-```typescript
-// 테마 오버라이드로 전역 스타일 변경
-const theme = createTheme({
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-        },
-      },
-    },
-  },
-});
-```
-
-- **나쁜 예시**:
-
-```typescript
-<Button sx={{ textTransform: 'none !important' }}>버튼</Button>
-```
+- **규칙**: [MUST NOT] `!important`를 사용하지 않는다. `cn()`으로 클래스 우선순위를 관리한다.
+- **이유**: `!important`는 CSS 우선순위 체계를 무력화하여 스타일 디버깅을 극도로 어렵게 만든다. `cn()`의 `tailwind-merge`가 클래스 충돌을 자동으로 해결하므로 `!important`가 불필요하다.
 
 ### 매직 px 값 하드코딩 금지
 
-- **규칙**: [MUST NOT] 매직 넘버 px 값을 하드코딩하지 않는다. `theme.spacing()` 또는 spacing shorthand를 사용한다.
+- **규칙**: [MUST NOT] 매직 넘버 px 값을 하드코딩하지 않는다. Tailwind의 spacing scale을 사용한다.
 - **이유**: 하드코딩된 px 값은 디자인 시스템의 spacing 단위와 불일치할 수 있으며, 전체 간격 체계를 변경할 때 모든 하드코딩 값을 수동으로 찾아 수정해야 한다.
 - **좋은 예시**:
 
 ```typescript
-// spacing 단위 사용 (1 = 8px)
-<Box sx={{ p: 2, mt: 3, gap: 1 }}>  {/* 16px, 24px, 8px */}
-  <Typography>내용</Typography>
-</Box>
+// Tailwind spacing scale 사용
+<div className="p-4 mt-6 gap-2"> {/* 16px, 24px, 8px */}
+  <p>내용</p>
+</div>
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-// 매직 px 값 하드코딩
-<Box sx={{ padding: '16px', marginTop: '24px', gap: '8px' }}>
-  <Typography>내용</Typography>
-</Box>
-```
-
-### HTML 요소 대신 MUI 컴포넌트 사용
-
-- **규칙**: [SHOULD NOT] MUI 컴포넌트 대신 HTML `<div>`, `<span>` 등으로 레이아웃을 구성하지 않는다. `Box`, `Stack`, `Grid`를 사용한다.
-- **이유**: MUI 레이아웃 컴포넌트는 `sx` prop, 반응형 값, 테마 토큰 접근 등 스타일 시스템의 모든 기능을 활용할 수 있다. HTML 요소를 직접 사용하면 이러한 이점을 잃고, 테마와의 일관성이 깨진다.
-- **좋은 예시**:
-
-```typescript
-import Stack from '@mui/material/Stack';
-import Box from '@mui/material/Box';
-
-function ActionBar() {
-  return (
-    <Stack direction="row" spacing={2} alignItems="center">
-      <Box sx={{ flex: 1 }}>
-        <Typography variant="h6">페이지 제목</Typography>
-      </Box>
-      <Button variant="contained">저장</Button>
-    </Stack>
-  );
-}
-```
-
-- **나쁜 예시**:
-
-```typescript
-function ActionBar() {
-  return (
-    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-      <div style={{ flex: 1 }}>
-        <span style={{ fontSize: '20px', fontWeight: 600 }}>페이지 제목</span>
-      </div>
-      <button>저장</button>
-    </div>
-  );
-}
+// Tailwind 임의 값으로 매직 넘버 사용
+<div className="p-[17px] mt-[23px] gap-[7px]">
+  <p>내용</p>
+</div>
 ```
 
 ### 테마에 없는 색상 직접 사용 금지
 
-- **규칙**: [MUST NOT] 테마 토큰에 없는 색상을 직접 사용하지 않는다. 필요한 색상은 palette에 정의한 후 사용한다.
-- **이유**: 테마 외부의 색상은 다크모드 전환, 브랜드 색상 변경 등 디자인 시스템 업데이트 시 누락되어 UI 불일치가 발생한다. palette에 정의하면 한 곳에서 관리할 수 있다.
+- **규칙**: [MUST NOT] CSS Variables에 정의되지 않은 색상을 직접 사용하지 않는다. 필요한 색상은 globals.css에 정의한 후 사용한다.
+- **이유**: 테마 외부의 색상은 다크모드 전환 시 자동으로 변경되지 않아 UI 불일치가 발생한다.
 - **좋은 예시**:
 
 ```typescript
-// theme/index.ts에서 커스텀 색상을 palette에 추가
-const theme = createTheme({
-  palette: {
-    info: {
-      main: '#0288d1',
-      light: '#03a9f4',
-      dark: '#01579b',
-    },
-  },
-});
-
-// 컴포넌트에서 palette 참조
-<Chip label="정보" sx={{ backgroundColor: 'info.light', color: 'info.dark' }} />
+// 시맨틱 토큰 사용
+<span className="text-destructive">에러 메시지</span>
+<div className="bg-muted p-4 rounded-md">안내 영역</div>
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-// palette에 없는 색상을 직접 하드코딩
-<Chip label="정보" sx={{ backgroundColor: '#03a9f4', color: '#01579b' }} />
+// Tailwind 기본 palette를 직접 사용 — 다크모드에서 깨짐
+<span className="text-red-600">에러 메시지</span>
+<div className="bg-gray-100 p-4 rounded-md">안내 영역</div>
+```
+
+### className 문자열 수동 결합 금지
+
+- **규칙**: [MUST NOT] 템플릿 리터럴이나 문자열 연결로 className을 결합하지 않는다. `cn()`을 사용한다.
+- **이유**: 문자열 결합은 Tailwind 클래스 간 충돌을 해결하지 못하고, 조건부 클래스에서 `undefined`나 `false`가 문자열로 포함될 수 있다.
+- **좋은 예시**:
+
+```typescript
+<div className={cn("p-4 rounded-lg", isActive && "bg-accent", className)} />
+```
+
+- **나쁜 예시**:
+
+```typescript
+<div className={`p-4 rounded-lg ${isActive ? "bg-accent" : ""} ${className}`} />
 ```
 
 ---
 
 ## 8. 참고 자료
 
-- [MUI Material UI 공식 문서](https://mui.com/material-ui/getting-started/)
-- [MUI System (sx prop)](https://mui.com/system/getting-started/)
-- [MUI Next.js Integration Guide](https://mui.com/material-ui/integrations/nextjs/)
-- [MUI Theming](https://mui.com/material-ui/customization/theming/)
-- [MUI CSS Theme Variables](https://mui.com/material-ui/customization/css-theme-variables/overview/)
-- [MUI Dark Mode](https://mui.com/material-ui/customization/dark-mode/)
-- [MUI Breakpoints](https://mui.com/material-ui/customization/breakpoints/)
-- [MUI styled() API](https://mui.com/system/styled/)
+- [shadcn/ui 공식 문서](https://ui.shadcn.com)
+- [Tailwind CSS 공식 문서](https://tailwindcss.com/docs)
+- [Radix UI Primitives](https://www.radix-ui.com/primitives)
+- [Class Variance Authority (cva)](https://cva.style/docs)
+- [next-themes](https://github.com/pacocoursey/next-themes)
+- [Lucide Icons](https://lucide.dev)
+- [Tailwind Merge](https://github.com/dcastil/tailwind-merge)

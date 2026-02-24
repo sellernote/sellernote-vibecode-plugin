@@ -9,9 +9,50 @@
 |------|----------|
 | TypeORM | TBD |
 | @nestjs/typeorm | TBD |
+| typeorm-naming-strategies | TBD |
 | typeorm-transactional | TBD |
 | 데이터베이스 | MySQL (기본) |
 | TypeScript | TBD |
+
+## DataSource 설정
+
+- **규칙**: [MUST] DataSource 설정에 `SnakeNamingStrategy`를 적용한다.
+- **이유**: TypeORM의 기본 네이밍 전략은 클래스/프로퍼티명을 그대로 테이블/컬럼명으로 사용한다. `SnakeNamingStrategy`를 적용하면 `OrderItem` → `order_item`, `orderNumber` → `order_number`로 자동 변환되어, Entity마다 테이블명/컬럼명을 하드코딩할 필요가 없다.
+- **좋은 예시**:
+  ```typescript
+  import { DataSource } from 'typeorm';
+  import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+
+  export const dataSource = new DataSource({
+    type: 'mysql',
+    namingStrategy: new SnakeNamingStrategy(),
+    // ... 기타 설정
+  });
+  ```
+  ```typescript
+  // NestJS에서의 설정
+  import { TypeOrmModule } from '@nestjs/typeorm';
+  import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+
+  @Module({
+    imports: [
+      TypeOrmModule.forRoot({
+        type: 'mysql',
+        namingStrategy: new SnakeNamingStrategy(),
+        // ... 기타 설정
+      }),
+    ],
+  })
+  export class AppModule {}
+  ```
+- **나쁜 예시**:
+  ```typescript
+  // SnakeNamingStrategy 미적용 — 컬럼명이 camelCase로 생성됨
+  export const dataSource = new DataSource({
+    type: 'mysql',
+    // namingStrategy 미설정
+  });
+  ```
 
 ## Entity 정의
 
@@ -24,7 +65,7 @@
   // entities/order.entity.ts
   import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-  @Entity('order')
+  @Entity()
   export class Order {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -43,25 +84,25 @@
 - **나쁜 예시**:
   ```typescript
   // entities/order.entity.ts - 하나의 파일에 여러 Entity 정의
-  @Entity('order')
+  @Entity()
   export class Order { ... }
 
-  @Entity('order_item')
+  @Entity()
   export class OrderItem { ... } // 별도 파일로 분리해야 함
   ```
 
 ### 데코레이터 사용 규칙
 
-- **규칙**: [MUST] `@Entity()` 데코레이터에 테이블명을 명시적으로 지정한다.
-- **이유**: 클래스명 변경 시 테이블명이 의도치 않게 변경되는 것을 방지한다. 테이블명은 데이터베이스 컨벤션의 네이밍 규칙(snake_case 단수형)을 따른다.
+- **규칙**: [MUST] `@Entity()` 데코레이터에 테이블명을 하드코딩하지 않는다. `SnakeNamingStrategy`가 클래스명을 snake_case로 자동 변환한다.
+- **이유**: `SnakeNamingStrategy`가 `OrderItem` → `order_item`으로 자동 변환하므로, 매 Entity마다 테이블명을 하드코딩할 필요가 없다. 하드코딩은 오타 및 불일치의 원인이 된다.
 - **좋은 예시**:
   ```typescript
-  @Entity('order_item')
-  export class OrderItem { ... }
+  @Entity()
+  export class OrderItem { ... } // 테이블명: order_item (자동 변환)
   ```
 - **나쁜 예시**:
   ```typescript
-  @Entity() // 테이블명 미지정 - 클래스명에 의존
+  @Entity('order_item') // 테이블명 하드코딩 — SnakeNamingStrategy가 이미 처리
   export class OrderItem { ... }
   ```
 
@@ -178,7 +219,7 @@
   import { Entity, Column } from 'typeorm';
   import { BaseEntity } from './base.entity';
 
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @Column({ type: 'varchar', length: 100 })
     orderNumber: string;
@@ -190,7 +231,7 @@
 - **나쁜 예시**:
   ```typescript
   // 매 Entity마다 공통 필드를 반복 정의
-  @Entity('order')
+  @Entity()
   export class Order {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -219,7 +260,7 @@
   ```typescript
   import { BaseEntity, Entity, Column } from 'typeorm';
 
-  @Entity('user')
+  @Entity()
   export class User extends BaseEntity { // TypeORM 내장 BaseEntity 사용 금지
     @Column()
     name: string;
@@ -299,7 +340,7 @@
   import type { IOrderModel } from '../interfaces/order.model.interface';
   import type { IOrderModelRelation } from '../interfaces/order-model-relation.interface';
 
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity implements IOrderModel, IOrderModelRelation {
     @Column({ type: 'varchar', length: 100 })
     orderNumber: string;
@@ -315,7 +356,7 @@
 
     // Relation 필드 — IOrderModelRelation 구현
     @ManyToOne(() => User, (user) => user.orders)
-    @JoinColumn({ name: 'user_id' })
+    @JoinColumn()
     user: Relation<User>;
 
     @OneToMany(() => OrderItem, (item) => item.order)
@@ -325,7 +366,7 @@
 - **나쁜 예시**:
   ```typescript
   // Interface 없이 Entity 정의 — 도메인 계약 부재
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @Column({ type: 'varchar', length: 100 })
     orderNumber: string;
@@ -375,7 +416,7 @@
   import { BaseEntity } from './base.entity';
   import { DecimalTransformer } from '../../common/transformers/decimal.transformer';
 
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @Column({ type: 'varchar', length: 100 })
     orderNumber: string;
@@ -401,7 +442,7 @@
 - **나쁜 예시**:
   ```typescript
   // Transformer 미적용 — 타입 불일치 발생
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @Column({ type: 'decimal', precision: 15, scale: 2 })
     totalAmount: number; // 타입은 number이지만 실제 반환값은 string!
@@ -419,7 +460,7 @@
   ```typescript
   import { Entity, ManyToOne, OneToMany, Relation } from 'typeorm';
 
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @ManyToOne(() => User, (user) => user.orders)
     user: Relation<User>;
@@ -430,7 +471,7 @@
   ```
 - **나쁜 예시**:
   ```typescript
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @ManyToOne(() => User, (user) => user.orders)
     user: User; // Relation<> 미사용 - 순환 참조 위험
@@ -444,19 +485,19 @@
 - **이유**: FK 컬럼을 명시하면 relation을 로드하지 않고도 FK 값에 직접 접근할 수 있어 성능상 유리하다.
 - **좋은 예시**:
   ```typescript
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @Column({ type: 'char', length: 36 })
     userId: string; // FK 컬럼 명시 (PK가 UUID이므로 FK도 CHAR(36))
 
     @ManyToOne(() => User, (user) => user.orders)
-    @JoinColumn({ name: 'user_id' })
+    @JoinColumn()
     user: Relation<User>;
   }
   ```
 - **나쁜 예시**:
   ```typescript
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     // FK 컬럼 미정의 - userId에 직접 접근 불가
     @ManyToOne(() => User, (user) => user.orders)
@@ -469,36 +510,36 @@
 - **좋은 예시**:
   ```typescript
   // Order(N) -> User(1): Order가 소유자
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @ManyToOne(() => User, (user) => user.orders)
-    @JoinColumn({ name: 'user_id' }) // FK는 order 테이블에 생성
+    @JoinColumn() // FK는 order 테이블에 생성
     user: Relation<User>;
   }
 
-  @Entity('user')
+  @Entity()
   export class User extends BaseEntity {
     @OneToMany(() => Order, (order) => order.user)
     orders: Relation<Order[]>; // @JoinColumn 없음 (비소유자)
   }
   ```
 
-- **규칙**: [MUST] `@JoinColumn()`에 FK 컬럼명을 명시적으로 지정한다.
-- **이유**: 데이터베이스 컨벤션의 FK 네이밍 규칙(`{참조_테이블_단수형}_id`)을 명시적으로 적용한다.
+- **규칙**: [MUST] `@JoinColumn()`에 FK 컬럼명을 하드코딩하지 않는다. `SnakeNamingStrategy`가 자동으로 snake_case FK 컬럼명을 생성한다.
+- **이유**: `SnakeNamingStrategy`가 `userId` → `user_id`로 자동 변환하므로, FK 컬럼명을 매번 하드코딩할 필요가 없다.
 - **좋은 예시**:
   ```typescript
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn() // SnakeNamingStrategy가 user_id로 자동 변환
   ```
 - **나쁜 예시**:
   ```typescript
-  @JoinColumn() // 컬럼명 미지정 - TypeORM 자동 생성에 의존
+  @JoinColumn({ name: 'user_id' }) // 하드코딩 — SnakeNamingStrategy가 이미 처리
   ```
 
 - **규칙**: [MUST] `@ManyToMany` 관계에서 `@JoinTable()`에 중간 테이블명과 컬럼명을 명시적으로 지정한다.
 - **이유**: 데이터베이스 컨벤션의 네이밍 규칙을 적용하고, 자동 생성되는 이름의 예측 불가능성을 제거한다.
 - **좋은 예시**:
   ```typescript
-  @Entity('post')
+  @Entity()
   export class Post extends BaseEntity {
     @ManyToMany(() => Tag, (tag) => tag.posts)
     @JoinTable({
@@ -511,7 +552,7 @@
   ```
 - **나쁜 예시**:
   ```typescript
-  @Entity('post')
+  @Entity()
   export class Post extends BaseEntity {
     @ManyToMany(() => Tag, (tag) => tag.posts)
     @JoinTable() // 중간 테이블명/컬럼명 미지정
@@ -524,13 +565,13 @@
 - **좋은 예시**:
   ```typescript
   @ManyToOne(() => User, (user) => user.orders)
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn()
   user: Relation<User>; // eager 미설정 (기본값 false)
   ```
 - **나쁜 예시**:
   ```typescript
   @ManyToOne(() => User, (user) => user.orders, { eager: true }) // 항상 User를 로드
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn()
   user: Relation<User>;
   ```
 
@@ -542,7 +583,7 @@
     onDelete: 'CASCADE', // 사용자 삭제 시 주문도 삭제
     nullable: false,
   })
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn()
   user: Relation<User>;
   ```
 
@@ -554,7 +595,7 @@
   ```typescript
   import { Entity, Column, Index } from 'typeorm';
 
-  @Entity('order')
+  @Entity()
   @Index('idx_order_user_id', ['userId'])
   @Index('idx_order_created_at_status', ['createdAt', 'status']) // 카디널리티가 높은 컬럼을 앞에 배치
   export class Order extends BaseEntity {
@@ -567,7 +608,7 @@
   ```
 - **나쁜 예시**:
   ```typescript
-  @Entity('order')
+  @Entity()
   @Index(['userId']) // 인덱스명 미지정 - 자동 생성된 이름은 의미 불명
   export class Order extends BaseEntity { ... }
   ```
@@ -576,7 +617,7 @@
 - **이유**: `@Column({ unique: true })`보다 인덱스명을 명시적으로 제어할 수 있다.
 - **좋은 예시**:
   ```typescript
-  @Entity('user')
+  @Entity()
   @Index('uq_user_email', ['email'], { unique: true })
   export class User extends BaseEntity {
     @Column({ type: 'varchar', length: 255 })
@@ -591,24 +632,31 @@
 - **좋은 예시**:
   ```typescript
   export enum OrderStatus {
-    PENDING = 'PENDING',
-    CONFIRMED = 'CONFIRMED',
-    SHIPPED = 'SHIPPED',
-    DELIVERED = 'DELIVERED',
-    CANCELLED = 'CANCELLED',
+    Pending = 'pending',
+    Confirmed = 'confirmed',
+    Shipped = 'shipped',
+    Delivered = 'delivered',
+    Cancelled = 'cancelled',
   }
 
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
-    @Column({ type: 'varchar', length: 20, default: OrderStatus.PENDING })
+    @Column({ type: 'varchar', length: 20, default: OrderStatus.Pending })
     status: OrderStatus;
   }
   ```
 - **나쁜 예시**:
   ```typescript
   // MySQL ENUM 타입 사용 — MySQL 컨벤션 위반
-  @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
+  @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.Pending })
   status: OrderStatus;
+
+  // UPPER_SNAKE_CASE key/value — PascalCase key, 소문자 snake_case value를 사용해야 함
+  export enum OrderStatus {
+    PENDING = 'PENDING',
+    CONFIRMED = 'CONFIRMED',
+    SHIPPED = 'SHIPPED',
+  }
 
   // 숫자 기반 Enum - DB에서 값의 의미를 파악하기 어려움
   export enum OrderStatus {
@@ -1405,7 +1453,7 @@
 - **이유**: Entity는 데이터 구조(스키마) 정의만 담당한다. 비즈니스 로직은 Service 레이어에 위치해야 한다.
 - **나쁜 예시**:
   ```typescript
-  @Entity('order')
+  @Entity()
   export class Order extends BaseEntity {
     @Column({ type: 'decimal', precision: 15, scale: 2 })
     totalAmount: number;

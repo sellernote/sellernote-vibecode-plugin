@@ -9,16 +9,17 @@
 
 ```
 src/
-├── app/                    # Next.js App Router (라우트 정의만)
+├── app/                    # Next.js App Router (라우트 정의 + globals.css)
 │   ├── (auth)/             # 인증 관련 라우트 그룹
 │   ├── (dashboard)/        # 대시보드 라우트 그룹
+│   ├── globals.css         # Tailwind CSS + CSS Variables (디자인 토큰)
 │   ├── layout.tsx          # 루트 레이아웃
 │   ├── page.tsx            # 홈 페이지
 │   ├── error.tsx           # 전역 에러 경계
 │   ├── not-found.tsx       # 404 페이지
 │   └── api/                # Route Handlers
 ├── components/             # 재사용 컴포넌트
-│   ├── ui/                 # 기본 UI 컴포넌트 (MUI 래퍼, Storybook 대상)
+│   ├── ui/                 # 기본 UI 컴포넌트 (shadcn/ui, Storybook 대상)
 │   ├── layout/             # 레이아웃 컴포넌트 (Header, Sidebar, Footer)
 │   └── feature/            # 비즈니스 로직 포함 컴포넌트
 ├── hooks/                  # 커스텀 훅
@@ -26,11 +27,8 @@ src/
 │   └── slices/             # Slice 파일
 ├── queries/                # TanStack Query 훅 + 쿼리 키
 ├── actions/                # Server Actions
-├── lib/                    # 유틸리티, API 클라이언트
+├── lib/                    # 유틸리티 (cn(), API 클라이언트 등)
 ├── types/                  # 공통 타입 정의
-├── theme/                  # MUI 테마 설정
-│   ├── index.ts            # createTheme
-│   └── tokens.ts           # 디자인 토큰
 ├── schemas/                # Zod 유효성 검사 스키마
 └── constants/              # 상수 정의
 ```
@@ -98,7 +96,7 @@ src/
 
 | 분류 | 위치 | 특징 | 예시 |
 |------|------|------|------|
-| UI 컴포넌트 | `components/ui/` | props만으로 동작, 비즈니스 로직 없음, Storybook 대상 | Button, Card, Modal, DataTable |
+| UI 컴포넌트 | `components/ui/` | shadcn/ui 기반, props만으로 동작, 비즈니스 로직 없음, Storybook 대상 | Button, Card, Dialog, DataTable |
 | Feature 컴포넌트 | `components/feature/` | 비즈니스 로직 포함, hooks/store/queries 사용 | OrderList, UserProfile, PaymentForm |
 | Layout 컴포넌트 | `components/layout/` | 페이지 구조, 네비게이션 | Header, Sidebar, Footer, PageLayout |
 | Page 컴포넌트 | `app/**/page.tsx` | Server Component 기본, 데이터 페칭 + Feature/UI 조합 | DashboardPage, OrderDetailPage |
@@ -142,7 +140,7 @@ src/
   // components/feature/OrderList/OrderList.tsx
   'use client';
 
-  import { DataTable } from '@/components/ui/DataTable';
+  import { DataTable } from '@/components/ui/data-table';
   import { useOrdersQuery } from '@/queries/useOrdersQuery';
   import { useOrderStore } from '@/store/slices/orderSlice';
 
@@ -289,7 +287,7 @@ components/feature/OrderList/
 - **이유**: 상대 경로(`../../`)는 파일 이동 시 모든 import를 수정해야 하고, 경로의 깊이가 깊어질수록 가독성이 떨어진다.
 - **좋은 예시**:
   ```tsx
-  import { Button } from '@/components/ui/Button';
+  import { Button } from '@/components/ui/button';
   import { useOrdersQuery } from '@/queries/useOrdersQuery';
   import { formatCurrency } from '@/lib/format';
   ```
