@@ -35,6 +35,7 @@ Conventions are loaded dynamically based on what files were changed. Before star
    - `references/STYLING_CONVENTION.md` - MUI v6, design tokens, responsive
    - `references/FORM_CONVENTION.md` - React Hook Form + Zod
    - `references/TESTING_CONVENTION.md` - Storybook, Jest, RTL, Playwright
+   - `references/REACT_CONVENTION.md` - React 19 패턴, Hooks 규칙, 성능 최적화, Error Boundary, Context API
 
 ## Workflow
 
@@ -141,6 +142,19 @@ Review each changed file against loaded conventions. Check these categories:
 **Forms (FORM_CONVENTION)**
 - [ ] React Hook Form + Zod combination
 - [ ] Zod schema validates all fields
+
+**React Patterns (REACT_CONVENTION)**
+- [ ] Compound Component pattern used for related component groups
+- [ ] Form inputs are controlled (not uncontrolled in forms)
+- [ ] No number directly on left side of `&&` in conditional rendering
+- [ ] List keys use unique IDs (not array index)
+- [ ] useEffect used only for external system sync (not derived state or event handling)
+- [ ] useEffect has cleanup function when using subscriptions/timers
+- [ ] No forwardRef in new code (React 19: ref as direct prop)
+- [ ] No manual useMemo/useCallback with React Compiler enabled
+- [ ] Error Boundary fallback has recovery mechanism
+- [ ] Context split by concern (not one mega-context)
+- [ ] ComponentPropsWithoutRef/ComponentPropsWithRef used for HTML wrapping components
 
 #### Common Checks
 
