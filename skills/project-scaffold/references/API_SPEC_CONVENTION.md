@@ -815,7 +815,7 @@ export class GetOrderListQueryDto {
   }
   ```
 
-- **규칙**: [MUST] 모든 DTO 필드에 API Property 데코레이터를 사용한다. 구체적인 사용법은 [NestJS 컨벤션](../nestjs/NESTJS_CONVENTION.md)의 Swagger 문서화 섹션을 따른다.
+- **규칙**: [MUST] 모든 DTO 필드에 `@sellernote/sellernote-nestjs-api-property` 데코레이터를 사용한다. 구체적인 사용법은 아래 [Schema 정의 표준](#schema-정의-표준) 섹션과 [NestJS 컨벤션](../nestjs/NESTJS_CONVENTION.md)의 Swagger 문서화 섹션을 따른다.
 
 ### 엔드포인트 문서화
 
@@ -843,32 +843,80 @@ export class GetOrderListQueryDto {
 
 ### Schema 정의 표준
 
-- **규칙**: [MUST] DTO 필드에는 `description`, `example`, 제약 조건을 명시한다.
-- **이유**: Swagger UI에서 API 사용자가 필드의 의미와 형식을 즉시 파악할 수 있다.
+- **규칙**: [MUST] DTO 필드 정의에 `@sellernote/sellernote-nestjs-api-property` 라이브러리를 사용한다.
+- **규칙**: [MUST NOT] `@nestjs/swagger`의 `@ApiProperty()`를 직접 사용하지 않는다. `class-validator`/`class-transformer` 데코레이터도 직접 사용하지 않는다.
+- **이유**: 이 라이브러리는 Swagger 문서화, 검증(`class-validator`), 변환(`class-transformer`)을 하나의 데코레이터로 통합한다. 데코레이터 하나만 선언하면 세 가지가 모두 처리되어 누락 없이 일관된 API 스펙을 보장한다.
+
+#### 데코레이터 개요
+
+| 데코레이터 | 용도 | 핵심 옵션 |
+|------------|------|-----------|
+| `SellernoteApiString` | 문자열 필드 | `maxLength`(필수), `minLength`, `isTrim`, `isEmail` 등 |
+| `SellernoteApiNumber` | 숫자 필드 | `min`, `max`, `isInt`, `isPositive` 등 |
+| `SellernoteApiBoolean` | 불리언 필드 | 문자열/숫자 자동 변환 내장 |
+| `SellernoteApiEnum` | 열거형 필드 | `enum`, `enumName` |
+| `SellernoteApiObject` | 중첩 객체 필드 | `type: () => ClassName` |
+| `SellernoteApiDate` | 날짜 필드 | `minDate`, `maxDate` |
+| `SellernoteApiUUID` | UUID 필드 | `version` |
+| `SellernoteApiLiteral` | 문자열 리터럴 유니온 | `literals` |
+| `SellernoteApiDecimal` | 소수점 문자열(금액 등) | `maxDecimalPlaces`, `maxDigits` |
+| `SellernoteApiUnion` | 유니온 타입 | `types`, `discriminator` |
+
+- **클래스 데코레이터**: `@SellernoteApiDto({ isQuery: true })` — Query DTO에서 단일 값을 배열로 자동 변환한다.
+- **공통 옵션**: 모든 데코레이터에 `description`(필수), `isRequired`(필수), `isArray`, `isNullable`, `example`을 사용할 수 있다.
+- **참고**: 각 데코레이터의 전체 옵션은 [sellernote-nestjs-api-property README](https://github.com/sellernote/sellernote-nestjs-api-property)를 참고한다.
+
 - **좋은 예시**:
   ```typescript
+  import {
+    SellernoteApiString,
+    SellernoteApiNumber,
+    SellernoteApiEnum,
+  } from '@sellernote/sellernote-nestjs-api-property';
+
   export class CreateOrderDto {
-    /** 상품 ID */
-    @IsString()
-    @ApiPropertyExample('prod-001')
+    @SellernoteApiString({
+      description: '상품 ID',
+      maxLength: 50,
+      isRequired: true,
+      example: 'prod-001',
+    })
     productId: string;
 
-    /** 주문 수량 (1 이상) */
-    @IsInt()
-    @Min(1)
-    @Max(999)
-    @ApiPropertyExample(2)
+    @SellernoteApiNumber({
+      description: '주문 수량 (1 이상)',
+      isInt: true,
+      min: 1,
+      max: 999,
+      isRequired: true,
+      example: 2,
+    })
     quantity: number;
+
+    @SellernoteApiEnum({
+      description: '주문 상태',
+      enum: OrderStatus,
+      enumName: 'OrderStatus',
+      isRequired: true,
+    })
+    status: OrderStatus;
   }
   ```
 - **나쁜 예시**:
   ```typescript
-  export class CreateOrderDto {
-    // description, example 없음 - Swagger에서 필드 의미를 알 수 없음
-    @IsString()
-    productId: string;
+  // @ApiProperty와 class-validator를 개별 사용 — 누락·불일치 위험
+  import { ApiProperty } from '@nestjs/swagger';
+  import { IsString, IsInt, Min, Max } from 'class-validator';
 
+  export class CreateOrderDto {
+    @ApiProperty({ description: '상품 ID' })
+    @IsString()
+    productId: string;  // maxLength 누락 — 보안 위험
+
+    @ApiProperty({ description: '주문 수량' })
     @IsInt()
+    @Min(1)
+    @Max(999)
     quantity: number;
   }
   ```
