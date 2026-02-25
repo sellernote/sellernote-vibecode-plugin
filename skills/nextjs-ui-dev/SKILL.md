@@ -1,6 +1,6 @@
 ---
 name: nextjs-ui-dev
-description: Next.js UI development following Sellernote conventions. Use when creating, modifying, or reviewing React components, MUI-styled UI, form handling, Storybook stories, Jest/RTL tests, or page layouts in a Next.js App Router project. Triggers on tasks involving UI component creation, MUI v6 theming and styling, React Hook Form + Zod form implementation, Storybook story writing, component testing, page composition, layout structure, responsive design, dark mode support, or any frontend UI work. Also use when asked to build a new component, create a form with validation, add Storybook coverage, write component tests, implement a page layout, or apply Sellernote frontend architecture conventions.
+description: Next.js UI development following Sellernote conventions. Use when creating, modifying, or reviewing React components, @sellernote/design-system + Tailwind CSS v4 styled UI, form handling, Storybook stories, Jest/RTL tests, or page layouts in a Next.js App Router project. Triggers on tasks involving UI component creation, DS component usage, Tailwind CSS v4 styling, React Hook Form + Zod form implementation, Storybook story writing, component testing, page composition, layout structure, responsive design, dark mode support, or any frontend UI work. Also use when asked to build a new component, create a form with validation, add Storybook coverage, write component tests, implement a page layout, or apply Sellernote frontend architecture conventions.
 ---
 
 # Next.js UI Dev
@@ -14,7 +14,7 @@ Before starting any work, Read the relevant reference files from `references/` w
 1. **Always read first** (core rules):
    - `references/FRONTEND_CONVENTION.md` - Component design, props, imports, accessibility
    - `references/FRONTEND_ARCHITECTURE_CONVENTION.md` - 4 component types, dependency direction, colocation
-   - `references/STYLING_CONVENTION.md` - MUI v6 theming, styled(), sx, anti-patterns
+   - `references/STYLING_CONVENTION.md` - @sellernote/design-system + Tailwind CSS v4, 디자인 토큰, cn()
 
 2. **Read when relevant**:
    - `references/NEXTJS_CONVENTION.md` - App Router, Server/Client Components, data fetching
@@ -51,7 +51,7 @@ Page -> Feature -> UI
 
 ### Step 2: Implement Component
 
-Follow standard React/MUI patterns. Key Sellernote constraints:
+Follow standard React + DS + Tailwind patterns. Key Sellernote constraints:
 
 - **UI components**: Props with `interface`, `React.ReactNode` for children, no store/queries imports, max 300 lines
 - **Feature components**: `'use client'` when using hooks/events, compose UI components, use TanStack Query (not `useEffect`) for data fetching, max 3 levels prop drilling (use Zustand beyond that)
@@ -61,19 +61,18 @@ See `references/FRONTEND_ARCHITECTURE_CONVENTION.md` for full rules and examples
 
 ### Step 3: Apply Styling
 
-**MUI + Next.js setup (required in root layout):**
+**@sellernote/design-system 기반 스타일링:**
 
-- Use `AppRouterCacheProvider` from `@mui/material-nextjs/v15-appRouter`
-- Set `cssVariables: true` in `createTheme`
-- Use `next/font` with CSS variable connected to MUI theme typography
+1. **DS 컴포넌트 우선 사용** - `@sellernote/design-system`에서 제공하는 40+ 컴포넌트를 직접 import
+2. **Tailwind 유틸리티 클래스** - DS에 없는 레이아웃/간격/커스텀 스타일은 Tailwind 클래스 사용
+3. **cn() 조건부 결합** - DS의 `cn()` 함수로 조건부 className 결합
 
-**Styling priority order:**
-
-1. **Theme overrides** - Global, all-instance styles
-2. **`styled()`** - Reusable styled components
-3. **`sx` prop** - One-off layout/spacing adjustments
-
-**Key constraints:** `theme.palette` for all colors (no hex), `theme.spacing()` for spacing (no magic px), MUI breakpoints for responsive (no manual media queries), no inline `style={{}}`, no `!important`, use `Box`/`Stack`/`Grid` over raw HTML elements.
+**Key constraints:**
+- [MUST] 색상은 DS 디자인 토큰 사용 (하드코딩 hex 금지)
+- [MUST] 글로벌 CSS에서 `@import 'tailwindcss'` → `@import '@sellernote/design-system/styles'` 순서
+- [MUST] 조건부 className은 `cn()` 사용
+- [MUST NOT] 인라인 `style={{}}` 사용 금지
+- [MUST NOT] `!important` 사용 금지
 
 See `references/STYLING_CONVENTION.md` for full rules and examples.
 
@@ -81,11 +80,11 @@ See `references/STYLING_CONVENTION.md` for full rules and examples.
 
 **Required combo:** React Hook Form + Zod
 
-- Wrap MUI components with `Controller` (not `register` directly - MUI controlled components are incompatible)
+- Wrap DS form components with `Controller` (not `register` directly - DS controlled components are incompatible)
 - Set `zodResolver` and `mode: 'onBlur'` in `useForm`
 - Extract form types with `z.infer<typeof schema>` (not manual interfaces)
 - Client + server dual validation using the same Zod schema
-- Field-level errors via MUI `error`/`helperText` props
+- Field-level errors via DS form component의 error props
 - Shared common schemas (email, password, phone) in `lib/schemas/common.ts`
 - `useFieldArray` for dynamic fields, `discriminatedUnion` for conditional validation
 
@@ -138,9 +137,8 @@ src/
 ├── actions/                    # Server Actions
 ├── lib/                        # Utilities, API clients
 ├── types/                      # Shared type definitions
-├── theme/                      # MUI theme
-│   ├── index.ts                # createTheme
-│   └── tokens.ts               # Design tokens
+├── styles/                     # Global styles
+│   └── globals.css             # Tailwind CSS + DS styles import
 ├── schemas/                    # Shared Zod schemas
 └── constants/                  # Constants
 ```
