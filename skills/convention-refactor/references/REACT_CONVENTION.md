@@ -13,6 +13,7 @@
 | TypeScript | 5.x |
 | React Compiler | 활성화 권장 |
 | Error Boundary | react-error-boundary |
+| UI 컴포넌트 | @sellernote/design-system |
 | 가상화 | @tanstack/react-virtual (필요 시) |
 
 > **React 19 문법 변경 사항**: 이 문서의 코드 예시는 React 19 기준으로 작성되었습니다.
@@ -88,6 +89,8 @@ export { Select };
 </Select>
 ```
 
+> **참고**: `@sellernote/design-system`이 `Select`, `Combobox`, `RadioGroup`, `CheckboxGroup` 등 복합 입력 컴포넌트를 제공한다. Compound Component를 직접 구현하기 전에 DS 컴포넌트를 먼저 확인한다.
+
 - **나쁜 예시**:
 
 ```typescript
@@ -142,6 +145,37 @@ function EmailInput() {
   }
 
   return <input type="email" defaultValue="" ref={inputRef} />;
+}
+```
+
+- **DS 컴포넌트 연동 예시**:
+
+```typescript
+import { useState } from "react";
+import { TextField, Select } from "@sellernote/design-system";
+
+function SignupForm() {
+  const [email, setEmail] = useState("");
+  const [country, setCountry] = useState("");
+
+  return (
+    <form className="flex flex-col gap-400">
+      <TextField
+        label="이메일"
+        value={email}
+        onChange={setEmail}
+      />
+      <Select
+        label="국가"
+        value={country}
+        items={[
+          { label: "한국", value: "kr" },
+          { label: "미국", value: "us" },
+        ]}
+        onSelectedChange={setCountry}
+      />
+    </form>
+  );
 }
 ```
 
@@ -1155,6 +1189,29 @@ export function ProductSection({ productId }: { productId: string }) {
 }
 ```
 
+- **DS 컴포넌트 활용 예시**:
+
+```typescript
+import { ErrorBoundary } from 'react-error-boundary';
+import { ActionButton, Alert } from "@sellernote/design-system";
+
+function ErrorFallback({ error, resetErrorBoundary }: {
+  error: Error;
+  resetErrorBoundary: () => void;
+}) {
+  return (
+    <div role="alert" className="flex flex-col gap-400 p-600">
+      <Alert variant="error" title="문제가 발생했습니다" open>
+        {error.message}
+      </Alert>
+      <ActionButton variant="secondary" onClick={resetErrorBoundary}>
+        다시 시도
+      </ActionButton>
+    </div>
+  );
+}
+```
+
 ### 복구 전략 (Reset 패턴)
 
 - **규칙**: [MUST] 모든 Error Boundary의 fallback UI에는 복구 수단을 제공한다. `resetKeys` prop을 활용하여 의존 데이터가 변경될 때 자동으로 재시도한다.
@@ -1340,6 +1397,12 @@ const AppContext = createContext<{
 ---
 
 ## 9. TypeScript 연동
+
+> **참고**: DS에서 제공하는 타입을 활용한다.
+> ```typescript
+> import type { OptionItem, OptionGroup } from "@sellernote/design-system";
+> import type { ActionButtonProps, DialogProps } from "@sellernote/design-system";
+> ```
 
 ### 컴포넌트 Props에 HTML 속성 확장
 
