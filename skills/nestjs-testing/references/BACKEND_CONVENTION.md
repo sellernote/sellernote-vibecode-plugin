@@ -106,6 +106,27 @@
 
 > 확장된 DTO 패턴(페이지네이션 응답, 에러 응답, Bulk 요청 등)은 [API Spec 컨벤션](api-spec/API_SPEC_CONVENTION.md)을 참조한다.
 
+### DTO 필드 네이밍
+
+- **규칙**: [MUST] DTO의 필드명(프로퍼티명)은 camelCase를 사용한다.
+- **이유**: JavaScript/TypeScript 생태계의 표준 관행이며, JSON 응답 필드명(camelCase)과 일관성을 유지한다.
+- **좋은 예시**:
+  ```typescript
+  export class CreateOrderDto {
+    orderNumber: string;
+    totalAmount: string;
+    shippingAddress: string;
+  }
+  ```
+- **나쁜 예시**:
+  ```typescript
+  export class CreateOrderDto {
+    order_number: string;   // snake_case
+    TotalAmount: string;    // PascalCase
+    ShippingAddress: string; // PascalCase
+  }
+  ```
+
 ### Entity 필드 네이밍
 
 - **규칙**: [MUST] Entity 필드명은 도메인 언어를 반영하며, 약어를 사용하지 않는다.

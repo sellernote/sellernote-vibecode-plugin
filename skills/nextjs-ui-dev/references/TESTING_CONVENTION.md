@@ -89,17 +89,23 @@ export default preview;
 - **좋은 예시**:
 
 ```
-src/components/ui/Button/
+src/shared/ui/Button/
 ├── Button.tsx
 ├── Button.stories.tsx
 ├── Button.test.tsx
 └── Button.types.ts
+
+src/features/order/components/
+├── OrderList.tsx
+├── OrderList.stories.tsx
+├── OrderList.test.tsx
+└── OrderListItem.tsx
 ```
 
 - **나쁜 예시**:
 
 ```
-src/components/ui/Button/
+src/shared/ui/Button/
 └── Button.tsx
 
 src/stories/
@@ -117,7 +123,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Button } from "./Button";
 
 const meta = {
-  title: "Atoms/Button",
+  title: "shared/Button",
   component: Button,
   args: {
     children: "버튼",
@@ -178,16 +184,15 @@ export const Secondary = () => <Button variant="secondary">버튼</Button>;
 
 ### 2-4. 스토리 계층
 
-- **규칙**: [SHOULD] `title` 속성은 Atomic Design 분류에 따라 계층적으로 작성한다
+- **규칙**: [SHOULD] `title` 속성은 FSD 레이어 분류에 따라 계층적으로 작성한다
 - **이유**: 일관된 계층 구조는 Storybook 사이드바에서 컴포넌트를 빠르게 탐색할 수 있게 하며, 팀원 간 컴포넌트 분류 기준을 통일한다.
 
 | 분류 | 대상 | 예시 |
 | --- | --- | --- |
-| Atoms | 더 이상 분해할 수 없는 기본 요소 | `Atoms/Button`, `Atoms/Input`, `Atoms/Badge` |
-| Molecules | Atom을 조합한 단위 기능 | `Molecules/SearchField`, `Molecules/FormField` |
-| Organisms | Molecule을 조합한 독립 영역 | `Organisms/Header`, `Organisms/OrderTable` |
-| Templates | 페이지 레이아웃 구조 | `Templates/DashboardLayout` |
-| Pages | 실제 데이터가 연결된 페이지 | `Pages/OrderListPage` |
+| shared | 공용 UI 컴포넌트 | `shared/Button`, `shared/DataTable` |
+| entities | 도메인 기본 UI | `entities/OrderCard`, `entities/UserBadge` |
+| features | 비즈니스 기능 컴포넌트 | `features/OrderList`, `features/UserProfile` |
+| widgets | 독립 UI 블록 | `widgets/Header`, `widgets/Sidebar` |
 
 ### 2-5. Interaction Testing
 
@@ -201,7 +206,7 @@ import { within, userEvent, expect } from "@storybook/test";
 import { ContactForm } from "./ContactForm";
 
 const meta = {
-  title: "Molecules/ContactForm",
+  title: "features/ContactForm",
   component: ContactForm,
 } satisfies Meta<typeof ContactForm>;
 
@@ -242,7 +247,7 @@ export const SubmitSuccess: Story = {
 
 ```typescript
 const meta = {
-  title: "Atoms/Button",
+  title: "shared/Button",
   component: Button,
   tags: ["autodocs"],
   argTypes: {
@@ -358,19 +363,27 @@ describe("useCounter", () => {
 - **이유**: 테스트 파일이 대상 파일과 같은 폴더에 있으면 관련 코드를 한 곳에서 관리할 수 있고, 파일 탐색 비용이 줄어든다.
 
 ```
-src/components/ui/Button/
+src/shared/ui/Button/
 ├── Button.tsx
 ├── Button.test.tsx          ← 컴포넌트 테스트
 ├── Button.stories.tsx       ← 스토리
 └── Button.types.ts
 
-src/hooks/
+src/shared/hooks/
 ├── useCounter.ts
 └── useCounter.test.ts       ← 훅 테스트
 
-src/utils/
+src/shared/lib/
 ├── formatDate.ts
 └── formatDate.test.ts       ← 유틸리티 테스트
+
+src/features/order/components/
+├── OrderList.tsx
+└── OrderList.test.tsx       ← 기능 컴포넌트 테스트
+
+src/entities/order/lib/
+├── formatOrder.ts
+└── formatOrder.test.ts      ← 도메인 유틸리티 테스트
 ```
 
 ### 3-4. Mock 패턴

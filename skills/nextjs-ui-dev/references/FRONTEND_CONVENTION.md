@@ -187,8 +187,8 @@ function Button(props: ButtonProps) {
 
 ### Import 순서
 
-- **규칙**: [SHOULD] import 문은 다음 순서를 따른다: 1) React/외부 라이브러리, 2) 디자인 시스템 (`@sellernote/design-system`), 3) 내부 모듈 (`@/`), 4) 상대 경로 (`./`), 5) 타입 (type import)
-- **이유**: 일관된 순서는 의존성의 출처를 빠르게 파악하게 해주며, 코드 리뷰 시 불필요한 논의를 줄인다.
+- **규칙**: [SHOULD] import 문은 다음 순서를 따른다: 1) React/외부 라이브러리, 2) 디자인 시스템 (`@sellernote/design-system`), 3) widgets (`@/widgets/`), 4) features (`@/features/`), 5) entities (`@/entities/`), 6) shared (`@/shared/`), 7) 상대 경로 (같은 슬라이스 내부), 8) 타입 (type import)
+- **이유**: 일관된 순서는 의존성의 출처를 빠르게 파악하게 해주며, 코드 리뷰 시 불필요한 논의를 줄인다. FSD 레이어 순서(상위→하위)를 따르면 의존 방향을 시각적으로 확인할 수 있다.
 - **좋은 예시**:
 
 ```typescript
@@ -199,20 +199,29 @@ import { useQuery } from "@tanstack/react-query";
 // 2) 디자인 시스템
 import { ActionButton, TextField, Dialog } from "@sellernote/design-system";
 
-// 3) 내부 모듈
-import { useAuth } from "@/hooks/useAuth";
+// 3) widgets
+import { PageLayout } from "@/widgets/page-layout";
 
-// 4) 상대 경로
+// 4) features
+import { useOrderFilter } from "@/features/order";
+
+// 5) entities
+import { OrderCard } from "@/entities/order";
+
+// 6) shared
+import { cn } from "@/shared/lib";
+
+// 7) 상대 경로
 import { formatPrice } from "./utils";
 
-// 5) 타입
-import type { Product } from "@/types/Product.types";
+// 8) 타입
+import type { Product } from "@/entities/product";
 ```
 
 - **나쁜 예시**:
 
 ```typescript
-import type { Product } from "@/types/Product.types";
+import type { Product } from "@/entities/product";
 import { formatPrice } from "./utils";
 import { useState } from "react";
 import { ActionButton } from "@sellernote/design-system";
@@ -220,8 +229,8 @@ import { ActionButton } from "@sellernote/design-system";
 
 ### 배럴 파일 사용 범위
 
-- **규칙**: [SHOULD] 배럴 파일(`index.ts`)은 `components/ui/` 등 공용 모듈에만 사용한다
-- **이유**: 배럴 파일을 남용하면 번들러가 tree-shaking을 제대로 수행하지 못해 번들 크기가 불필요하게 증가한다. 공용 모듈처럼 여러 곳에서 반복 import되는 경우에만 사용하면 편의성과 번들 효율성을 모두 확보할 수 있다.
+- **규칙**: [SHOULD] 배럴 파일(`index.ts`)은 FSD 슬라이스(`features/`, `entities/`, `widgets/`)의 Public API와 `shared/` 세그먼트에 사용한다. 각 슬라이스의 `index.ts`는 외부에서 접근 가능한 유일한 진입점이다.
+- **이유**: 배럴 파일을 남용하면 번들러가 tree-shaking을 제대로 수행하지 못해 번들 크기가 불필요하게 증가한다. FSD 슬라이스의 Public API로만 사용을 제한하면 캡슐화와 번들 효율성을 모두 확보할 수 있다.
 
 ---
 

@@ -16,16 +16,16 @@
 
 ### 스키마 위치
 
-- **규칙**: [SHOULD] Zod 스키마는 feature 폴더 내부 또는 프로젝트 루트의 `schemas/` 디렉토리에 배치한다
-- **이유**: 특정 feature에만 사용되는 스키마는 해당 feature 폴더에, 여러 feature에서 공유하는 스키마는 `schemas/` 디렉토리에 두어 응집도와 재사용성을 모두 확보한다.
+- **규칙**: [SHOULD] Zod 스키마는 feature 슬라이스 내부(`features/{domain}/schemas/`), 엔터티 스키마(`entities/{domain}/model/schemas.ts`), 또는 공유 스키마(`shared/lib/schemas/`)에 배치한다
+- **이유**: 특정 feature에만 사용되는 스키마는 해당 feature 슬라이스에, 도메인 엔터티 스키마는 entities 레이어에, 여러 feature에서 공유하는 스키마는 `shared/lib/schemas/` 디렉토리에 두어 응집도와 재사용성을 모두 확보한다.
 
 ### 공통 스키마 재사용
 
-- **규칙**: [SHOULD] email, password, phone 등 반복 사용되는 검증 규칙은 `lib/schemas/common.ts`에 공통 스키마로 정의하고 재사용한다
+- **규칙**: [SHOULD] email, password, phone 등 반복 사용되는 검증 규칙은 `shared/lib/schemas/common.ts`에 공통 스키마로 정의하고 재사용한다
 - **이유**: 동일한 검증 규칙이 여러 폼에 분산되면 규칙 변경 시 누락이 발생하기 쉽다. 공통 스키마를 한 곳에서 관리하면 검증 규칙의 일관성을 보장할 수 있다.
 - **좋은 예시**:
 ```typescript
-// lib/schemas/common.ts
+// shared/lib/schemas/common.ts
 import { z } from "zod";
 export const emailSchema = z.string().min(1, "이메일을 입력해주세요").email("올바른 이메일 형식이 아닙니다");
 export const passwordSchema = z.string().min(8, "비밀번호는 8자 이상이어야 합니다")
@@ -47,7 +47,7 @@ const SignupSchema = z.object({ email: z.string().email("이메일 형식이 아
 - **이유**: 스키마와 타입을 별도로 관리하면 둘 사이의 불일치가 발생할 수 있다. `z.infer`를 사용하면 스키마가 단일 진실 공급원(Single Source of Truth)이 되어 타입 안전성이 보장된다.
 - **좋은 예시**:
 ```typescript
-import { emailSchema, passwordSchema, phoneSchema } from "@/lib/schemas/common";
+import { emailSchema, passwordSchema, phoneSchema } from "@/shared/lib/schemas/common";
 
 export const CreateUserSchema = z.object({
   name: z.string().min(2, "이름은 2자 이상이어야 합니다"),
@@ -83,7 +83,7 @@ import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TextField, PasswordField, ActionButton } from "@sellernote/design-system";
-import { emailSchema, passwordSchema } from "@/lib/schemas/common";
+import { emailSchema, passwordSchema } from "@/shared/lib/schemas/common";
 
 const LoginSchema = z.object({ email: emailSchema, password: passwordSchema });
 type LoginFormData = z.infer<typeof LoginSchema>;
@@ -231,10 +231,10 @@ const onSubmit = async (data: SignupFormData) => {
 - **이유**: Server Actions를 활용하면 별도의 API 엔드포인트 없이 서버에서 직접 폼 데이터를 처리할 수 있으며, 동일한 Zod 스키마로 검증 규칙을 공유할 수 있다.
 - **좋은 예시**:
 ```typescript
-// actions/createUser.ts
+// features/user/actions/createUser.ts
 "use server";
 import { revalidatePath } from "next/cache";
-import { CreateUserSchema } from "@/schemas/user";
+import { CreateUserSchema } from "@/entities/user";
 
 export async function createUser(formData: FormData) {
   const raw = { name: formData.get("name"), email: formData.get("email"), password: formData.get("password") };
@@ -269,13 +269,13 @@ const onSubmit = async (data: CreateUserFormData) => {
 - **이유**: 각 단계의 스키마를 독립적으로 정의하면 단계별 유효성 검사가 가능하고, 스키마 변경 시 다른 단계에 영향을 주지 않는다. Zustand에 임시 데이터를 저장하면 단계 이동 시 이전 입력값을 유지할 수 있다.
 - **좋은 예시**:
 ```typescript
-// schemas/signup-wizard.ts — 단계별 스키마 분리
+// features/auth/schemas/signup-wizard.ts — 단계별 스키마 분리
 export const Step1Schema = z.object({ email: emailSchema, password: passwordSchema });
 export const Step2Schema = z.object({ name: z.string().min(2), phone: phoneSchema });
 export const Step3Schema = z.object({ company: z.string().min(1), role: z.enum(["developer", "designer", "manager"]) });
 export const SignupWizardSchema = Step1Schema.merge(Step2Schema).merge(Step3Schema);
 
-// store/slices/signupWizardSlice.ts — 단계 간 데이터 유지
+// features/auth/store/signupWizardSlice.ts — 단계 간 데이터 유지
 export const useSignupWizardStore = create<SignupWizardState>((set) => ({
   currentStep: 1,
   formData: {},

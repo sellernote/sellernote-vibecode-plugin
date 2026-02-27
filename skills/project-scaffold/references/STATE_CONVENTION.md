@@ -29,11 +29,11 @@
 
 ### Slice 패턴
 
-- **규칙**: [MUST] `store/slices/` 디렉토리에 도메인별 slice 파일을 생성하고, `StateCreator` 타입을 사용한다.
+- **규칙**: [MUST] 도메인별 store는 `features/{domain}/store/`에, 전역 UI store는 `shared/store/`에 slice 파일을 생성하고, `StateCreator` 타입을 사용한다.
 - **이유**: 도메인별로 slice를 분리하면 관심사가 명확히 나뉘고, 각 slice를 독립적으로 테스트할 수 있다.
 - **좋은 예시**:
   ```typescript
-  // store/slices/userSlice.ts
+  // features/user/store/userSlice.ts
   import { StateCreator } from 'zustand';
 
   export interface UserSlice {
@@ -55,7 +55,7 @@
     logout: () => set({ user: null }),
   });
 
-  // store/slices/uiSlice.ts
+  // shared/store/uiSlice.ts
   export interface UISlice {
     isSidebarOpen: boolean;
     notifications: Notification[];
@@ -78,7 +78,7 @@
 - **이유**: `devtools`는 상태 변경 이력 추적을, `persist`는 새로고침 후에도 필요한 상태 유지를 지원한다.
 - **좋은 예시**:
   ```typescript
-  // store/index.ts
+  // shared/store/index.ts — 전역 UI store (global UI state)
   import { create } from 'zustand';
   import { devtools, persist } from 'zustand/middleware';
 
@@ -96,6 +96,9 @@
       { name: 'AppStore' },
     ),
   );
+
+  // 도메인별 store는 features/{domain}/store/에 독립적으로 정의한다.
+  // 예: features/order/store/index.ts
   ```
 
 ### Selector 최적화
@@ -104,8 +107,10 @@
 - **이유**: store 전체를 구독하면 어떤 상태가 변경되든 해당 컴포넌트가 리렌더링된다. 필요한 값만 선택하면 해당 값 변경 시에만 리렌더링이 발생한다.
 - **좋은 예시**:
   ```typescript
-  // store/selectors.ts
+  // features/user/store/selectors.ts — 도메인 selector는 해당 feature에서 내보낸다
   export const useUser = () => useStore((state) => state.user);
+
+  // shared/store/selectors.ts — 전역 UI selector는 shared에서 내보낸다
   export const useIsSidebarOpen = () => useStore((state) => state.isSidebarOpen);
   export const useToggleSidebar = () => useStore((state) => state.toggleSidebar);
   ```
@@ -146,8 +151,8 @@
 - **이유**: 문자열 배열로 직접 query key를 관리하면 오타, 중복, 불일치가 발생하기 쉽다. Factory는 타입 안전한 key 생성과 계층적 invalidation을 지원한다.
 - **좋은 예시**:
   ```typescript
-  // queries/queryKeys.ts
-  import { createQueryKeys, mergeQueryKeys } from '@lukemorales/query-key-factory';
+  // features/product/queries/queryKeys.ts
+  import { createQueryKeys } from '@lukemorales/query-key-factory';
 
   export const productKeys = createQueryKeys('products', {
     all: null,
@@ -155,13 +160,14 @@
     detail: (id: string) => ({ queryKey: [id] }),
   });
 
+  // features/user/queries/queryKeys.ts
+  import { createQueryKeys } from '@lukemorales/query-key-factory';
+
   export const userKeys = createQueryKeys('users', {
     all: null, me: null,
     detail: (id: string) => ({ queryKey: [id] }),
     orders: (userId: string) => ({ queryKey: [userId] }),
   });
-
-  export const queryKeys = mergeQueryKeys(productKeys, userKeys);
   ```
 - **나쁜 예시**:
   ```typescript
@@ -172,11 +178,11 @@
 
 ### 커스텀 훅
 
-- **규칙**: [MUST] `queries/` 디렉토리에 도메인별 파일을 생성하고, query/mutation 로직을 커스텀 훅으로 캡슐화한다.
+- **규칙**: [MUST] `features/{domain}/queries/` 디렉토리에 도메인별 파일을 생성하고, query/mutation 로직을 커스텀 훅으로 캡슐화한다.
 - **이유**: 컴포넌트에서 `useQuery`를 직접 호출하면 설정이 흩어진다. 커스텀 훅으로 캡슐화하면 변경이 한 곳에 집중되고 재사용이 가능하다.
 - **좋은 예시**:
   ```typescript
-  // queries/useProducts.ts
+  // features/product/queries/useProducts.ts
   import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
   import { productKeys } from './queryKeys';
 
@@ -296,6 +302,9 @@
 - **이유**: 동일한 데이터가 두 곳에 존재하면 동기화 문제가 발생한다. TanStack Query가 백그라운드에서 데이터를 갱신해도 Zustand에 복사된 데이터는 오래된 상태로 남아 추적하기 어려운 버그를 유발한다.
 - **나쁜 예시**:
   ```typescript
+  import { useUser } from '@/features/user'; // TanStack Query 훅
+  import { useStore } from '@/shared/store';
+
   function UserProfile() {
     const { data: user } = useUser();
     const setUser = useStore((state) => state.setUser);
@@ -308,6 +317,8 @@
   ```
 - **좋은 예시**:
   ```typescript
+  import { useUser } from '@/features/user'; // Public API를 통해 내보낸 TanStack Query 훅
+
   // TanStack Query 훅을 직접 사용 - 단일 데이터 소스 보장
   function UserProfile() {
     const { data: user, isLoading } = useUser();
@@ -374,7 +385,7 @@
 
 ### 3. 모든 상태를 한 store에 몰아넣기
 
-- **규칙**: [SHOULD NOT] 관심사가 다른 상태를 하나의 store에 모두 넣지 않는다. 도메인별로 slice를 분리한다.
+- **규칙**: [SHOULD NOT] 관심사가 다른 상태를 하나의 store에 모두 넣지 않는다. 도메인별로 `features/{domain}/store/`에 slice를 분리한다.
 - **이유**: 하나의 거대한 store 파일은 코드 탐색이 어렵고, 여러 개발자가 동시에 수정할 때 충돌이 빈번하다.
 
 ### 4. Selector 없이 전체 store 구독
@@ -383,10 +394,12 @@
 - **이유**: store의 어떤 값이 변경되든 해당 컴포넌트가 리렌더링되어 성능이 저하된다.
 - **나쁜 예시**:
   ```typescript
+  import { useStore } from '@/shared/store';
   const { user, isSidebarOpen, notifications, theme } = useStore();
   ```
 - **좋은 예시**:
   ```typescript
+  import { useStore } from '@/shared/store';
   const theme = useStore((state) => state.theme);
   ```
 
