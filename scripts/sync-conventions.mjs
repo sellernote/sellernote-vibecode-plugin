@@ -154,12 +154,23 @@ const SKILL_MAP = {
 console.log('Syncing Sellernote development conventions...');
 console.log(`Repository: ${REPO}\n`);
 
+// Map: srcPath -> { content, dests: [destPath, ...] }
+const srcToDestMap = new Map();
+
 for (const [skill, files] of Object.entries(SKILL_MAP)) {
   console.log(`[${skill}]`);
   for (const [src, destName] of files) {
-    download(src, join(SKILLS_DIR, skill, 'references', destName));
+    const dest = join(SKILLS_DIR, skill, 'references', destName);
+    const result = download(src, dest);
+    if (result) {
+      if (!srcToDestMap.has(src)) {
+        srcToDestMap.set(src, { content: result.content, dests: [] });
+      }
+      srcToDestMap.get(src).dests.push(dest);
+    }
   }
   console.log('');
 }
 
-console.log('Done! All conventions synced.');
+console.log('Done! All conventions downloaded.');
+console.log(`Unique source files: ${srcToDestMap.size}\n`);
