@@ -206,5 +206,21 @@ for (const [skill, files] of Object.entries(SKILL_MAP)) {
   console.log('');
 }
 
-console.log('Done! All conventions downloaded.');
 console.log(`Unique source files: ${srcToDestMap.size}\n`);
+
+console.log('Translating conventions to English (parallel)...\n');
+
+await Promise.all(
+  Array.from(srcToDestMap.entries()).map(async ([src, { content, dests }]) => {
+    process.stdout.write(`  Translating: ${src}\n`);
+    const translated = await translateAsync(content, src);
+    if (translated) {
+      for (const dest of dests) {
+        writeFileSync(dest, translated, 'utf-8');
+      }
+      process.stdout.write(`  ✓ Done: ${src} → ${dests.length} file(s)\n`);
+    }
+  })
+);
+
+console.log('\nDone! All conventions synced and translated.');
