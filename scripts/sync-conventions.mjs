@@ -25,7 +25,7 @@ function download(src, dest) {
   try {
     const result = execSync(
       `gh api "repos/${REPO}/contents/${src}" --jq ".content"`,
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 10 * 1024 * 1024 }
     );
     const content = Buffer.from(result.trim(), 'base64').toString('utf-8');
     writeFileSync(dest, content, 'utf-8');
@@ -56,6 +56,11 @@ function translateAsync(content, srcLabel) {
     proc.stdout.on('data', (chunk) => { output += chunk; });
     proc.stderr.on('data', (chunk) => { errOutput += chunk; });
 
+    proc.on('error', (err) => {
+      process.stdout.write(`  WARNING: Failed to spawn claude for ${srcLabel}: ${err.message}\n`);
+      resolve(null);
+    });
+
     proc.on('close', (code) => {
       if (code === 0) {
         resolve(output.trim());
@@ -65,6 +70,10 @@ function translateAsync(content, srcLabel) {
       }
     });
 
+    proc.stdin.on('error', (err) => {
+      process.stdout.write(`  WARNING: stdin error for ${srcLabel}: ${err.message}\n`);
+      resolve(null);
+    });
     proc.stdin.write(content, 'utf-8');
     proc.stdin.end();
   });
@@ -219,6 +228,10 @@ await Promise.all(
         writeFileSync(dest, translated, 'utf-8');
       }
       process.stdout.write(`  ✓ Done: ${src} → ${dests.length} file(s)\n`);
+    } else {
+      for (const dest of dests) {
+        process.stdout.write(`  WARNING: ${dest} left in Korean (translation failed)\n`);
+      }
     }
   })
 );
