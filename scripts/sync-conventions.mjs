@@ -29,8 +29,10 @@ function download(src, dest) {
     );
     const content = Buffer.from(result.trim(), 'base64').toString('utf-8');
     writeFileSync(dest, content, 'utf-8');
+    return { src, content };
   } catch {
     process.stdout.write(`  WARNING: Failed to download ${src}\n`);
+    return null;
   }
 }
 
