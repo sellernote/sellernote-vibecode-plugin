@@ -9,7 +9,7 @@
  * Usage: node scripts/sync-conventions.mjs
  */
 
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,6 +34,40 @@ function download(src, dest) {
     process.stdout.write(`  WARNING: Failed to download ${src}\n`);
     return null;
   }
+}
+
+const TRANSLATE_PROMPT =
+  'Translate this markdown document from Korean to English. ' +
+  'Rules: (1) Preserve all markdown formatting exactly (headings, lists, tables, code blocks, bold, italic). ' +
+  '(2) Do NOT translate content inside code blocks (``` or `). ' +
+  '(3) Do NOT translate technical terms, variable names, class names, or proper nouns. ' +
+  '(4) Only translate natural language Korean text. ' +
+  '(5) Output ONLY the translated markdown — no preamble, no commentary.';
+
+function translateAsync(content, srcLabel) {
+  return new Promise((resolve) => {
+    const proc = spawn('claude', ['-p', TRANSLATE_PROMPT], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    let output = '';
+    let errOutput = '';
+
+    proc.stdout.on('data', (chunk) => { output += chunk; });
+    proc.stderr.on('data', (chunk) => { errOutput += chunk; });
+
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve(output.trim());
+      } else {
+        process.stdout.write(`  WARNING: Translation failed for ${srcLabel}: ${errOutput.slice(0, 200)}\n`);
+        resolve(null);
+      }
+    });
+
+    proc.stdin.write(content, 'utf-8');
+    proc.stdin.end();
+  });
 }
 
 const SKILL_MAP = {
