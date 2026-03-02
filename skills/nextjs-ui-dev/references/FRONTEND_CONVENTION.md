@@ -1,7 +1,7 @@
 # Frontend Convention
 
 > This document defines common rules that apply to the entire frontend.
-> For rules specific to certain tools/categories, refer to the documents in subdirectories.
+> For rules specific to certain tools/categories, refer to the documents in the subdirectories.
 >
 > - [Architecture Convention](architecture/ARCHITECTURE_CONVENTION.md)
 > - [React Convention](react/REACT_CONVENTION.md)
@@ -35,15 +35,15 @@
 
 ### Single Responsibility Principle
 
-- **Rule**: [MUST] A single component is responsible for only one role
+- **Rule**: [MUST] Each component is responsible for only one role
 
 ```typescript
-// UserAvatar: Only responsible for rendering the avatar
+// UserAvatar: Responsible only for rendering the avatar
 function UserAvatar({ src, name }: UserAvatarProps) {
   return <img src={src} alt={`${name}의 프로필 이미지`} />;
 }
 
-// UserGreeting: Only responsible for rendering the greeting
+// UserGreeting: Responsible only for rendering the greeting
 function UserGreeting({ name }: UserGreetingProps) {
   return <p>{name}님, 환영합니다.</p>;
 }
@@ -98,7 +98,7 @@ function Button({ variant, size = "md", disabled = false, children, onClick }: B
 }
 ```
 
-> **Note**: Components provided by `@sellernote/design-system` (ActionButton, TextField, Select, etc.) already follow these principles, so use them without implementing your own. For basic UI elements like buttons, inputs, and selects, check DS components first.
+> **Note**: Components provided by `@sellernote/design-system` (ActionButton, TextField, Select, etc.) already follow these principles, so use them without implementing your own. For basic UI elements such as buttons, inputs, and selects, check the DS components first.
 
 ---
 
@@ -127,9 +127,9 @@ Import rules follow the Import Path rules in the [Architecture Convention](archi
 
 ### Keyboard Accessibility
 
-- **Rule**: [MUST] Interactive elements (buttons, links, form fields, etc.) must be accessible and operable using only a keyboard
+- **Rule**: [MUST] Interactive elements (buttons, links, form fields, etc.) must be accessible and operable using only the keyboard
 
-### Image Alt Text
+### Image Alternative Text
 
 - **Rule**: [MUST] Provide a meaningful `alt` attribute for all `<img>` elements. For decorative images, explicitly set `alt=""`.
 
@@ -139,7 +139,7 @@ Import rules follow the Import Path rules in the [Architecture Convention](archi
 
 ### Semantic HTML Usage
 
-- **Rule**: [MUST] Use semantic HTML elements that match their meaning, and do not overuse `<div>`
+- **Rule**: [MUST] Use semantic HTML elements appropriate to their meaning, and do not overuse `<div>`
 
 ```typescript
 function ProductList({ products }: ProductListProps) {
@@ -196,7 +196,7 @@ const HeavyChart = dynamic(() => import("@/components/HeavyChart"), {
 
 ### Prop Drilling
 
-- **Rule**: [MUST NOT] Do not pass props more than 3 levels deep. Use Zustand store or Context instead.
+- **Rule**: [MUST NOT] Do not pass props through more than 3 levels. Use a Zustand store or Context instead.
 
 ```typescript
 // Global state management with Zustand store
@@ -212,7 +212,7 @@ function UserAvatar() {
 
 - **Rule**: [MUST NOT] Do not write components exceeding 300 lines. Separate by responsibility.
 
-### Data Fetching in useEffect
+### Data Fetching Inside useEffect
 
 - **Rule**: [MUST NOT] Do not fetch data directly inside `useEffect`. Use TanStack Query instead.
 
@@ -228,6 +228,6 @@ function UserList() {
 }
 ```
 
-### Infinite Re-renders from Inline Functions
+### Infinite Re-renders Caused by Inline Functions
 
-- **Rule**: [MUST NOT] Do not include inline functions in dependency arrays causing infinite re-renders. Use TanStack Query for declarative data fetching instead.
+- **Rule**: [MUST NOT] Do not include inline functions in dependency arrays, causing infinite re-renders. Use TanStack Query for declarative data fetching instead.

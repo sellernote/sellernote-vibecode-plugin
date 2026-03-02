@@ -7,7 +7,7 @@
 
 ## 1. Test Pyramid
 
-Frontend testing follows the pyramid structure below. Lower levels should be faster, more stable, and have higher proportion.
+Frontend testing follows the pyramid structure below. Lower levels should be faster, more stable, and have a higher proportion.
 
 ```
         /  Visual  \          ← Visual Regression (Chromatic)
@@ -24,13 +24,13 @@ Frontend testing follows the pyramid structure below. Lower levels should be fas
 | Component | Storybook + Interaction Testing | Rendering and interaction of individual UI components | 25% |
 | Integration | React Testing Library | Composition of multiple components, form submission flows, etc. | 20% |
 | E2E | Playwright | Core user scenarios such as login, order creation | 10% |
-| Visual | Chromatic | Detecting UI style changes, preventing visual regression | 5% |
+| Visual | Chromatic | UI style change detection, visual regression prevention | 5% |
 
 ---
 
 ## 2. Storybook Convention
 
-### 2-1. Setup
+### 2-1. Configuration
 
 - **Rule**: [MUST] Storybook uses the `@storybook/nextjs` framework and enables App Router
 
@@ -83,7 +83,7 @@ export default preview;
 
 ### 2-2. Story File Location
 
-- **Rule**: [MUST] Story files are placed in the same folder as the component, following the `[ComponentName].stories.tsx` pattern
+- **Rule**: [MUST] Story files are placed in the same folder as the component and follow the `[ComponentName].stories.tsx` pattern
 
 ```
 src/shared/ui/Button/
@@ -95,7 +95,7 @@ src/shared/ui/Button/
 
 ### 2-3. CSF3 Format
 
-- **Rule**: [MUST] Use Component Story Format 3 (CSF3) with `Meta` and `StoryObj` types
+- **Rule**: [MUST] Use Component Story Format 3 (CSF3), applying `Meta` and `StoryObj` types
 
 ```typescript
 import type { Meta, StoryObj } from "@storybook/react";
@@ -121,12 +121,12 @@ export const Secondary: Story = { args: { variant: "secondary", children: "Secon
 
 ### 2-4. Story Hierarchy
 
-- **Rule**: [SHOULD] The `title` property should be written hierarchically following the FSD layer classification
+- **Rule**: [SHOULD] The `title` property should be written hierarchically following FSD layer classification
 
-| Classification | Target | Example |
+| Category | Target | Example |
 | --- | --- | --- |
 | shared | Common UI components | `shared/Button`, `shared/DataTable` |
-| entities | Domain basic UI | `entities/OrderCard`, `entities/UserBadge` |
+| entities | Domain base UI | `entities/OrderCard`, `entities/UserBadge` |
 | features | Business feature components | `features/OrderList`, `features/UserProfile` |
 | widgets | Independent UI blocks | `widgets/Header`, `widgets/Sidebar` |
 
@@ -195,7 +195,7 @@ const meta = {
 
 ### 3-1. Component Testing
 
-- **Rule**: [MUST] Component tests follow the render -> interact -> assert pattern and prioritize using `screen.getByRole`
+- **Rule**: [MUST] Component tests follow the render -> interact -> assert pattern and prioritize `screen.getByRole`
 
 ```typescript
 import { render, screen } from "@testing-library/react";
@@ -237,7 +237,7 @@ describe("useCounter", () => {
 
 ### 3-3. File Location
 
-- **Rule**: [MUST] Test files are placed in the same folder as the test target, using the `*.test.tsx` (or `*.spec.tsx`) pattern
+- **Rule**: [MUST] Test files are placed in the same folder as the test target and use the `*.test.tsx` (or `*.spec.tsx`) pattern
 
 ### 3-4. Mock Patterns
 
@@ -385,13 +385,13 @@ E2E tests are costly, so focus on the following core scenarios:
 | Login/Logout | Authentication flow, session management |
 | Order CRUD | Full flow of create, read, update, delete |
 | Search/Filter | Search result accuracy, filter behavior |
-| Payment Flow | Payment information input, payment completion confirmation |
+| Payment Flow | Payment information entry, payment completion confirmation |
 
 ---
 
 ## 5. Test Naming
 
-- **Rule**: [SHOULD] Use `describe` to specify the test target, and write conditions and expected results in `it`
+- **Rule**: [SHOULD] Specify the test target with `describe`, and write conditions and expected results in `it`
 
 ```typescript
 describe("OrderTable", () => {
@@ -413,7 +413,7 @@ describe("OrderTable", () => {
 
 ---
 
-## 6. Anti-Patterns
+## 6. Anti-patterns
 
 - **Rule**: [MUST NOT] Do not overuse `data-testid` or write tests that depend on internal implementation. Prioritize `getByRole`, `getByText`, and `getByLabelText`.
 
@@ -423,7 +423,7 @@ expect(screen.getByRole("button", { name: "삭제" })).toBeDisabled();
 expect(screen.getByLabelText("이메일")).toHaveValue("hong@example.com");
 ```
 
-- **Rule**: [SHOULD NOT] Do not use snapshot tests for UI components that change frequently. Use them only in limited cases such as design system components that rarely change.
+- **Rule**: [SHOULD NOT] Do not use snapshot tests for UI components that change frequently. Use them only sparingly for rarely changing components such as design system components.
 - **Rule**: [MUST NOT] Do not share state between tests. Each test must run independently. (Create a new store/state for each test)
 - **Rule**: [MUST NOT] Do not assert asynchronously rendered elements without `waitFor`
 

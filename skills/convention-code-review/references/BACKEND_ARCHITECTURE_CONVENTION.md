@@ -1,11 +1,11 @@
 # Architecture Convention
 
-> This document defines the responsibility boundaries per layer and clean architecture principles for backend architecture.
+> This document defines the responsibility boundaries per layer and clean architecture principles for the backend architecture.
 > While maintaining the existing 3-layer structure, it clearly distinguishes what each layer should and should not do.
 >
 > Parent rule: BACKEND_CONVENTION.md
 
-## Core Principles of Clean Architecture
+## Clean Architecture Core Principles
 
 Mapping the 3-layer structure (Controller → Service → Repository) from a clean architecture perspective is as follows.
 
@@ -40,7 +40,7 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 
 ### Data Access Isolation
 
-- **Rule**: [MUST] Repository is the sole entry point for data access and performs only the role of purely storing/retrieving data.
+- **Rule**: [MUST] Repository is the sole entry point for data access and performs only the role of purely storing/querying data.
 
 ### Layer Independence
 
@@ -48,26 +48,26 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 
 ### Monorepo Dependency Direction
 
-- **Rule**: [MUST] Dependencies must flow only in the direction of Application (API service) → Library (shared domain logic). Reverse dependencies are prohibited, and direct calls between the same layer should be avoided.
+- **Rule**: [MUST] Dependencies flow only in the direction of Application (API service) → Library (shared domain logic). Reverse dependencies are prohibited, and direct calls between layers at the same level should be avoided.
 
 ## Responsibility Matrix by Layer
 
-| Action                                                      | Controller |    Service    | Repository |
-| ----------------------------------------------------------- | :--------: | :-----------: | :--------: |
-| HTTP request/response handling                              |     O      |       X       |     X      |
-| Input validation (DTO validation)                           |     O      |       X       |     X      |
-| Business logic (conditional branching, calculations)        |     X      |       O       |     X      |
-| Domain rule validation (stock check, permission check, etc) |     X      |       O       |     X      |
-| Transaction management (@Transactional)                     |     X      |       O       |     X      |
-| Calling other Services                                      |     X      | O (with rules) |     X      |
-| Calling Repository                                          |     X      |       O       |     X      |
-| Simple CRUD operations (find, save, delete)                 |     X      |       X       |     O      |
-| Dynamic query building (assembling filter conditions)       |     X      |       X       |     O      |
-| Statistics/aggregation queries (GROUP BY, SUM, etc)         |     X      |       X       |     O      |
-| Business conditional branching (if/else decisions)          |     X      |       X       | **Prohibited** |
-| Calling other Repository/Service                            |     X      |       X       | **Prohibited** |
-| External API calls                                          |     X      |       O       |     X      |
-| Throwing business/HTTP exceptions (HttpException, etc)      |     O      |       O       | **Prohibited** |
+| Behavior                                              | Controller |    Service    | Repository |
+| ----------------------------------------------------- | :--------: | :-----------: | :--------: |
+| HTTP request/response handling                        |     O      |       X       |     X      |
+| Input value validation (DTO validation)               |     O      |       X       |     X      |
+| Business logic (conditional branching, calculations)  |     X      |       O       |     X      |
+| Domain rule validation (stock check, permission check, etc.) |     X      |       O       |     X      |
+| Transaction management (@Transactional)               |     X      |       O       |     X      |
+| Calling other Services                                |     X      | O (with rules) |     X      |
+| Calling Repository                                    |     X      |       O       |     X      |
+| Simple CRUD operations (find, save, delete)           |     X      |       X       |     O      |
+| Dynamic query building (assembling filter conditions) |     X      |       X       |     O      |
+| Statistics/aggregation queries (GROUP BY, SUM, etc.)  |     X      |       X       |     O      |
+| Business conditional branching (if/else decisions)    |     X      |       X       | **Prohibited** |
+| Calling other Repository/Service                      |     X      |       X       | **Prohibited** |
+| External API calls                                    |     X      |       O       |     X      |
+| Throwing business/HTTP exceptions (HttpException, etc.) |     O      |       O       | **Prohibited** |
 
 ### "Where does this code belong?" Decision Checklist
 
@@ -105,7 +105,7 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 
 #### 2. Dynamic Query Building
 
-- **Rule**: [MUST] Logic that dynamically assembles WHERE clauses based on filter conditions is placed in the Repository.
+- **Rule**: [MUST] Logic that dynamically assembles WHERE clauses based on filter conditions belongs in the Repository.
 - **Good Example**:
   ```typescript
   async findByFilter(filter: GetOrderListQueryDto): Promise<[Order[], number]> {
@@ -125,7 +125,7 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 
 #### 3. Statistics/Aggregation Queries
 
-- **Rule**: [MUST] Statistics/aggregation queries such as GROUP BY, SUM, COUNT are placed in the Repository.
+- **Rule**: [MUST] Statistics/aggregation queries such as GROUP BY, SUM, COUNT belong in the Repository.
 - **Good Example**:
   ```typescript
   async getOrderStatsByUserId(userId: string): Promise<{ totalCount: number; totalAmount: number }> {
@@ -270,12 +270,12 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 
 ### Dependency Direction Matrix
 
-| Call Direction              | Allowed |                Description                |
-| --------------------------- | :-----: | ----------------------------------------- |
-| Application → Library       |    O    | Normal dependency direction               |
-| Application → Application   | **Prohibited** | Direct dependency between API services is prohibited |
-| Library → Library           | **Discouraged** | Only when unavoidable; prefer composition at the Application level |
-| Library → Application       | **Prohibited** | Reverse dependency is prohibited          |
+| Call Direction              | Allowed   | Description                                                |
+| --------------------------- | :-------: | ---------------------------------------------------------- |
+| Application → Library       |     O     | Normal dependency direction                                |
+| Application → Application   | **Prohibited** | Direct dependency between API services is prohibited  |
+| Library → Library           | **Discouraged** | Only when unavoidable; prefer composing in the upper Application layer |
+| Library → Application       | **Prohibited** | Reverse dependency is prohibited                      |
 
 ### Application → Library (Allowed)
 
@@ -304,7 +304,7 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 
 ### Application → Application (Prohibited)
 
-- **Rule**: [MUST NOT] Do not directly depend between Application services.
+- **Rule**: [MUST NOT] Application services must not directly depend on each other.
 - **Good Example** (extract common logic to Library):
 
   ```typescript
@@ -328,8 +328,8 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 
 ### Library → Library (Discouraged)
 
-- **Rule**: [SHOULD NOT] Minimize direct dependencies between Libraries. Prefer composing at the Application level.
-- **Good Example** (composed at Application level):
+- **Rule**: [SHOULD NOT] Minimize direct dependencies between Libraries. Prefer composing in the upper Application layer.
+- **Good Example** (composed in Application):
 
   ```typescript
   // packages/order-lib - 독립적
@@ -366,8 +366,8 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 
 ### Anemic Service
 
-- **Description**: A pattern where the Service contains no business logic and simply calls Repository methods.
-- **Solution**: Even for simple CRUD, perform at least minimal logic such as null checks, exception handling, and logging in the Service.
+- **Description**: A pattern where the Service has no business logic and simply calls Repository methods.
+- **Solution**: Even for simple CRUD, perform minimal logic such as null checks, exception handling, and logging in the Service.
 
   ```typescript
   @Injectable()
@@ -395,9 +395,9 @@ Mapping the 3-layer structure (Controller → Service → Repository) from a cle
 ### Cross-Layer Dependency
 
 - **Description**: A pattern where a Repository injects other Repositories or Services, creating dependencies that cross layer boundaries.
-- **Solution**: Logic that composes multiple Repositories/Services is always performed in the Service.
+- **Solution**: Logic that composes multiple Repositories/Services should always be performed in the Service.
 
 ### Direct Calls Between Applications
 
 - **Description**: A pattern where Applications (deployment units) in a monorepo directly import and depend on each other.
-- **Solution**: Extract commonly used logic into a Library package, and each Application depends only on Libraries.
+- **Solution**: Extract commonly used logic into Library packages, and each Application depends only on Libraries.

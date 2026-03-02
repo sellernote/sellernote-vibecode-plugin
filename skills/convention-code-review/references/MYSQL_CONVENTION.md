@@ -1,6 +1,6 @@
 # MySQL Convention
 
-> This document defines rules applied to MySQL projects.
+> This document defines the rules applied to MySQL projects.
 > Parent rules: DATABASE_CONVENTION.md
 
 ## Tech Stack
@@ -11,12 +11,12 @@
 
 ## Naming Rules
 
-> Basic naming rules follow DATABASE_CONVENTION.md. Below defines only MySQL-specific rules.
+> Default naming rules follow DATABASE_CONVENTION.md. Below defines only MySQL-specific rules.
 
 ### Table Names
 
-- **Rule**: [MUST] Table names must be written in lowercase snake_case and singular form.
-- **Good Examples**:
+- **Rule**: [MUST] Table names must be written in lowercase snake_case, singular form.
+- **Good Example**:
   ```sql
   CREATE TABLE `order` ( ... );
   CREATE TABLE order_item ( ... );
@@ -25,7 +25,7 @@
 
 ### Field COMMENT
 
-- **Rule**: [MUST] Add a COMMENT to every field describing the field's purpose and constraints.
+- **Rule**: [MUST] Add a COMMENT to all fields describing the field's purpose and constraints.
 - **Good Example**:
   ```sql
   CREATE TABLE `order` (
@@ -40,14 +40,14 @@
   );
   ```
 
-## Currency Handling
+## Monetary Value Handling
 
-> Basic rules for using DECIMAL follow DATABASE_CONVENTION.md. Below is a MySQL-specific precision guide.
+> Default rules for DECIMAL usage follow DATABASE_CONVENTION.md. Below is the MySQL-specific precision guide.
 
 ### DECIMAL Precision
 
-- **Rule**: [SHOULD] The default precision for currency fields is `DECIMAL(15, 2)`. Use `DECIMAL(15, 4)` when GAAP compliance is required.
-- **Good Examples**:
+- **Rule**: [SHOULD] The default precision for monetary fields is `DECIMAL(15, 2)`. Use `DECIMAL(15, 4)` when GAAP compliance is required.
+- **Good Example**:
   ```sql
   total_amount DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT '주문 총 금액 (KRW)',
   unit_price DECIMAL(15, 4) NOT NULL DEFAULT 0.0000 COMMENT '단가 (GAAP 4자리 소수점)',
@@ -58,7 +58,7 @@
 ### Server/Session Timezone UTC Setting
 
 - **Rule**: [MUST] Set the MySQL server's global timezone and session timezone to UTC (`'+00:00'`).
-- **Good Examples**:
+- **Good Example**:
   ```ini
   # my.cnf (MySQL 설정 파일)
   [mysqld]
@@ -76,7 +76,7 @@
 ### Application Connection UTC Setting
 
 - **Rule**: [MUST] Explicitly set the session timezone to UTC when connecting to MySQL from the application.
-- **Good Examples**:
+- **Good Example**:
   ```sql
   SET SESSION time_zone = '+00:00';
   SELECT @@session.time_zone;  -- '+00:00'
@@ -104,7 +104,7 @@
 
 ### Indentation and Line Breaks
 
-- **Rule**: [SHOULD] Major SQL clauses (SELECT, FROM, WHERE, JOIN, ORDER BY, GROUP BY, etc.) should each be written on a new line, with items within each clause indented.
+- **Rule**: [SHOULD] Major SQL clauses (SELECT, FROM, WHERE, JOIN, ORDER BY, GROUP BY, etc.) should each be written on a new line, and items within clauses should be indented.
 - **Good Example**:
   ```sql
   SELECT
@@ -122,7 +122,7 @@
 
 ### JOIN Syntax
 
-- **Rule**: [MUST] Explicitly specify the JOIN type (INNER JOIN, LEFT JOIN, etc.). Do not use implicit JOINs (listing tables separated by commas).
+- **Rule**: [MUST] Explicitly specify the JOIN type. (INNER JOIN, LEFT JOIN, etc.) Do not use implicit JOINs (listing tables separated by commas).
 - **Good Example**:
   ```sql
   SELECT o.id, u.name
@@ -146,7 +146,7 @@
 |------|------|-----------------|----------|
 | TINYINT | 1 byte | 0 ~ 255 | boolean, status values |
 | INT | 4 bytes | 0 ~ ~4.2 billion | general integers |
-| BIGINT | 8 bytes | 0 ~ ~18.4 quintillion | `_no`, high-volume counters |
+| BIGINT | 8 bytes | 0 ~ ~18.4 quintillion | `_no`, large-scale counters |
 
 - **Rule**: [SHOULD] Use TINYINT(1) for boolean values. (MySQL does not have a native BOOLEAN type)
 
@@ -155,10 +155,10 @@
 | Type | Usage Criteria |
 |------|----------|
 | VARCHAR(n) | Strings with predictable maximum length (up to 65,535 bytes) |
-| TEXT | Long text with unpredictable length |
+| TEXT | Long text where length is difficult to predict |
 | CHAR(n) | Fixed-length strings (e.g., country code `KR`, currency code `KRW`) |
 
-- **Rule**: [MUST NOT] Do not specify unnecessarily large lengths for VARCHAR. (When creating temporary tables, memory may be allocated for the specified maximum length)
+- **Rule**: [MUST NOT] Do not specify meaninglessly large lengths for VARCHAR. (Temporary tables may allocate memory up to the specified maximum length)
 
 ### Date/Time Types
 
@@ -166,15 +166,15 @@
 |------|------|------|----------|
 | DATETIME | 1000-01-01 ~ 9999-12-31 | 8 bytes | General date/time storage |
 | TIMESTAMP | 1970-01-01 ~ 2038-01-19 | 4 bytes | Do not use (see rule below) |
-| DATE | 1000-01-01 ~ 9999-12-31 | 3 bytes | When only date is needed (e.g., date of birth) |
+| DATE | 1000-01-01 ~ 9999-12-31 | 3 bytes | When only the date is needed (e.g., date of birth) |
 
-- **Rule**: [MUST] Date/time fields must use the DATETIME type. Do not use TIMESTAMP. (TIMESTAMP has a 2038 limitation, and its automatic timezone conversion causes confusion under a UTC storage policy)
+- **Rule**: [MUST] Date/time fields must use the DATETIME type. Do not use TIMESTAMP. (TIMESTAMP has a 2038 limitation, and automatic timezone conversion causes confusion under a UTC storage policy)
 - **Rule**: [MUST NOT] Do not store date/time values as strings (VARCHAR).
 
 ### JSON Type
 
-- **Rule**: [MAY] JSON type may be used for unstructured data with flexible or frequently changing schemas.
-- **Rule**: [MUST NOT] Do not store structured data that can be normalized in JSON. (JSON internal fields are difficult to index directly and cannot be joined)
+- **Rule**: [MAY] JSON type may be used for unstructured data with flexible structure or frequently changing schemas.
+- **Rule**: [MUST NOT] Do not store structured data that can be normalized in JSON. (Fields within JSON are difficult to index directly and cannot be joined)
 - **Good Example**:
   ```sql
   -- 외부 API 응답, 사용자 설정 등 유동적 데이터
@@ -243,7 +243,7 @@
 
 ### Using EXPLAIN
 
-- **Rule**: [MUST] New queries or queries suspected of performance issues must have their execution plans verified using EXPLAIN.
+- **Rule**: [MUST] New queries or queries suspected of performance issues must be verified with EXPLAIN to check the execution plan.
 - **Good Example**:
   ```sql
   EXPLAIN SELECT o.id, o.total_amount
@@ -261,21 +261,21 @@
 ### Slow Queries
 
 - **Rule**: [MUST] Enable slow query logging and monitor it periodically.
-- **Rule**: [SHOULD] Set the slow query threshold to 1 second. (May be adjusted based on project characteristics)
+- **Rule**: [SHOULD] Set the slow query threshold to 1 second. (Adjustable based on project characteristics)
 
 ### Precautions When Analyzing Execution Plans
 
-| EXPLAIN Item | Warning Signal | Corrective Action |
+| EXPLAIN Item | Warning Signal | Action |
 |-------------|----------|----------|
 | type = ALL | Full Table Scan | Add appropriate indexes |
 | type = index | Full Index Scan | Review indexes matching WHERE conditions |
 | Extra: Using filesort | File sort occurring | Add index on ORDER BY columns |
 | Extra: Using temporary | Temporary table usage | Optimize GROUP BY/ORDER BY |
-| Very large rows value | Scanning large number of rows | Improve indexes or query structure |
+| Very large rows value | Large-scale row scan | Improve indexes or query structure |
 
 ### Pagination
 
-- **Rule**: [SHOULD] For large dataset pagination, use cursor-based (keyset) pagination instead of OFFSET-based pagination.
+- **Rule**: [SHOULD] For large data pagination, use cursor-based (keyset) pagination instead of OFFSET-based pagination.
 - **Good Example**:
   ```sql
   -- 커서 기반 페이지네이션 (이전 페이지 마지막 id 이후의 데이터 조회)
@@ -322,9 +322,9 @@
   SELECT * FROM user WHERE name LIKE '김%';
   ```
 
-### Bulk Data Processing
+### Bulk Data Batch Processing
 
-- **Rule**: [MUST NOT] Do not process large volumes of INSERT/UPDATE/DELETE in a single transaction. (Long transactions cause lock contention, replication lag, and undo log bloat)
+- **Rule**: [MUST NOT] Do not process large INSERT/UPDATE/DELETE operations in a single transaction. (Long transactions cause lock contention, replication lag, and undo log bloat)
 - **Good Example**:
   ```sql
   -- 배치 단위로 나누어 처리

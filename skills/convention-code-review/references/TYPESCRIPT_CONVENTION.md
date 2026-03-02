@@ -17,9 +17,9 @@
 
 - **Rule**: [SHOULD] Use `interface` when defining the shape of an object.
 - **Rule**: [SHOULD] Use `type` for union types, intersection types, utility type combinations, etc.
-- **Good example**:
+- **Good Example**:
   ```typescript
-  // Object shape definition → interface
+  // Defining object shape → interface
   interface User {
     id: string;
     name: string;
@@ -36,7 +36,7 @@
 ### Generics
 
 - **Rule**: [SHOULD] Use meaningful names for generic type parameters. Single characters (`T`, `U`, etc.) should only be used in simple cases.
-- **Good example**:
+- **Good Example**:
   ```typescript
   // Simple case — T is acceptable
   function identity<T>(value: T): T {
@@ -53,7 +53,7 @@
 ### Utility Type Usage
 
 - **Rule**: [SHOULD] Actively use TypeScript built-in utility types (`Partial`, `Pick`, `Omit`, `Record`, etc.).
-- **Good example**:
+- **Good Example**:
   ```typescript
   interface User {
     id: string;
@@ -69,7 +69,7 @@
 ### any and unknown
 
 - **Rule**: [MUST NOT] Do not use the `any` type. Use `unknown` when the type is not known.
-- **Good example**:
+- **Good Example**:
   ```typescript
   function parseJson(input: string): unknown {
     return JSON.parse(input);
@@ -86,12 +86,12 @@
 
 ### Variable Declaration — const / let
 
-- **Rule**: [MUST] Use `const` by default, and only use `let` when reassignment is necessary.
+- **Rule**: [MUST] Use `const` by default, and only use `let` when reassignment is needed.
 - **Rule**: [MUST NOT] Do not use `var`.
-- **Good example**:
+- **Good Example**:
   ```typescript
   const userName = 'John';
-  const items = [1, 2, 3]; // Array content can be modified, so const is fine
+  const items = [1, 2, 3]; // Array contents can be modified, so const is fine
 
   let count = 0;
   count += 1; // Reassignment needed → let
@@ -99,9 +99,9 @@
 
 ### Writing Functions
 
-- **Rule**: [MUST] Explicitly declare the return type for public API (exported functions).
-- **Rule**: [MAY] The return type of internal functions can be delegated to TypeScript inference.
-- **Good example**:
+- **Rule**: [MUST] Explicitly declare return types for public API (exported functions).
+- **Rule**: [MAY] Return types for internal functions may be delegated to TypeScript inference.
+- **Good Example**:
   ```typescript
   // Public API — explicit return type
   export function calculateTotal(items: CartItem[]): number {
@@ -118,7 +118,7 @@
 
 - **Rule**: [SHOULD] Use arrow functions for callbacks and inline functions.
 - **Rule**: [SHOULD] Use `function` declarations for top-level (exported) functions.
-- **Good example**:
+- **Good Example**:
   ```typescript
   // Top-level export function — function declaration
   export function getActiveUsers(users: User[]): User[] {
@@ -131,8 +131,8 @@
 
 ### Async Handling — async/await
 
-- **Rule**: [MUST] Use `async/await` when dealing with Promises. Avoid `.then()` chains.
-- **Good example**:
+- **Rule**: [MUST] Use `async/await` when working with Promises. Avoid `.then()` chains.
+- **Good Example**:
   ```typescript
   async function fetchUser(id: string): Promise<User> {
     const response = await fetch(`/api/users/${id}`);
@@ -150,7 +150,7 @@
 ### Optional Chaining and Nullish Coalescing
 
 - **Rule**: [MUST] Use optional chaining (`?.`) and nullish coalescing (`??`) to safely handle null/undefined.
-- **Good example**:
+- **Good Example**:
   ```typescript
   const city = user?.address?.city;
   const pageSize = input ?? 10; // Only replaces null/undefined
@@ -162,7 +162,7 @@
 - **Rule**: [MUST] Write code with `strictNullChecks` enabled. (Included in `strict: true`)
 
 - **Rule**: [SHOULD] Distinguish between optional (`?`) and `| undefined` in function parameters.
-- **Good example**:
+- **Good Example**:
   ```typescript
   // name does not need to be passed (optional parameter)
   function greet(name?: string): string {
@@ -185,8 +185,8 @@
 
 ### Enum / as const Naming Rules
 
-- **Rule**: [MUST] Use **PascalCase** for keys and **lowercase snake_case** for values in enum and `as const` objects.
-- **Good example**:
+- **Rule**: [MUST] Use **PascalCase** for keys and **lowercase snake_case** for values in enums and `as const` objects.
+- **Good Example**:
   ```typescript
   // as const object
   const OrderStatus = {
@@ -207,9 +207,9 @@
 
 ### Union Type Usage (Simple Cases)
 
-- **Good example**:
+- **Good Example**:
   ```typescript
-  // Simple set of strings — union type
+  // Simple string set — union type
   type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered';
 
   function updateStatus(orderId: string, status: OrderStatus): void {
@@ -217,9 +217,9 @@
   }
   ```
 
-### as const Object Usage (When Value Reference Is Needed)
+### as const Object Usage (When Value References Are Needed)
 
-- **Good example**:
+- **Good Example**:
   ```typescript
   // When values need to be referenced — as const object
   const OrderStatus = {
@@ -240,7 +240,7 @@
 ### When Enum Is Allowed
 
 - **Rule**: [MAY] `enum` may be used only when numeric mapping is needed or when iteration over values is required.
-- **Good example**:
+- **Good Example**:
   ```typescript
   enum HttpStatus {
     Ok = 200,
@@ -283,7 +283,7 @@ import { styles } from './styles';
 ### Type-Only Import
 
 - **Rule**: [MUST] Use `import type` when importing only types.
-- **Good example**:
+- **Good Example**:
   ```typescript
   import type { User, CreateUserDto } from '@/types/user';
   import { UserService } from '@/services/user-service';
@@ -291,9 +291,9 @@ import { styles } from './styles';
 
 ### Barrel Export
 
-- **Rule**: [SHOULD] Export public APIs of packages or modules through barrel exports via `index.ts`.
+- **Rule**: [SHOULD] Expose public APIs of packages or modules through barrel exports via `index.ts`.
 - **Rule**: [MUST NOT] Do not import directly from deep paths. Use barrel-exported paths.
-- **Good example**:
+- **Good Example**:
   ```typescript
   // packages/utils/src/index.ts
   export { formatDate, formatCurrency } from './format';
@@ -307,7 +307,7 @@ import { styles } from './styles';
 ### Path Alias
 
 - **Rule**: [SHOULD] Use path aliases (`@/`) for project internal imports.
-- **Good example**:
+- **Good Example**:
   ```typescript
   import { UserService } from '@/services/user-service';
   ```
@@ -318,7 +318,7 @@ import { styles } from './styles';
 ### ESLint
 
 - **Rule**: [MUST] Use ESLint flat config (`eslint.config.mjs`) with `typescript-eslint`.
-- **Good example**:
+- **Good Example**:
   ```javascript
   // eslint.config.mjs
   import eslint from '@eslint/js';
@@ -334,8 +334,8 @@ import { styles } from './styles';
 
 - **Rule**: [MUST] Running ESLint is mandatory for all code changes.
 
-- **Rule**: [MUST] Include ESLint checks as a mandatory step in the CI/CD pipeline, and block merges when errors occur.
-- **Good example**:
+- **Rule**: [MUST] Include ESLint checks as a required step in the CI/CD pipeline, and block merges when errors occur.
+- **Good Example**:
   ```yaml
   # .github/workflows/ci.yml
   jobs:
@@ -351,7 +351,7 @@ import { styles } from './styles';
   ```
 
 - **Rule**: [SHOULD] Use the `--max-warnings 0` option when running ESLint to disallow warnings as well.
-- **Good example**:
+- **Good Example**:
   ```json
   {
     "scripts": {
@@ -363,9 +363,9 @@ import { styles } from './styles';
 
 ### Prettier
 
-- **Rule**: [MUST] Use Prettier as the code formatter, and use `eslint-config-prettier` to prevent conflicts with ESLint.
+- **Rule**: [MUST] Use Prettier as the code formatter, and prevent conflicts with ESLint using `eslint-config-prettier`.
 
-- **Rule**: [SHOULD] Use the following Prettier settings as defaults. (Can be adjusted by team consensus)
+- **Rule**: [SHOULD] Use the following Prettier settings as defaults. (Can be adjusted by team agreement)
 
 ```json
 {
@@ -388,7 +388,7 @@ import { styles } from './styles';
 
 - **Rule**: [MUST NOT] Do not use type assertions (`as`) to bypass type errors.
   - Note: Do not use patterns like `response.data as User` or `someValue as unknown as number` (double assertion).
-- **Good example**:
+- **Good Example**:
   ```typescript
   import { z } from 'zod';
 
@@ -403,13 +403,13 @@ import { styles } from './styles';
 
 ### Using any
 
-- **Rule**: [MUST NOT] Do not use `any`. Replace with `unknown` and narrow the type using type guards.
+- **Rule**: [MUST NOT] Do not use `any`. Replace with `unknown` and narrow using type guards.
 
 ### Overuse of Non-null Assertion (!)
 
-- **Rule**: [MUST NOT] Do not use non-null assertion (`!`) habitually.
+- **Rule**: [MUST NOT] Do not habitually use non-null assertion (`!`).
   - Note: Do not use patterns like `users.find(...)!` or `document.getElementById('app')!`.
-- **Good example**:
+- **Good Example**:
   ```typescript
   const user = users.find((u) => u.id === id);
   if (!user) {
@@ -421,8 +421,8 @@ import { styles } from './styles';
 ### Overuse of @ts-ignore / @ts-expect-error
 
 - **Rule**: [MUST NOT] Do not use `@ts-ignore`.
-- **Rule**: [SHOULD] When unavoidable, use `@ts-expect-error` and always leave a comment explaining the reason.
-- **Good example**:
+- **Rule**: [SHOULD] Use `@ts-expect-error` when unavoidable, and always leave a comment explaining the reason.
+- **Good Example**:
   ```typescript
   // @ts-expect-error: Library type definitions have not been updated yet (issue: #123)
   someLibraryFunction(arg);

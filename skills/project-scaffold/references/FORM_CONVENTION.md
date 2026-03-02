@@ -50,8 +50,8 @@ export type CreateUserFormData = z.infer<typeof CreateUserSchema>;
 
 ## 3. React Hook Form + @sellernote/design-system Integration
 
-- **Rule**: [MUST] Connect form fields using `@sellernote/design-system` components and React Hook Form's `Controller`
-- **Rule**: [MUST] Set `zodResolver` on `useForm` and use `mode: 'onBlur'` as the default
+- **Rule**: [MUST] Connect form fields using `@sellernote/design-system` components with React Hook Form's `Controller`
+- **Rule**: [MUST] Set `zodResolver` on `useForm` and use `mode: 'onBlur'` as default
 ```typescript
 "use client";
 import { z } from "zod";
@@ -112,16 +112,16 @@ export function LoginForm() {
 
 ## 4. Validation Strategy
 
-- **Rule**: [MUST] Perform validation on both the client and server sides (dual validation principle)
-- **Rule**: [MUST] Client-side validation is performed per field at `onBlur` timing to provide immediate feedback
-- **Rule**: [MUST] Perform final validation with the same Zod schema in Server Actions or API endpoints
+- **Rule**: [MUST] Perform validation on both client and server sides (dual validation principle)
+- **Rule**: [MUST] Client-side validation is performed per field at `onBlur` to provide immediate feedback
+- **Rule**: [MUST] Perform final validation using the same Zod schema in Server Actions or API endpoints
 - **Rule**: [MUST NOT] Replace security validation with client-side validation alone
 
 ---
 
 ## 5. Error Display Patterns
 
-### Per-Field Inline Errors
+### Per-field Inline Errors
 
 - **Rule**: [MUST] Display per-field errors as error message components below the corresponding field
 ```typescript
@@ -142,9 +142,9 @@ export function LoginForm() {
 />
 ```
 
-### Form-Level Errors
+### Form-level Errors
 
-- **Rule**: [SHOULD] Display errors not attributable to a specific field, such as server errors or network errors, at the top of the form using the DS `Alert` component
+- **Rule**: [SHOULD] Display errors not attributable to a specific field (such as server errors, network errors) at the top of the form using the DS `Alert` component
 ```typescript
 import { Alert } from "@sellernote/design-system";
 
@@ -163,7 +163,7 @@ return (
 
 ### Server Error Mapping
 
-- **Rule**: [SHOULD] When the server returns an error for a specific field, map the error to that field using `setError()`
+- **Rule**: [SHOULD] When the server returns errors for specific fields, map them to the corresponding fields using `setError()`
 ```typescript
 const onSubmit = async (data: SignupFormData) => {
   try {
@@ -180,9 +180,9 @@ const onSubmit = async (data: SignupFormData) => {
 
 ---
 
-## 6. Server Actions Form Pattern
+## 6. Server Actions Form Patterns
 
-- **Rule**: [SHOULD] Integrate Next.js Server Actions with React Hook Form to perform server-side validation and data processing
+- **Rule**: [SHOULD] Integrate Next.js Server Actions with React Hook Form for server-side validation and data processing
 ```typescript
 // features/user/actions/createUser.ts
 "use server";
@@ -216,7 +216,7 @@ const onSubmit = async (data: CreateUserFormData) => {
 
 ## 7. Complex Forms
 
-### Multi-Step Forms (Wizard)
+### Multi-step Forms (Wizard)
 
 - **Rule**: [SHOULD] For multi-step forms, separate Zod schemas per step and store interim data between steps in a Zustand store
 ```typescript
@@ -271,7 +271,7 @@ export function OrderForm() {
 
 ### Conditional Fields
 
-- **Rule**: [SHOULD] When showing/hiding fields based on the value of a specific field, use `watch()` to observe the value and conditionally render. Handle validation of conditional fields with Zod's `discriminatedUnion`.
+- **Rule**: [SHOULD] When showing/hiding fields based on another field's value, use `watch()` to observe the value and conditionally render. Handle validation of conditional fields using Zod's `discriminatedUnion`.
 ```typescript
 const ShippingSchema = z.discriminatedUnion("method", [
   z.object({ method: z.literal("delivery"), address: z.string().min(1, "주소를 입력해주세요") }),
@@ -297,9 +297,9 @@ export function ShippingForm() {
 
 ---
 
-## 8. Anti-Patterns
+## 8. Anti-patterns
 
-- **Rule**: [MUST NOT] Replace security validation with client-side validation alone without server validation
+- **Rule**: [MUST NOT] Replace security validation with client-side validation only, without server validation
 - **Rule**: [MUST NOT] Catch errors in a catch block without providing any feedback to the user
 
 ```typescript
@@ -307,8 +307,8 @@ try { await submitForm(data); }
 catch (error) { setFormError("요청 처리 중 오류가 발생했습니다. 다시 시도해주세요."); }
 ```
 
-- **Rule**: [SHOULD NOT] Store form input state in a global store such as Zustand. Let React Hook Form manage form state. The exception is when interim data needs to be persisted between steps in multi-step forms.
-- **Rule**: [MUST NOT] Call an API on every `onChange` event of an input. Apply debounce or call at `onBlur` timing.
+- **Rule**: [SHOULD NOT] Store form input state in a global store such as Zustand. Let React Hook Form manage the form state. The exception is when data needs to be persisted between steps in a multi-step form.
+- **Rule**: [MUST NOT] Call an API on every input `onChange` event. Apply debounce or call at the `onBlur` point.
 
 ```typescript
 const debouncedCheck = useDebouncedCallback(async (value: string) => {

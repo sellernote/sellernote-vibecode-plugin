@@ -1,14 +1,14 @@
 # Common Conventions
 
 > Defines common rules that apply to all roles and tools.
-> For rules specific to a particular domain, refer to the documents in the subdirectories.
+> For rules specific to a particular domain, refer to the documents in subdirectories.
 >
-> - [TypeScript Conventions](typescript/TYPESCRIPT_CONVENTION.md)
+> - [TypeScript Convention](typescript/TYPESCRIPT_CONVENTION.md)
 
 ## Domain Glossary
 
-Defines business/technical terms used in the project.
-AI consistently uses the terms defined here for variable names, class names, etc. when generating code.
+Defines the business/technical terms used in the project.
+AI consistently uses the terms defined here for variable names, class names, etc. during code generation.
 
 | Term | English | Description |
 |------|---------|-------------|
@@ -19,12 +19,12 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### General Principles
 
-- **Rule**: [MUST] Use clear names that convey meaning on their own.
+- **Rule**: [MUST] Use clear names that convey meaning from the name alone.
 
 - **Rule**: [MUST] Only use abbreviations agreed upon by the team. Do not use abbreviations not registered in the domain glossary.
 
 - **Rule**: [MUST NOT] Do not include redundant type information in names. (No Hungarian notation)
-  - Note: Do not use type prefixes like `strName`, `arrItems`.
+  - Note: Do not use type prefixes such as `strName`, `arrItems`.
 
 ### Variable Names — camelCase
 
@@ -55,7 +55,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
   const MAX_RETRY_COUNT = 3;
   const API_BASE_URL = 'https://api.example.com';
   ```
-- **Rule**: [SHOULD] Use camelCase for object properties or local constants. UPPER_SNAKE_CASE should only be used for module-level global constants.
+- **Rule**: [SHOULD] Use camelCase for object properties and local constants. Use UPPER_SNAKE_CASE only for module-level global constants.
 
 ### File Names
 
@@ -77,7 +77,18 @@ AI consistently uses the terms defined here for variable names, class names, etc
   const canEdit = user.role === 'admin';
   const shouldRefresh = Date.now() > expiresAt;
   ```
-  - Note: Do not use names without prefixes like `active`, `permission` for booleans.
+  - Note: Do not use names without prefixes such as `active`, `permission` for booleans.
+- **Rule**: [MUST NOT] Do not use the `no` prefix to express negation. Instead, combine `is`, `has`, `can`, `should` prefixes with clearly meaningful adjectives.
+- **Bad Example**:
+  ```typescript
+  const noPermission = true;
+  const noStock = false;
+  ```
+- **Good Example**:
+  ```typescript
+  const hasPermission = false;
+  const isOutOfStock = true;
+  ```
 
 ### Function Naming
 
@@ -103,9 +114,9 @@ AI consistently uses the terms defined here for variable names, class names, etc
 | `fix/<description>` | Bug fix | `fix/login-validation-error` |
 | `hotfix/<description>` | Production emergency fix | `hotfix/payment-crash` |
 | `refactor/<description>` | Refactoring | `refactor/order-service` |
-| `chore/<description>` | Build, configuration, and maintenance | `chore/update-dependencies` |
+| `chore/<description>` | Build, configuration, and other maintenance | `chore/update-dependencies` |
 
-- **Rule**: [MUST] Branch names must use only lowercase letters and hyphens (`-`), with slashes (`/`) separating the type and description.
+- **Rule**: [MUST] Branch names must use only lowercase letters and hyphens (`-`), with a slash (`/`) separating the type and description.
 
 - **Rule**: [SHOULD] Include the issue number in the branch name when a Jira issue exists.
 - **Good Example**:
@@ -130,19 +141,19 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 | Type | Description | Example |
 |------|-------------|---------|
-| `feat` | New feature addition | `feat(auth): add JWT refresh token` |
+| `feat` | Add new feature | `feat(auth): add JWT refresh token` |
 | `fix` | Bug fix | `fix(order): resolve null pointer in validation` |
 | `docs` | Documentation changes | `docs: update API documentation` |
 | `style` | Code formatting, missing semicolons, etc. | `style: apply prettier formatting` |
 | `refactor` | Code restructuring without functionality changes | `refactor(user): extract validation logic` |
 | `perf` | Performance improvement | `perf(query): add index for user lookup` |
-| `test` | Adding/modifying tests | `test(auth): add login failure test cases` |
-| `chore` | Build, configuration, and maintenance | `chore: update dependencies` |
+| `test` | Add/modify tests | `test(auth): add login failure test cases` |
+| `chore` | Build, configuration, and other maintenance | `chore: update dependencies` |
 | `ci` | CI/CD configuration changes | `ci: add staging deployment workflow` |
 
 - **Rule**: [MUST] Write commit titles in imperative mood. Keep them within 50 characters.
-- **Rule**: [MUST] Each commit should contain only one concern.
-- **Rule**: [SHOULD] When there is a Breaking Change, append `!` after the type and specify `BREAKING CHANGE:` in the footer.
+- **Rule**: [MUST] Each commit must contain only one concern.
+- **Rule**: [SHOULD] If there is a Breaking Change, append `!` after the type and specify `BREAKING CHANGE:` in the footer.
 - **Good Example**:
   ```
   feat(auth)!: change token expiry to 1 hour
@@ -150,15 +161,15 @@ AI consistently uses the terms defined here for variable names, class names, etc
   BREAKING CHANGE: token expiry changed from 24h to 1h.
   All existing tokens will be invalidated.
   ```
-  - Note: Do not omit the type (`fixed bug`), use past tense, or write meaningless descriptions (`update code`).
+  - Note: Do not omit the type (`fixed bug`), use past tense, or use meaningless descriptions (`update code`).
 
 ### PR Rules
 
 - **Rule**: [MUST] PR titles must follow the Conventional Commits format. (When using squash merge, the PR title becomes the commit message)
 
-- **Rule**: [MUST] PR descriptions must include the following:
+- **Rule**: [MUST] PR body must include the following:
   - Summary of changes
-  - Related issue numbers (if any)
+  - Related issue number (if applicable)
   - Testing method or verification items
 
 - **Rule**: [SHOULD] Create PRs in the smallest possible units. (Recommended: 10 or fewer changed files)
@@ -179,22 +190,22 @@ AI consistently uses the terms defined here for variable names, class names, etc
 | Performance | Are there unnecessary computations or inefficient patterns? |
 | Security | Are there security vulnerabilities? (input validation, authentication/authorization, etc.) |
 | Testing | Are appropriate tests included? |
-| Conventions | Does it comply with team conventions? |
+| Convention | Does it comply with team conventions? |
 
 ### Approval Conditions
 
 - **Rule**: [MUST] At least 1 reviewer approval is required before merging.
-- **Rule**: [SHOULD] For core logic changes, approval from 2 or more reviewers is recommended.
+- **Rule**: [SHOULD] For core logic changes, 2 or more approvals are recommended.
 - **Rule**: [MUST] All CI pipeline checks (build, test, lint) must pass before merging.
 
-### Writing Review Comments
+### Review Comment Writing
 
 - **Rule**: [SHOULD] Use the following prefixes in review comments to clarify intent.
 
 | Prefix | Meaning | Example |
 |--------|---------|---------|
 | `[MUST]` | Must be fixed (merge blocker) | `[MUST] There is a risk of SQL injection.` |
-| `[SHOULD]` | Recommended to fix | `[SHOULD] This can be improved with an early return.` |
+| `[SHOULD]` | Recommended to fix | `[SHOULD] This part can be improved with an early return.` |
 | `[NIT]` | Minor improvement suggestion | `[NIT] The variable name could be more descriptive.` |
 | `[Q]` | Question | `[Q] What is the intent of this logic?` |
 
@@ -214,7 +225,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### Error Response Format (HTTP API)
 
-- **Rule**: [MUST] API error responses must follow the standard format below.
+- **Rule**: [MUST] API error responses must follow this standard format.
 
 ```json
 {
@@ -264,30 +275,30 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 - **Rule**: [MUST NOT] Do not expose sensitive implementation details such as stack traces, DB queries, or internal paths in error responses.
 
-- **Rule**: [MUST NOT] Do not use messages that reveal whether an account exists in authentication errors. (Prevent account enumeration attacks)
+- **Rule**: [MUST NOT] Do not use messages that reveal account existence in authentication errors. (Prevent account enumeration attacks)
 - **Good Example**: `"The authentication credentials are incorrect."`
-  - Note: Do not use specific messages like `"No user exists with that email address."`.
+  - Note: Do not use specific messages like `"No user exists with that email address."`
 
 ## Logging
 
 ### Log Levels
 
-- **Rule**: [MUST] Follow the log level standards below.
+- **Rule**: [MUST] Follow these log level standards.
 
 | Level | Usage | Example |
 |-------|-------|---------|
 | `ERROR` | Errors requiring immediate attention | DB connection failure, external API outage, payment failure |
-| `WARN` | Potential issues, expected exceptions | Retries occurring, configuration fallback, slow queries |
+| `WARN` | Potential issues, expected exceptions | Retry occurred, configuration fallback, slow query |
 | `INFO` | Major business events, state changes | User registration, order creation, deployment start |
 | `DEBUG` | Detailed information for development/debugging | Function parameters, query results, intermediate calculations |
 
 - **Rule**: [MUST NOT] Do not enable DEBUG level in production environments.
 
-- **Rule**: [SHOULD] ERROR logs should include sufficient context for error tracing (request ID, user ID, input summary, etc.).
+- **Rule**: [SHOULD] Include sufficient context in ERROR logs to trace the error (request ID, user ID, input summary, etc.).
 
 ### Log Format
 
-- **Rule**: [SHOULD] Use Structured Logging. JSON format is recommended.
+- **Rule**: [SHOULD] Use structured logging. JSON format is recommended.
 - **Good Example**:
   ```json
   {
@@ -307,18 +318,18 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### Sensitive Information Masking
 
-- **Rule**: [MUST] The following information must never be logged in plain text.
+- **Rule**: [MUST] Never log the following information in plain text.
 
 | Sensitive Data Type | Masking Method | Example |
-|---------------------|----------------|---------|
-| Passwords | Full masking | `****` |
-| Emails | Partial masking | `j***@example.com` |
-| Phone numbers | Partial masking | `010-****-5678` |
-| Card numbers | Show last 4 digits only | `****-****-****-1234` |
-| Tokens/API keys | Show first 4 characters only | `eyJh****` |
-| National ID numbers | Full masking | `******-*******` |
+|---------------------|---------------|---------|
+| Password | Full masking | `****` |
+| Email | Partial masking | `j***@example.com` |
+| Phone number | Partial masking | `010-****-5678` |
+| Card number | Show last 4 digits only | `****-****-****-1234` |
+| Token/API key | Show first 4 characters only | `eyJh****` |
+| National ID number | Full masking | `******-*******` |
 
-- **Rule**: [MUST NOT] Do not log entire request/response bodies. Log only selected necessary fields.
+- **Rule**: [MUST NOT] Do not log entire request/response bodies. Log only the necessary fields selectively.
 
 - **Rule**: [SHOULD] Automate sensitive information masking in logging middleware or utilities.
 
@@ -327,7 +338,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 ### Magic Numbers/Strings
 
 - **Rule**: [MUST NOT] Do not use numbers or strings with unclear meaning directly in code.
-  - Note: Do not use literals directly like `if (status === 3)`, `setTimeout(handler, 86400000)`.
+  - Note: Avoid direct use of literals like `if (status === 3)`, `setTimeout(handler, 86400000)`.
 - **Good Example**:
   ```typescript
   const ORDER_STATUS_COMPLETED = 3;
@@ -340,3 +351,43 @@ AI consistently uses the terms defined here for variable names, class names, etc
 ### Hardcoded Passwords/Keys
 
 - **Rule**: [MUST NOT] Do not write passwords, API keys, or secrets directly in source code. Use environment variables or a secret manager.
+
+### Empty Catch
+
+> Applies to all try-catch / try-except / rescue blocks regardless of language.
+
+- **Rule**: [MUST NOT] Do not leave catch blocks empty or silently ignore errors.
+- **Rule**: [MUST] At minimum, log at the appropriate level for the exception within the catch block. (Refer to `## Logging > Log Levels` in this document for log level standards)
+
+| Situation | Log Level |
+|-----------|-----------|
+| Unrecoverable error | `ERROR` |
+| Expected exception / fallback handling | `WARN` |
+| Catching as part of normal flow | `INFO` or `DEBUG` |
+
+- **Bad Example**:
+  ```typescript
+  try {
+    await sendNotification(user);
+  } catch (error) {
+    // No handling — notification failure goes unnoticed
+  }
+  ```
+- **Good Example**:
+  ```typescript
+  try {
+    await sendNotification(user);
+  } catch (error) {
+    logger.warn('Notification send failed — applying fallback', { userId: user.id, error });
+  }
+  ```
+
+- **Rule**: [MUST] If an error is intentionally ignored, document the reason with a comment.
+- **Good Example**:
+  ```typescript
+  try {
+    await cacheClient.delete(key);
+  } catch {
+    // Cache deletion failure is safe to ignore as it will be auto-cleaned on next TTL expiry
+  }
+  ```

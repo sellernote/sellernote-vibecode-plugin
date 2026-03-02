@@ -1,6 +1,6 @@
 # Backend Convention
 
-> This document defines common rules that apply to the entire backend.
+> This document defines the common rules that apply across the entire backend.
 > For rules specific to a particular framework, refer to the documents in the subdirectories.
 >
 > - [API Spec Convention](api-spec/API_SPEC_CONVENTION.md)
@@ -72,7 +72,7 @@ Architecture rules follow the [Architecture Convention](architecture/ARCHITECTUR
 
 Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 
-## Test Strategy
+## Testing Strategy
 
 ### Test Pyramid
 
@@ -81,7 +81,7 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 ```
         /  E2E  \          ← Few in number, core scenarios
        / Integration \     ← Service + Repository integration
-      /  Unit Tests   \    ← Greatest in number, focused on Service logic
+      /  Unit Tests   \    ← Most numerous, focused on Service logic
      ──────────────────
 ```
 
@@ -114,7 +114,7 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 ### God Service
 
 - **Rule**: [MUST NOT] A single Service class must not take on too many responsibilities.
-- **Good Example**: Separate each concern into its own Service (OrderService, PaymentService, ShipmentService, NotificationService).
+- **Good Example**: Separate each concern into individual Services (OrderService, PaymentService, ShipmentService, NotificationService).
 
 ### Skipping Layers
 
@@ -130,5 +130,5 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 
 ### Swallowing Errors
 
-- **Rule**: [MUST NOT] Do not catch an exception and ignore it without any handling.
+- **Rule**: [MUST NOT] Do not catch an exception and then ignore it without any handling.
 > Empty catch blocks make it impossible to identify the root cause of problems.

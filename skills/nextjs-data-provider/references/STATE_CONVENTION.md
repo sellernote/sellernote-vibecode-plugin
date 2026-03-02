@@ -6,13 +6,13 @@
 
 ## State Classification Criteria
 
-- **Rule**: [MUST] All state must be classified into one of the 4 types below, and the appropriate tool for each type must be used.
+- **Rule**: [MUST] All state must be classified into one of the following 4 types, and the appropriate tool must be used for each type.
 
 | State Type | Description | Tool | Examples |
 |----------|------|------|------|
 | Server State | Data fetched from APIs | TanStack Query | Product list, user profile, order history |
 | Client State | UI state, user settings | Zustand | Sidebar open/close, theme, notifications |
-| Local State | State within a single component | useState | Modal open, input values, toggles |
+| Local State | State within a single component | useState | Modal open, input value, toggle |
 | URL State | Route parameters, search | useSearchParams | Pagination, filters, sorting |
 
 - **Rule**: [MUST] Data from the server must be managed with TanStack Query.
@@ -23,7 +23,7 @@
 
 ### Slice Pattern
 
-- **Rule**: [MUST] Domain-specific stores create slice files in `features/{domain}/store/`, global UI stores in `shared/store/`, using the `StateCreator` type.
+- **Rule**: [MUST] Create slice files for domain-specific stores in `features/{domain}/store/` and global UI stores in `shared/store/`, using the `StateCreator` type.
   ```typescript
   // features/user/store/userSlice.ts
   import { StateCreator } from 'zustand';
@@ -64,7 +64,7 @@
   });
   ```
 
-### Store Composition
+### Store Combination
 
 - **Rule**: [MUST] Create the store by combining `devtools` and `persist` middleware in the `create` function.
   ```typescript
@@ -178,7 +178,7 @@ export const productKeys = createQueryKeys('products', {
 | Data Type | staleTime | gcTime | Examples |
 |------------|-----------|--------|------|
 | Frequently changing | 30s ~ 1min | 5min | Real-time inventory, notification count |
-| Moderate | 5min (default) | 10min | Product list, order history |
+| Normal | 5min (default) | 10min | Product list, order history |
 | Rarely changing | 30min ~ 1hr | 2hr | Category list, announcements |
 | Never changing | Infinity | 24hr | Country codes, exchange rate reference date |
 
@@ -197,7 +197,7 @@ const queryClient = new QueryClient({
 
 ### Optimistic Updates
 
-- **Rule**: [SHOULD] Apply optimistic updates to mutations where user experience is important.
+- **Rule**: [SHOULD] Apply optimistic updates for mutations where user experience is important.
   ```typescript
   export function useUpdateProduct() {
     const queryClient = useQueryClient();
@@ -245,25 +245,25 @@ export function useDeleteProduct() {
 - **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query into a Zustand store. Use TanStack Query hooks directly to ensure a single source of truth.
 
 ```typescript
-// Use TanStack Query hooks directly - ensures a single source of truth
+// Use TanStack Query hooks directly - ensures single source of truth
 function UserProfile() {
   const { data: user, isLoading } = useUser();
   if (isLoading) return <Skeleton />;
   return <div>{user?.name}</div>;
 }
-// Even when multiple components call the same hook, the cache is shared so there are no duplicate requests
+// Even when multiple components call the same hook, they share the cache so there are no duplicate requests
 function UserAvatar() {
   const { data: user } = useUser();
   return <Avatar src={user?.avatarUrl} />;
 }
 ```
 
-## Anti-Patterns
+## Anti-patterns
 
 - **Rule**: [MUST NOT] Do not store data in Zustand when local state is sufficient. Use useState for single component state.
 - **Rule**: [MUST NOT] Do not manage server data by calling fetch inside useEffect instead of using TanStack Query.
 - **Rule**: [SHOULD NOT] Do not put state with different concerns all in one store. Separate slices by domain in `features/{domain}/store/`.
-- **Rule**: [MUST NOT] Do not subscribe to the entire store without using a selector.
+- **Rule**: [MUST NOT] Do not subscribe to the entire store without using selectors.
 
 ```typescript
 // Use individual selectors

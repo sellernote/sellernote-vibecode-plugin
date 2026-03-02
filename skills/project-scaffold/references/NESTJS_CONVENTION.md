@@ -63,16 +63,16 @@ src/
 
 - **Rule**: [MUST] File names follow the `[name].[type].ts` pattern.
 
-| Type                   | Pattern                       | Example                        |
-| ---------------------- | ----------------------------- | ------------------------------ |
+| Type                   | Pattern                          | Example                          |
+| ---------------------- | -------------------------------- | -------------------------------- |
 | Module                 | `[name].module.ts`            | `order.module.ts`              |
 | Controller             | `[name].controller.ts`        | `order.controller.ts`          |
-| Controller (split)     | `[feature]-[name].controller.ts` | `order-crud.controller.ts`  |
+| Controller (split)     | `[feature]-[name].controller.ts` | `order-crud.controller.ts`     |
 | Service                | `[name].service.ts`           | `order.service.ts`             |
-| Service (split)        | `[feature]-[name].service.ts` | `order-fulfillment.service.ts` |
+| Service (split)        | `[feature]-[name].service.ts`    | `order-fulfillment.service.ts` |
 | Repository             | `[name].repository.ts`        | `order.repository.ts`          |
 | Entity                 | `[name].entity.ts`            | `order.entity.ts`              |
-| DTO                    | `[action]-[name].dto.ts`      | `create-order.dto.ts`          |
+| DTO                    | `[action]-[name].dto.ts`        | `create-order.dto.ts`          |
 | Guard                  | `[name].guard.ts`             | `jwt-auth.guard.ts`            |
 | Interceptor            | `[name].interceptor.ts`       | `logging.interceptor.ts`       |
 | Pipe                   | `[name].pipe.ts`              | `parse-int.pipe.ts`            |
@@ -83,7 +83,7 @@ src/
 
 ### Domain Model Interface Definition
 
-- **Rule**: [MUST] Define a Domain Model Interface for each domain model. Include only the model's own data fields, excluding relation fields.
+- **Rule**: [MUST] Define a Domain Model Interface for each domain model. Include only the data fields unique to that model, excluding relation fields.
 - **Good example**:
   ```typescript
   // modules/order/interfaces/order.model.interface.ts
@@ -201,9 +201,9 @@ modules/order/
 - **Rule**: [MUST] Use the `@SellernoteApiDecimal` decorator for Swagger documentation of monetary amount DTO fields.
   > [MUST NOT] Do not use `@SellernoteApiNumber` for monetary amounts.
 
-### Monetary Amount Calculation Library
+### Monetary Amount Arithmetic Library
 
-- **Rule**: [MUST] Use the `big.js` library for monetary amount calculations.
+- **Rule**: [MUST] Use the `big.js` library for monetary amount arithmetic.
 - **Good example**:
 
   ```typescript
@@ -227,7 +227,7 @@ modules/order/
 
 ## Controller / Service / Repository Splitting
 
-### Splitting Principles
+### Splitting Principle
 
 - **Rule**: [MUST] All feature modules use `controllers/`, `services/`, `repositories/` directories.
 
@@ -280,7 +280,7 @@ modules/order/
 
 - **Rule**: [MUST] Repositories are mapped 1:1 with Entities and placed in the `repositories/` directory.
 
-### Module Registration (When Split)
+### Module Registration (When Splitting)
 
 - **Rule**: [MUST] All split Controllers, Services, and Repositories must be registered in the corresponding Feature Module's `@Module()` decorator.
 - **Good example**:
@@ -330,7 +330,7 @@ modules/order/
 
 ### Global Module
 
-- **Rule**: [MAY] Modules used across the entire app may use the `@Global()` decorator. However, do not overuse it.
+- **Rule**: [MAY] Modules used throughout the entire app may use the `@Global()` decorator. However, do not overuse it.
 - **Good example**:
   ```typescript
   @Global()
@@ -349,7 +349,7 @@ modules/order/
 
 ### Provider Registration
 
-- **Rule**: [MUST] All service classes use the `@Injectable()` decorator and are registered in the module's `providers`.
+- **Rule**: [MUST] All service classes use the `@Injectable()` decorator and are registered in the corresponding module's `providers`.
 
 ### Constructor Injection
 
@@ -393,7 +393,7 @@ modules/order/
 
 ### Custom Decorator Usage Criteria
 
-- **Rule**: [SHOULD] Use Custom Decorators to extract repetitive logic.
+- **Rule**: [SHOULD] Use Custom Decorators when extracting repetitive logic.
 - **Good example**:
 
   ```typescript
@@ -429,17 +429,17 @@ modules/order/
 
 ### Role Distinction
 
-- **Rule**: [MUST] Guard, Interceptor, and Pipe must be used according to their designated roles.
+- **Rule**: [MUST] Guard, Interceptor, and Pipe must each be used according to their designated roles.
 
-| Component       | Role                                    | When to Use                                                   |
-| --------------- | --------------------------------------- | ------------------------------------------------------------- |
-| **Guard**       | Authentication/Authorization decisions  | Checks access permissions before a request reaches the handler |
-| **Interceptor** | Request/Response transformation, logging, caching | Adds logic before and after handler execution (AOP)    |
-| **Pipe**        | Input data transformation and validation | When data is bound to handler parameters                      |
+| Component       | Role                                      | When to Use                                              |
+| --------------- | ----------------------------------------- | -------------------------------------------------------- |
+| **Guard**       | Authentication/Authorization decisions    | Check access permissions before request reaches handler  |
+| **Interceptor** | Request/Response transformation, logging, caching | Add logic before and after handler execution (AOP) |
+| **Pipe**        | Input data transformation and validation  | When data is bound to handler parameters                 |
 
 ### Guard Usage
 
-- **Rule**: [MUST] Authentication/authorization logic is handled in Guards. Do not perform checks directly inside Controller methods.
+- **Rule**: [MUST] Authentication/authorization logic is handled in Guards. Do not check directly inside Controller methods.
 - **Good example**:
 
   ```typescript
@@ -538,9 +538,9 @@ modules/order/
 
 ### API Property Management Library
 
-- **Rule**: [MUST] Use the in-house library `@sellernote/sellernote-nestjs-api-property` for DTO API Property definitions.
+- **Rule**: [MUST] Use the in-house library `@sellernote/sellernote-nestjs-api-property` for API Property definitions in DTOs.
 - **Rule**: [MUST NOT] Do not directly use `@ApiProperty()` from `@nestjs/swagger`. Do not directly use `class-validator`/`class-transformer` decorators either.
-- **Reference**: Refer to the [sellernote-nestjs-api-property README](https://github.com/sellernote/sellernote-nestjs-api-property) for usage.
+- **Reference**: See the [sellernote-nestjs-api-property README](https://github.com/sellernote/sellernote-nestjs-api-property) for usage.
 - **Good example**:
 
   ```typescript
@@ -637,14 +637,14 @@ modules/order/
   }
   ```
 
-## Anti-Patterns
+## Anti-patterns
 
 ### Circular Dependencies
 
 - **Rule**: [MUST NOT] Do not create circular dependencies between modules or Providers.
 - **Resolution**: Extract common logic into a separate module, or use `forwardRef()` as a last resort.
 
-### Business Logic in Controllers
+### Business Logic in Controller
 
 - **Rule**: [MUST NOT] Do not write business logic in Controllers.
 
@@ -664,6 +664,6 @@ modules/order/
 
 - **Rule**: [SHOULD NOT] Do not overuse the `@Global()` decorator.
 
-### Using the any Type
+### Using any Type
 
 - **Rule**: [MUST NOT] Do not use the `any` type in TypeScript. Use explicit types or generics.

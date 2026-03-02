@@ -9,9 +9,9 @@
 
 ### Package Installation
 
-- **Rule**: [MUST] Install the `@sellernote/design-system` package and integrate it with the project
+- **Rule**: [MUST] Install the `@sellernote/design-system` package and integrate it into the project
 
-**.npmrc Configuration (GitHub Packages Authentication):**
+**.npmrc configuration (GitHub Packages authentication):**
 
 ```ini
 @sellernote:registry=https://npm.pkg.github.com
@@ -26,7 +26,7 @@ pnpm add @sellernote/design-system
 
 ### Tailwind Integration
 
-- **Rule**: [MUST] Apply the DS Tailwind preset to the project's Tailwind configuration
+- **Rule**: [MUST] Apply the DS Tailwind preset to the project Tailwind configuration
 
 ```javascript
 // tailwind.config.js
@@ -43,7 +43,7 @@ export default {
 
 ### Style Import
 
-- **Rule**: [MUST] Import Tailwind and DS styles in the following order from the global CSS file
+- **Rule**: [MUST] Import Tailwind and DS styles in the following order in the global CSS file
 
 ```css
 /* app/globals.css */
@@ -52,11 +52,11 @@ export default {
 @import '@sellernote/design-system/styles';
 ```
 
-> **Note**: The Pretendard font is included in `@sellernote/design-system/styles`, so a separate `next/font` configuration is unnecessary.
+> **Note**: Since Pretendard font is included in `@sellernote/design-system/styles`, separate `next/font` configuration is unnecessary.
 
 ### cn() Utility Function
 
-- **Rule**: [MUST] Use the `cn()` function provided by DS for conditional className composition. `cn()` is a function combining `clsx` + `tailwind-merge` that automatically resolves class conflicts.
+- **Rule**: [MUST] Use the `cn()` function provided by DS for conditional className merging. `cn()` combines `clsx` + `tailwind-merge` to automatically resolve class conflicts.
 
 ```typescript
 import { cn } from "@sellernote/design-system";
@@ -83,76 +83,76 @@ function Card({ className, children }: CardProps) {
 
 ### Color System
 
-- **Rule**: [MUST] Colors must be referenced through DS system color tokens. Do not directly use hex values or Tailwind's default palette.
+- **Rule**: [MUST] Colors are referenced through DS system color tokens. Do not directly use hex values or Tailwind's default palette.
 
 #### Background (bg)
 
-| Token | Tailwind Class | Value   | Usage                |
-|-------|---------------|---------|----------------------|
-| bg-1  | `bg-bg-1`     | #ffffff | Default page background |
-| bg-2  | `bg-bg-2`     | #f6f7f8 | Secondary background |
-| bg-3  | `bg-bg-3`     | #1f2328 | Dark background      |
+| Token | Tailwind Class | Value   | Usage              |
+|-------|----------------|---------|--------------------|
+| bg-1  | `bg-bg-1`      | #ffffff | Default page background |
+| bg-2  | `bg-bg-2`      | #f6f7f8 | Secondary background    |
+| bg-3  | `bg-bg-3`      | #1f2328 | Dark background         |
 
 #### Surface
 
 | Token     | Tailwind Class  | Value   | Usage                          |
-|-----------|----------------|---------|--------------------------------|
+|-----------|-----------------|---------|--------------------------------|
 | surface-1 | `bg-surface-1` | #ffffff | Card, panel default            |
 | surface-2 | `bg-surface-2` | #f6f7f8 | Disabled background, secondary surface |
 | surface-3 | `bg-surface-3` | #e8eaed | Hover state, selected item     |
-| surface-4 | `bg-surface-4` | #ccd0d7 | Emphasis background            |
+| surface-4 | `bg-surface-4` | #ccd0d7 | Emphasized background          |
 | surface-5 | `bg-surface-5` | #48505b | Dark surface                   |
 | surface-6 | `bg-surface-6` | #1f2328 | Darkest surface                |
 
 #### Text
 
-| Token  | Tailwind Class | Value   | Usage                            |
-|--------|---------------|---------|----------------------------------|
-| text-1 | `text-text-1` | #1f2328 | Primary text (headings, input values) |
-| text-2 | `text-text-2` | #48505b | Secondary text (list items)      |
-| text-3 | `text-text-3` | #768293 | Placeholder, label               |
-| text-4 | `text-text-4` | #afb6c0 | Disabled text                    |
-| text-5 | `text-text-5` | #ffffff | White text (on dark backgrounds) |
+| Token  | Tailwind Class | Value   | Usage                          |
+|--------|----------------|---------|--------------------------------|
+| text-1 | `text-text-1`  | #1f2328 | Primary text (headings, input values) |
+| text-2 | `text-text-2`  | #48505b | Secondary text (list items)    |
+| text-3 | `text-text-3`  | #768293 | Placeholder, label             |
+| text-4 | `text-text-4`  | #afb6c0 | Disabled text                  |
+| text-5 | `text-text-5`  | #ffffff | White text (on dark background)|
 
 #### Line — Dividers
 
-| Token  | Tailwind Class   | Value   | Usage                |
-|--------|-----------------|---------|----------------------|
-| line-1 | `border-line-1` | #ffffff | White divider        |
-| line-2 | `border-line-2` | #e8eaed | Default divider      |
-| line-3 | `border-line-3` | #ccd0d7 | Medium emphasis divider |
-| line-4 | `border-line-4` | #363c45 | Dark divider         |
-| line-5 | `border-line-5` | #1f2328 | Darkest divider      |
+| Token  | Tailwind Class   | Value   | Usage               |
+|--------|------------------|---------|----------------------|
+| line-1 | `border-line-1`  | #ffffff | White divider        |
+| line-2 | `border-line-2`  | #e8eaed | Default divider      |
+| line-3 | `border-line-3`  | #ccd0d7 | Medium emphasis divider |
+| line-4 | `border-line-4`  | #363c45 | Dark divider         |
+| line-5 | `border-line-5`  | #1f2328 | Darkest divider      |
 
 #### Border — Input Borders
 
-| Token    | Tailwind Class     | Value   | Usage                |
-|----------|--------------------|---------|----------------------|
-| border-1 | `border-border-1` | #ffffff | White border         |
+| Token    | Tailwind Class     | Value   | Usage                 |
+|----------|--------------------|---------|-----------------------|
+| border-1 | `border-border-1` | #ffffff | White border          |
 | border-2 | `border-border-2` | #e8eaed | Disabled state border |
-| border-3 | `border-border-3` | #ccd0d7 | Default resting border |
+| border-3 | `border-border-3` | #ccd0d7 | Default resting border|
 
 #### Icon
 
-| Token  | Tailwind Class | Value   | Usage                       |
-|--------|---------------|---------|------------------------------|
-| icon-1 | `text-icon-1` | #000000 | Primary icon                 |
-| icon-2 | `text-icon-2` | #48505b | Secondary icon               |
-| icon-3 | `text-icon-3` | #8d97a5 | Placeholder/subtle icon      |
-| icon-4 | `text-icon-4` | #ccd0d7 | Disabled icon                |
-| icon-5 | `text-icon-5` | #ffffff | White icon                   |
+| Token  | Tailwind Class | Value   | Usage                     |
+|--------|----------------|---------|---------------------------|
+| icon-1 | `text-icon-1`  | #000000 | Default icon              |
+| icon-2 | `text-icon-2`  | #48505b | Secondary icon            |
+| icon-3 | `text-icon-3`  | #8d97a5 | placeholder/subtle icon   |
+| icon-4 | `text-icon-4`  | #ccd0d7 | Disabled icon             |
+| icon-5 | `text-icon-5`  | #ffffff | White icon                |
 
 #### Brand
 
-| Token     | Tailwind Class                   | Usage                      |
-|-----------|----------------------------------|----------------------------|
-| brand-1~3 | `bg-brand-1` ~ `bg-brand-3`     | Light blue shades          |
-| brand-4   | `bg-brand-4` / `text-brand-4`   | Primary brand color (#1d67cd) |
-| brand-5~7 | `bg-brand-5` ~ `bg-brand-7`     | Dark blue shades           |
+| Token     | Tailwind Class                   | Usage                       |
+|-----------|----------------------------------|-----------------------------|
+| brand-1~3 | `bg-brand-1` ~ `bg-brand-3`    | Light blue range            |
+| brand-4   | `bg-brand-4` / `text-brand-4`  | Primary brand color (#1d67cd) |
+| brand-5~7 | `bg-brand-5` ~ `bg-brand-7`    | Dark blue range             |
 
-#### Tone Colors — State Expression
+#### Tone Colors — Status Expression
 
-Each color (red / yellow / green / cyan / blue / purple) has levels 1–5. Levels 1–2 are for backgrounds (light), level 3 is for default text/icons, and levels 4–5 are for emphasis/hover (dark).
+Each color (red / yellow / green / cyan / blue / purple) has levels 1–5. Levels 1–2 are for backgrounds (light), level 3 is for default text/icon use, and levels 4–5 are for emphasis/hover (dark).
 
 ```
 tone-red-1~5, tone-yellow-1~5, tone-green-1~5
@@ -173,37 +173,37 @@ tone-cyan-1~5, tone-blue-1~5, tone-purple-1~5
 
 ### Typography
 
-- **Rule**: [MUST] Text styles must use DS typography token classes (`text-{name}`). font-size, line-height, and font-weight are applied as a bundle.
+- **Rule**: [MUST] Text styles use the DS typography token classes (`text-{name}`). font-size, line-height, and font-weight are applied as a bundle.
 
-| Tailwind Class        | Size | Line Height | Weight | Usage                              |
-|-----------------------|------|-------------|--------|------------------------------------|
-| `text-display-lg`     | 56px | 72px        | 700    | Large display                      |
-| `text-display-md`     | 40px | 52px        | 700    | Medium display                     |
-| `text-heading-lg`     | 32px | 40px        | 600    | Page heading                       |
-| `text-heading-md`     | 24px | 32px        | 600    | Section heading                    |
-| `text-heading-sm`     | 20px | 28px        | 600    | Subheading                         |
-| `text-heading-xs`     | 18px | 26px        | 600    | Minor subheading                   |
-| `text-subtitle-xl`    | 18px | 28px        | 500    | Emphasized body large              |
-| `text-subtitle-lg`    | 16px | 24px        | 500    | Emphasized body medium             |
-| `text-subtitle-md`    | 14px | 20px        | 500    | UI default text (labels, options, etc.) |
-| `text-subtitle-sm`    | 12px | 16px        | 500    | Small emphasis                     |
-| `text-body-lg`        | 16px | 26px        | 400    | Body large                         |
-| `text-body-md`        | 14px | 22px        | 400    | General body (input values, etc.)  |
-| `text-body-sm`        | 12px | 18px        | 400    | Small body                         |
-| `text-caption-md`     | 12px | 16px        | 400    | Caption                            |
-| `text-caption-sm`     | 10px | 14px        | 400    | Small caption                      |
+| Tailwind Class      | Size | Line Height | Weight | Usage                            |
+|---------------------|------|-------------|--------|----------------------------------|
+| `text-display-lg`   | 56px | 72px        | 700    | Large display                    |
+| `text-display-md`   | 40px | 52px        | 700    | Medium display                   |
+| `text-heading-lg`   | 32px | 40px        | 600    | Page title                       |
+| `text-heading-md`   | 24px | 32px        | 600    | Section title                    |
+| `text-heading-sm`   | 20px | 28px        | 600    | Subheading                       |
+| `text-heading-xs`   | 18px | 26px        | 600    | Minor subheading                 |
+| `text-subtitle-xl`  | 18px | 28px        | 500    | Emphasized body large            |
+| `text-subtitle-lg`  | 16px | 24px        | 500    | Emphasized body medium           |
+| `text-subtitle-md`  | 14px | 20px        | 500    | UI default text (labels, options, etc.) |
+| `text-subtitle-sm`  | 12px | 16px        | 500    | Small emphasis                   |
+| `text-body-lg`      | 16px | 26px        | 400    | Body large                       |
+| `text-body-md`      | 14px | 22px        | 400    | Body default (input values, etc.)|
+| `text-body-sm`      | 12px | 18px        | 400    | Body small                       |
+| `text-caption-md`   | 12px | 16px        | 400    | Caption                          |
+| `text-caption-sm`   | 10px | 14px        | 400    | Small caption                    |
 
 > Most frequently used classes in components: `text-subtitle-md` (UI elements), `text-body-md` (input values)
 
 ```typescript
-<h1 className="text-heading-lg text-text-1">Page Heading</h1>
+<h1 className="text-heading-lg text-text-1">Page Title</h1>
 <p className="text-body-md text-text-2">Body content</p>
 <span className="text-caption-md text-text-3">Supplementary info</span>
 ```
 
 ### Spacing
 
-- **Rule**: [MUST] Spacing (padding, margin, gap, etc.) must use DS spacing tokens.
+- **Rule**: [MUST] Spacing (padding, margin, gap, etc.) uses DS spacing tokens.
 
 | Token | Tailwind Class        | Value |
 |-------|-----------------------|-------|
@@ -222,30 +222,30 @@ tone-cyan-1~5, tone-blue-1~5, tone-purple-1~5
 
 ```typescript
 <div className="p-600 flex flex-col gap-400">
-  <h2 className="text-heading-sm text-text-1">Section Heading</h2>
+  <h2 className="text-heading-sm text-text-1">Section Title</h2>
   <p className="text-body-md text-text-2">Content</p>
 </div>
 ```
 
 ### Border Radius
 
-| Token | Tailwind Class   | Value | Usage                            |
-|-------|------------------|-------|----------------------------------|
-| 50    | `rounded-50`     | 2px   | Minimum                         |
+| Token | Tailwind Class   | Value | Usage                          |
+|-------|------------------|-------|--------------------------------|
+| 50    | `rounded-50`     | 2px   | Minimal                        |
 | 100   | `rounded-100`    | 4px   | General elements (buttons, inputs, cards) |
-| 200   | `rounded-200`    | 8px   | Panels, dropdowns                |
-| 300   | `rounded-300`    | 12px  | Large cards                      |
-| 400   | `rounded-400`    | 16px  | Modals                           |
-| full  | `rounded-full`   | 999px | Pill shape, circle               |
+| 200   | `rounded-200`    | 8px   | Panels, dropdowns              |
+| 300   | `rounded-300`    | 12px  | Large cards                    |
+| 400   | `rounded-400`    | 16px  | Modals                         |
+| full  | `rounded-full`   | 999px | Pill shape, circle             |
 
 ### Shadow
 
 | Tailwind Class       | Usage            |
 |----------------------|------------------|
 | `shadow-normal`      | Card default     |
-| `shadow-emphasize`   | Dropdown, popover |
+| `shadow-emphasize`   | Dropdown, popover|
 | `shadow-strong`      | Dialog           |
-| `shadow-heavy`       | Emphasis layer   |
+| `shadow-heavy`       | Emphasized layer |
 
 ### Z-Index
 
@@ -264,26 +264,26 @@ tone-cyan-1~5, tone-blue-1~5, tone-purple-1~5
 | `z-sticky`         | Sticky element               |
 | `z-base`           | Default                      |
 
-> **Note**: DS components (Dialog, Toast, etc.) have the correct z-index built in, so manual specification is unnecessary. Only use these tokens when creating custom layers.
+> **Note**: DS components (Dialog, Toast, etc.) have the correct z-index built in, so manual specification is unnecessary. Use these tokens only when creating custom layers.
 
 ### Animation
 
-| Tailwind Class              | Usage              |
-|-----------------------------|--------------------|
-| `animate-fly-down`          | Dropdown open      |
-| `animate-fly-down-out`      | Dropdown close     |
-| `animate-fly-up`            | Dialog open        |
-| `animate-fly-up-out`        | Dialog close       |
-| `animate-slide-down`        | Toast appear       |
-| `animate-slide-up`          | Toast disappear    |
-| `animate-slide-in-right`    | Snackbar appear    |
+| Tailwind Class              | Usage            |
+|-----------------------------|------------------|
+| `animate-fly-down`          | Dropdown open    |
+| `animate-fly-down-out`      | Dropdown close   |
+| `animate-fly-up`            | Dialog open      |
+| `animate-fly-up-out`        | Dialog close     |
+| `animate-slide-down`        | Toast appear     |
+| `animate-slide-up`          | Toast disappear  |
+| `animate-slide-in-right`    | Snackbar appear  |
 | `animate-slide-out-right`   | Snackbar disappear |
-| `animate-slide-in-left`     | Drawer open        |
-| `animate-slide-out-left`    | Drawer close       |
-| `animate-fade-in`           | Fade in            |
-| `animate-fade-out`          | Fade out           |
+| `animate-slide-in-left`     | Drawer open      |
+| `animate-slide-out-left`    | Drawer close     |
+| `animate-fade-in`           | Fade in          |
+| `animate-fade-out`          | Fade out         |
 
-> All animation duration: 150ms, easing: ease. Since they are built into DS components, manual application should only be used for custom animations.
+> All animation duration: 150ms, easing: ease. Since they are built into DS components, manual application is only used for custom animations.
 
 ### Custom Token Extension
 
@@ -318,7 +318,7 @@ Follow the decision flow below when applying styles.
 | Is it a reusable custom component? | Yes | Manage variants with `cva()` + `cn()` |
 | Is it one-off styling? | Yes | Use Tailwind utility classes + DS tokens |
 
-### Priority 1: DS Components
+### 1st Priority: DS Components
 
 - **Rule**: [MUST] When implementing UI, prioritize using components provided by `@sellernote/design-system`
 
@@ -352,9 +352,9 @@ function ProductCard({ product }: ProductCardProps) {
 #### DS Component Categories
 
 | Category | Components |
-|----------|------------|
-| Buttons | `ActionButton`, `IconButton`, `TextButton` |
-| Inputs | `TextField`, `Textarea`, `PasswordField`, `SearchField`, `NumberField`, `Checkbox`, `CheckboxGroup`, `RadioButton`, `RadioGroup`, `Switch`, `Slider`, `Select`, `Combobox`, `ToggleGroup` |
+|----------|-----------|
+| Button | `ActionButton`, `IconButton`, `TextButton` |
+| Input | `TextField`, `Textarea`, `PasswordField`, `SearchField`, `NumberField`, `Checkbox`, `CheckboxGroup`, `RadioButton`, `RadioGroup`, `Switch`, `Slider`, `Select`, `Combobox`, `ToggleGroup` |
 | Data Display | `Avatar`, `Badge`, `Tag`, `Empty`, `Image`, `Label`, `Steps`, `Table`, `ScrollArea` |
 | Feedback | `Alert`, `Toast` (`addToast()`), `Snackbar` (`addSnackbar()`) |
 | Overlay | `Dialog`, `AlertDialog` (`showAlertDialog()`), `Drawer`, `Tooltip`, `Popover`, `DropdownMenu` |
@@ -362,7 +362,7 @@ function ProductCard({ product }: ProductCardProps) {
 | Loading | `Spinner`, `Progress` |
 | Foundation | `Icon` |
 
-### Priority 2: Variant Management with cva() + cn()
+### 2nd Priority: Variant Management with cva() + cn()
 
 - **Rule**: [SHOULD] Manage variants of reusable custom components not available in DS using `class-variance-authority(cva)`
 
@@ -397,7 +397,7 @@ function StatusBadge({ className, status, ...props }: StatusBadgeProps) {
 }
 ```
 
-### Priority 3: Tailwind Utility Classes
+### 3rd Priority: Tailwind utility classes
 
 - **Rule**: [MAY] Use Tailwind utility classes with DS tokens for one-off layout/spacing adjustments
 
@@ -413,7 +413,7 @@ function PageHeader({ title }: { title: string }) {
 
 ### DS Component Customization
 
-- **Rule**: [MUST NOT] Do not copy DS component source code into the project to modify it. Customize using `className` prop and variant props.
+- **Rule**: [MUST NOT] Do not copy DS component source code into the project and modify it. Customize using `className` prop and variant props.
 
 ```typescript
 <ActionButton className="w-full">Full Width Button</ActionButton>
@@ -426,31 +426,31 @@ function PageHeader({ title }: { title: string }) {
 
 ### Using the Tailwind Breakpoints System
 
-- **Rule**: [MUST] Use Tailwind's breakpoint prefixes for responsive layouts
+- **Rule**: [MUST] Use Tailwind breakpoint prefixes for responsive layouts
 
-| Breakpoint | Min Width | Target              |
-|-----------|----------|---------------------|
-| (default) | 0px      | Mobile              |
-| `xs`      | 360px    | Mobile              |
+| Breakpoint | Min Width | Target           |
+|-----------|----------|-------------------|
+| (default) | 0px      | Mobile            |
+| `xs`      | 360px    | Mobile            |
 | `sm`      | 768px    | Tablet / Mobile-Desktop breakpoint |
-| `md`      | 1024px   | Desktop             |
-| `lg`      | 1440px   | Wide                |
+| `md`      | 1024px   | Desktop           |
+| `lg`      | 1440px   | Wide              |
 
 ### Mobile-first Approach
 
-- **Rule**: [MUST] Write styles mobile-first. Apply mobile styles in the default classes, and add larger screen styles using breakpoint prefixes like `sm:`, `md:`, `lg:`.
+- **Rule**: [MUST] Styles are written mobile-first. Apply mobile styles to the base classes, and add larger screen styles using breakpoint prefixes like `sm:`, `md:`, `lg:`.
 
 ```typescript
 <div className="p-400 md:p-600 lg:p-800 max-w-full md:max-w-3xl lg:max-w-5xl mx-auto">
   <h2 className="text-heading-sm sm:text-heading-md md:text-heading-lg text-center md:text-left">
-    Responsive Heading
+    Responsive Title
   </h2>
 </div>
 ```
 
 ### Responsive Grid
 
-- **Rule**: [SHOULD] Use Tailwind's CSS Grid utility classes for grid layouts
+- **Rule**: [SHOULD] Use Tailwind CSS Grid utility classes for grid layouts
 
 ```typescript
 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-400 md:gap-600">
@@ -465,8 +465,8 @@ function PageHeader({ title }: { title: string }) {
 - **Rule**: [MUST NOT] Do not write CSS media queries directly. Use Tailwind breakpoint prefixes.
 
 ```typescript
-<div className="hidden md:block">Visible only on desktop</div>
-<div className="md:hidden">Visible only on mobile</div>
+<div className="hidden md:block">Visible on desktop only</div>
+<div className="md:hidden">Visible on mobile only</div>
 ```
 
 ---
@@ -475,7 +475,7 @@ function PageHeader({ title }: { title: string }) {
 
 ### next-themes Setup
 
-- **Rule**: [MUST] Use the `next-themes` library with class-based switching for dark mode
+- **Rule**: [MUST] Dark mode uses the `next-themes` library with class-based switching
 
 ```bash
 pnpm add next-themes
@@ -497,7 +497,7 @@ export function ThemeProvider({
 
 ### Using DS Tokens
 
-- **Rule**: [SHOULD] Using DS system color tokens will automatically switch colors when dark mode is extended in the future.
+- **Rule**: [SHOULD] Using DS system color tokens will enable automatic switching when dark mode is extended in the future.
 
 ```typescript
 <div className="bg-bg-1 text-text-1 border-border-3">
@@ -507,7 +507,7 @@ export function ThemeProvider({
 
 ### No Hardcoded Colors
 
-- **Rule**: [MUST] Colors must always be referenced through DS system color tokens. Do not directly use hex values or Tailwind's default palette.
+- **Rule**: [MUST] Colors are always referenced through DS system color tokens. Do not directly use hex values or Tailwind's default palette.
 
 ---
 
@@ -541,14 +541,14 @@ Icon names follow the `icon-{category}-{name}` pattern:
 
 ### Icon Size Rules
 
-- **Rule**: [SHOULD] Specify icon sizes in px units using the `size` prop
+- **Rule**: [SHOULD] Specify icon size in px units using the `size` prop
 
-| Usage              | size        | Size       |
-|--------------------|-------------|------------|
-| Inline text        | `16`        | 16px       |
-| Inside button      | `16` or `20`| 16px / 20px|
-| Standalone icon button | `20`    | 20px       |
-| Hero/emphasis      | `24` or above | 24px+    |
+| Usage              | size          | Size        |
+|--------------------|---------------|-------------|
+| Inline text        | `16`          | 16px        |
+| Inside button      | `16` or `20`  | 16px / 20px |
+| Standalone icon button | `20`      | 20px        |
+| Hero/emphasis      | `24` or above | 24px+       |
 
 ### Icon Accessibility
 
@@ -568,7 +568,7 @@ import { IconButton, Icon } from "@sellernote/design-system";
 
 ### Adding New Icons
 
-If an icon needed for the project is not available in DS:
+If the project requires an icon not available in DS:
 
 1. Add the SVG file to the `assets/icons/origin/` directory in the DS repository
 2. Follow the `icon-{category}-{name}.svg` naming pattern for the file name
@@ -582,8 +582,8 @@ If an icon needed for the project is not available in DS:
 - **Rule**: [MUST NOT] Do not use inline `style={{}}` attributes. Use Tailwind utility classes.
 - **Rule**: [MUST NOT] Do not use `!important`. Manage class priority with `cn()`.
 - **Rule**: [MUST NOT] Do not hardcode magic number px values. Use DS spacing tokens.
-- **Rule**: [MUST NOT] Do not copy `@sellernote/design-system` component source code into the project to modify it.
-- **Rule**: [MUST NOT] Do not combine className using template literals or string concatenation. Use `cn()`.
+- **Rule**: [MUST NOT] Do not copy `@sellernote/design-system` component source code into the project and modify it.
+- **Rule**: [MUST NOT] Do not combine classNames using template literals or string concatenation. Use `cn()`.
 
 ```typescript
 import { cn } from "@sellernote/design-system";

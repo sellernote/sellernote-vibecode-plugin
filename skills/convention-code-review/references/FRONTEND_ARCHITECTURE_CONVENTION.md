@@ -1,24 +1,24 @@
 # Frontend Architecture Convention
 
-> This document defines the directory structure, layer hierarchy, and dependency direction of the frontend project.
+> This document defines the directory structure, layer hierarchy, and dependency direction of frontend projects.
 > It follows a 5-layer architecture that adapts Feature-Sliced Design (FSD) to the Next.js App Router.
 > Parent rules: FRONTEND_CONVENTION.md
 
 ## FSD Overview
 
-Feature-Sliced Design (FSD) is an architecture methodology that **coheres frontend projects by domain unit** and **controls dependencies between layers unidirectionally**. For compatibility with the Next.js App Router, **app/pages/processes are consolidated into `app/`**, operating with the following 5 layers.
+Feature-Sliced Design (FSD) is an architecture methodology that **coheres frontend projects by domain units** and **controls dependencies between layers unidirectionally**. For compatibility with the Next.js App Router, **app/pages/processes are unified into `app/`**, operating with the following 5 layers.
 
 | Layer | Role |
 |--------|------|
 | `app/` | Next.js App Router. Routing, layouts, page composition |
-| `widgets/` | Independent UI blocks. Self-contained units composed of multiple features/entities |
+| `widgets/` | Independent UI blocks. Self-contained units combining multiple features/entities |
 | `features/` | Business feature units. User action handling |
 | `entities/` | Domain entities. Core data models and basic UI representation |
 | `shared/` | Domain-agnostic shared code. Utilities, common UI, configuration |
 
 ## Directory Layout
 
-- **Rule**: [MUST] The project follows the following FSD 5-layer directory structure.
+- **Rule**: [MUST] Projects must follow the FSD 5-layer directory structure below.
 
 ```
 src/
@@ -40,8 +40,8 @@ src/
 │
 ├── features/                     # Business feature units
 │   ├── order/
-│   │   ├── components/           # UI components dedicated to this feature
-│   │   ├── hooks/                # Custom hooks dedicated to this feature
+│   │   ├── components/           # UI components specific to this feature
+│   │   ├── hooks/                # Custom hooks specific to this feature
 │   │   ├── queries/              # TanStack Query hooks + query keys
 │   │   ├── store/                # Zustand slices
 │   │   ├── actions/              # Server Actions
@@ -73,7 +73,7 @@ src/
 
 ```
 ┌─────────────────────────────────────────────┐
-│  app/           ← Top level (can import all layers)   │
+│  app/           ← Top level (can import all layers) │
 ├─────────────────────────────────────────────┤
 │  widgets/       ← features, entities, shared      │
 ├─────────────────────────────────────────────┤
@@ -81,13 +81,13 @@ src/
 ├─────────────────────────────────────────────┤
 │  entities/      ← shared                          │
 ├─────────────────────────────────────────────┤
-│  shared/        ← External libraries only              │
+│  shared/        ← External libraries only          │
 └─────────────────────────────────────────────┘
 ```
 
 ### Upward Import Prohibition
 
-- **Rule**: [MUST NOT] Lower layers cannot import from upper layers.
+- **Rule**: [MUST NOT] Lower layers must not import from upper layers.
 
 ```tsx
 // entities/order/lib/formatOrder.ts — uses shared only
@@ -98,21 +98,21 @@ export function formatOrder(order: Order) {
 }
 ```
 
-### Cross-Import Prohibition
+### Cross-import Prohibition
 
-- **Rule**: [MUST NOT] A slice cannot directly import another slice from the same layer.
+- **Rule**: [MUST NOT] Slices within the same layer must not directly import from other slices in that layer.
 
 ```tsx
 // features/order/components/OrderList.tsx — imports from a lower layer (entities)
 import { UserAvatar } from '@/entities/user';
 ```
 
-### Cross-Import Resolution Patterns
+### Cross-import Resolution Patterns
 
-When two slices in the same layer need to share data, resolve it with the following two patterns.
+When two slices in the same layer need to share data, resolve it using one of these two patterns.
 
 1. **Extract common data to a lower layer**: Move shared data down to `entities/` or `shared/`.
-2. **Compose in an upper layer**: Compose multiple features in `widgets/` or `app/`.
+2. **Compose in an upper layer**: Combine multiple features in `widgets/` or `app/`.
 
 ```tsx
 // widgets/order-dashboard/ui/OrderDashboard.tsx — composing multiple features in an upper layer
@@ -129,21 +129,21 @@ export function OrderDashboard() {
 }
 ```
 
-### Only Public API Access Allowed
+### Public API Access Only
 
 - **Rule**: [MUST] External access to each slice is only allowed through its `index.ts`. Direct import of internal files is prohibited.
 
-### shared/ Segment Organization
+### shared/ Segment Structure
 
-- **Rule**: [MUST] `shared/` is organized by technical segments (`ui/`, `hooks/`, `lib/`, `store/`, `types/`, `constants/`, `config/`), not slices.
+- **Rule**: [MUST] `shared/` is organized by technical segments (`ui/`, `hooks/`, `lib/`, `store/`, `types/`, `constants/`, `config/`), not by slices.
 
 ## app/ Layer
 
 - **Rule**: [MUST] The `app/` directory follows Next.js App Router conventions and only contains route-related files.
-- **Rule**: [MUST] Do not write business logic directly in `page.tsx`. Compose screens using `widgets/` and `features/`.
+- **Rule**: [MUST] `page.tsx` must not contain business logic directly. Compose screens by combining `widgets/` and `features/`.
 
 ```tsx
-// app/(dashboard)/orders/page.tsx — compose widgets/features only
+// app/(dashboard)/orders/page.tsx — composition of widgets/features only
 import { Suspense } from 'react';
 import { PageLayout } from '@/widgets/page-layout';
 import { OrderList, OrderFilter } from '@/features/order';
@@ -182,14 +182,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 ## widgets/ Layer
 
-- **Rule**: [MUST] Place independent and self-contained UI blocks in `widgets/`. They form a single independent unit by composing multiple `features/` and `entities/`.
-- **Rule**: [MUST] Each widget is exposed externally through `index.ts` (Public API).
+- **Rule**: [MUST] `widgets/` contains independent, self-contained UI blocks. They form a single independent unit by combining multiple `features/` and `entities/`.
+- **Rule**: [MUST] Each widget is exposed externally through its `index.ts` (Public API).
 
 ### Distinction from entities
 
 | Criteria | widgets/ | entities/ |
 |------|----------|-----------|
-| Composition | Independent blocks composed of multiple domains | Basic units of a single domain |
+| Composition | Independent blocks combining multiple domains | Basic units of a single domain |
 | Examples | Header, Sidebar, OrderDashboard | OrderCard, OrderBadge, UserAvatar |
 | Dependencies | features, entities, shared | shared only |
 
@@ -220,17 +220,17 @@ export { Header } from './ui/Header';
 
 ## features/ Layer
 
-- **Rule**: [MUST] Place business feature units that provide value to the user in `features/`. Each feature slice can contain domain-specific `components/`, `hooks/`, `queries/`, `store/`, `actions/`, `schemas/`, and exposes a Public API through `index.ts`.
+- **Rule**: [MUST] `features/` contains business feature units that deliver value to users. Each feature slice may include domain-specific `components/`, `hooks/`, `queries/`, `store/`, `actions/`, `schemas/`, and exposes a Public API through `index.ts`.
 
 ### features/ Internal Structure
 
 ```
 features/order/
-├── components/           # UI components dedicated to this feature
+├── components/           # UI components specific to this feature
 │   ├── OrderList.tsx
 │   ├── OrderFilter.tsx
 │   └── OrderListItem.tsx
-├── hooks/                # Custom hooks dedicated to this feature
+├── hooks/                # Custom hooks specific to this feature
 │   └── useOrderExport.ts
 ├── queries/              # TanStack Query hooks + query keys
 │   ├── useOrdersQuery.ts
@@ -244,7 +244,7 @@ features/order/
 └── index.ts              # Public API
 ```
 
-### Distinction from entities: "What do you do with it" vs "What is it"
+### Distinction from entities: "What does it do" vs "What is it"
 
 | Criteria | features/ | entities/ |
 |------|-----------|-----------|
@@ -287,8 +287,8 @@ export type { OrderFilter as OrderFilterType } from './store/orderStore';
 
 ## entities/ Layer
 
-- **Rule**: [MUST] Place core data models, basic UI representations, and domain utilities of the business domain in `entities/`.
-- **Rule**: [MUST] UI components in `entities/` operate with props only and do not depend on store or queries.
+- **Rule**: [MUST] `entities/` contains core data models, basic UI representations, and domain utilities for the business domain.
+- **Rule**: [MUST] UI components in `entities/` operate with props only and must not depend on store or queries.
 
 ### entities/ Internal Segments
 
@@ -347,7 +347,7 @@ export { orderSchema } from './model/schemas';
 
 ## shared/ Layer
 
-- **Rule**: [MUST] Place domain-agnostic shared code in `shared/`. Organize by technical segments, not slices.
+- **Rule**: [MUST] `shared/` contains domain-agnostic shared code. It is organized by technical segments, not by slices.
 
 ### shared/ Segments
 
@@ -363,7 +363,7 @@ export { orderSchema } from './model/schemas';
 
 ### Relationship with @sellernote/design-system
 
-- **Rule**: [MUST] `@sellernote/design-system` is an external library, so it can be directly imported from any layer. Place only project-specific UI not in DS in `shared/ui/`. Do not wrap DS components in `shared/ui/`.
+- **Rule**: [MUST] `@sellernote/design-system` is an external library and can be directly imported from any layer. `shared/ui/` should only contain project-specific UI not available in DS. Do not wrap DS components in `shared/ui/`.
 
 ```tsx
 // shared/ui/data-table/DataTable.tsx — project-specific UI not in DS
@@ -383,10 +383,10 @@ export function DataTable<T>({ columns, data, isLoading }: DataTableProps<T>) {
 
 ## Public API Rules
 
-- **Rule**: [MUST] Each slice (`features/`, `entities/`, `widgets/`) explicitly exports only the items to be exposed externally through `index.ts`. External access is only permitted through `index.ts`.
+- **Rule**: [MUST] Each slice (`features/`, `entities/`, `widgets/`) must explicitly export only the items to be exposed externally through `index.ts`. External access is only allowed through `index.ts`.
 
 ```tsx
-// Accessing through the Public API from outside
+// Accessing through Public API from outside
 import { OrderList, OrderFilter } from '@/features/order';
 import { OrderCard, formatOrderDate } from '@/entities/order';
 import { Header } from '@/widgets/header';
@@ -395,7 +395,7 @@ import type { Order } from '@/entities/order';
 
 ### index.ts Writing Guide
 
-- **Rule**: [SHOULD] Only expose items in `index.ts` that are actually needed externally. Do not over-expose internal implementations.
+- **Rule**: [SHOULD] `index.ts` should only expose items that are actually needed externally. Do not over-expose internal implementations.
 
 ```ts
 // features/order/index.ts — expose only what is needed externally
@@ -406,9 +406,9 @@ export type { OrderFilter as OrderFilterType } from './store/orderStore';
 
 ## Import Path Rules
 
-### Using Absolute Paths
+### Use Absolute Paths
 
-- **Rule**: [MUST] Import paths use absolute paths with the `@/` prefix. Use relative paths between files within the same slice.
+- **Rule**: [MUST] Import paths must be written as absolute paths using the `@/` prefix. Use relative paths between files within the same slice.
 
 `tsconfig.json` configuration:
 
@@ -430,14 +430,14 @@ export type { OrderFilter as OrderFilterType } from './store/orderStore';
 import { OrderCard } from '@/entities/order';
 import { DataTable } from '@/shared/ui/data-table';
 
-// Within the same slice, use relative paths
+// Within the same slice use relative paths
 import { useOrdersQuery } from '../queries/useOrdersQuery';
 import { useOrderStore } from '../store/orderStore';
 ```
 
 ### Import Order
 
-- **Rule**: [MUST] Import statements are written in the following 8-category order, with blank lines between categories.
+- **Rule**: [MUST] Import statements must be written in the following 8-category order, with blank lines between categories.
 
 ```tsx
 // 1) React/external libraries
@@ -469,65 +469,65 @@ import type { OrderFilter as OrderFilterType } from '../store/orderStore';
 
 ## Code Colocation
 
-- **Rule**: [SHOULD] Place related files (components, tests, stories) in the same folder within each slice.
+- **Rule**: [SHOULD] Related files (components, tests, stories) should be placed in the same folder within each slice.
 
 ```
 features/order/components/
 ├── OrderList.tsx              # Feature component
 ├── OrderList.test.tsx         # Unit test
 ├── OrderList.stories.tsx      # Storybook story
-└── OrderListItem.tsx          # Sub-component (dedicated to this feature)
+└── OrderListItem.tsx          # Sub-component (specific to this feature)
 ```
 
-## Anti-Patterns
+## Anti-patterns
 
-### Cross-Import
+### Cross-import
 
-- **Rule**: [MUST NOT] Do not directly import another slice from the same layer. Compose in an upper layer (widgets/app).
+- **Rule**: [MUST NOT] Do not directly import from other slices within the same layer. Compose in an upper layer (widgets/app).
 
 ### Upward Dependency
 
-- **Rule**: [MUST NOT] Do not import from an upper layer in a lower layer.
+- **Rule**: [MUST NOT] Do not import from upper layers in lower layers.
 
 ### Public API Bypass
 
-- **Rule**: [MUST NOT] Do not directly import internal slice files without going through `index.ts`.
+- **Rule**: [MUST NOT] Do not directly import internal files of a slice without going through `index.ts`.
 
 ### Slice Leakage
 
-- **Rule**: [MUST NOT] Do not over-expose internal implementations (internal-only components, internal store, query keys, etc.) in `index.ts`.
+- **Rule**: [MUST NOT] Do not over-expose internal implementations (internal-only components, internal stores, query keys, etc.) in `index.ts`.
 
 ### Bloated shared/
 
-- **Rule**: [MUST NOT] Do not place domain logic in `shared/`. Place domain logic in `entities/`.
+- **Rule**: [MUST NOT] Do not place domain logic in `shared/`. Domain logic belongs in `entities/`.
 
 ### Business Logic in entities
 
-- **Rule**: [MUST NOT] Do not place `useQuery` or `store`-dependent code in `entities/`. UI in entities operates with props only.
+- **Rule**: [MUST NOT] Do not place `useQuery` or `store`-dependent code in `entities/`. UI in entities must operate with props only.
 
-### Bloated Feature Slice
+### Bloated Feature Slices
 
-- **Rule**: [SHOULD NOT] Consider splitting when a single feature slice has 10 or more components.
+- **Rule**: [SHOULD NOT] If a single feature slice has 10 or more components, consider splitting it.
 
 ```
 features/order-management/     # Order inquiry/management features
-features/order-form/           # Order creation/modification features
+features/order-form/           # Order creation/editing features
 features/order-fulfillment/    # Order processing (shipping, refund) features
 ```
 
-### Circular Dependency
+### Circular Dependencies
 
 - **Rule**: [MUST NOT] Do not create circular dependencies between modules (A -> B -> A). Resolve by extracting common logic to a lower layer (`entities/` or `shared/`).
 
-### Anti-Pattern Summary
+### Anti-pattern Summary
 
-| Anti-Pattern | Description | Marker |
+| Anti-pattern | Description | Marker |
 |---------|------|------|
-| Cross-import | Directly importing `features/user` from `features/order` | [MUST NOT] |
-| Upward dependency | Importing `features/` from `entities/` | [MUST NOT] |
-| Public API bypass | Directly importing `@/features/order/components/OrderList` | [MUST NOT] |
+| Cross-import | Direct import of `features/user` from `features/order` | [MUST NOT] |
+| Upward dependency | Import of `features/` from `entities/` | [MUST NOT] |
+| Public API bypass | Direct import of `@/features/order/components/OrderList` | [MUST NOT] |
 | Slice leakage | Over-exposing internal implementations in `index.ts` | [MUST NOT] |
 | Bloated shared/ | Placing domain logic in `shared/` | [MUST NOT] |
 | Business logic in entities | Placing useQuery or store-dependent code in entities | [MUST NOT] |
-| Bloated feature slice | A single feature having 10 or more components | [SHOULD NOT] |
-| Circular dependency | A -> B -> A circular between modules | [MUST NOT] |
+| Bloated feature slices | A single feature having 10+ components | [SHOULD NOT] |
+| Circular dependencies | A -> B -> A cycles between modules | [MUST NOT] |
