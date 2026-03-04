@@ -18,6 +18,10 @@ React SPA(Vite + React Router) 프로젝트에서 데이터 페칭과 상태 관
    - `references/FRONTEND_CONVENTION.md` - 컴포넌트 설계, import 규칙
 
 2. **필요 시 읽기**:
+   - `references/API_CLIENT_CONVENTION.md` - API 클라이언트 공통 규칙, 토큰 관리, 에러 처리
+   - `references/API_CLIENT_AXIOS_CONVENTION.md` - Axios 구현, 인터셉터, 리프레시 토큰 플로우
+   - `references/REACT_CONVENTION.md` - React 19 패턴, Hooks 규칙, 성능 최적화
+   - `references/REACT_ROUTER_CONVENTION.md` - React Router 7 Framework Mode, route modules, loader
    - `references/TYPESCRIPT_CONVENTION.md` - 타입 시스템, async/await, import 순서
    - `references/COMMON_CONVENTION.md` - 네이밍, 에러 처리, 로깅
 

@@ -33,10 +33,13 @@ Conventions are loaded dynamically based on what files were changed. Before star
    - `references/FRONTEND_ARCHITECTURE_CONVENTION.md` - Component types, dependency direction
    - `references/NEXTJS_CONVENTION.md` - App Router, Server/Client Components
    - `references/STATE_CONVENTION.md` - Zustand, TanStack Query, state classification
-   - `references/STYLING_CONVENTION.md` - MUI v6, design tokens, responsive
+   - `references/STYLING_CONVENTION.md` - Tailwind CSS v4, cn(), design tokens
    - `references/FORM_CONVENTION.md` - React Hook Form + Zod
-   - `references/TESTING_CONVENTION.md` - Storybook, Jest, RTL, Playwright
+   - `references/TESTING_CONVENTION.md` - Storybook, Vitest, RTL, Playwright
    - `references/REACT_CONVENTION.md` - React 19 패턴, Hooks 규칙, 성능 최적화, Error Boundary, Context API
+   - `references/REACT_ROUTER_CONVENTION.md` - React Router 7 Framework Mode, route modules, loader/action
+   - `references/API_CLIENT_CONVENTION.md` - API client common rules, token management
+   - `references/API_CLIENT_AXIOS_CONVENTION.md` - Axios implementation, interceptors
 
 ## Workflow
 
@@ -75,9 +78,11 @@ Map each changed file to its domain to determine which conventions to load:
 | `app/**/*.tsx` | Frontend/Route | NEXTJS, FRONTEND_ARCHITECTURE |
 | `components/ui/**` | Frontend/UI | FRONTEND_ARCHITECTURE, STYLING |
 | `components/feature/**` | Frontend/Feature | FRONTEND_ARCHITECTURE, NEXTJS, STATE |
-| `queries/**`, `hooks/**` | Frontend/Data | STATE, NEXTJS |
+| `queries/**`, `hooks/**` | Frontend/Data | STATE, NEXTJS, API_CLIENT |
 | `store/**` | Frontend/State | STATE |
 | `actions/**` | Frontend/Actions | NEXTJS, STATE |
+| `lib/api*.ts` | Frontend/API | API_CLIENT, API_CLIENT_AXIOS |
+| `routes/**` | Frontend/Route | REACT_ROUTER, FRONTEND_ARCHITECTURE |
 | `*.stories.tsx` | Frontend/Test | TESTING |
 | `*.spec.ts`, `*.test.ts` | Testing | TESTING (frontend) or NESTJS (backend) |
 
@@ -144,7 +149,7 @@ Review each changed file against loaded conventions. Check these categories:
 **Next.js (NEXTJS_CONVENTION)**
 - [ ] `page.tsx` is Server Component (no `'use client'`, no business logic)
 - [ ] `'use client'` only at leaf/Feature components (not on Page or Layout)
-- [ ] `loading.tsx` uses MUI `Skeleton` (not spinners)
+- [ ] `loading.tsx` uses Skeleton component (not spinners)
 - [ ] `error.tsx` has `'use client'` directive
 - [ ] All imports use `@/` absolute paths
 
@@ -154,9 +159,9 @@ Review each changed file against loaded conventions. Check these categories:
 - [ ] Query key factory pattern used (`{feature}Keys`)
 
 **Styling (STYLING_CONVENTION)**
-- [ ] Uses MUI theme tokens (no hex hardcoding)
-- [ ] Priority: Theme overrides > `styled()` > `sx` prop
-- [ ] Responsive using MUI breakpoints (no raw media queries)
+- [ ] Uses design tokens (no hex hardcoding)
+- [ ] Priority: DS components > Tailwind utilities > cn() conditional
+- [ ] Responsive using Tailwind breakpoints
 
 **Forms (FORM_CONVENTION)**
 - [ ] React Hook Form + Zod combination

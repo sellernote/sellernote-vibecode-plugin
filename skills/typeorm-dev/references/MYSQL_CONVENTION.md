@@ -3,7 +3,7 @@
 > This document defines the rules applied to MySQL projects.
 > Parent rules: DATABASE_CONVENTION.md
 
-## Tech Stack
+## Technology Stack
 
 | Item | Version/Setting |
 |------|----------|
@@ -11,7 +11,7 @@
 
 ## Naming Rules
 
-> Default naming rules follow DATABASE_CONVENTION.md. Below defines only MySQL-specific rules.
+> Basic naming rules follow DATABASE_CONVENTION.md. Below defines only MySQL-specific rules.
 
 ### Table Names
 
@@ -40,13 +40,13 @@
   );
   ```
 
-## Monetary Value Handling
+## Monetary Amount Handling
 
-> Default rules for DECIMAL usage follow DATABASE_CONVENTION.md. Below is the MySQL-specific precision guide.
+> Basic rules for using DECIMAL follow DATABASE_CONVENTION.md. Below is a MySQL-specific precision guide.
 
 ### DECIMAL Precision
 
-- **Rule**: [SHOULD] The default precision for monetary fields is `DECIMAL(15, 2)`. Use `DECIMAL(15, 4)` when GAAP compliance is required.
+- **Rule**: [SHOULD] The default precision for monetary amount fields is `DECIMAL(15, 2)`. Use `DECIMAL(15, 4)` when GAAP compliance is required.
 - **Good Example**:
   ```sql
   total_amount DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT '주문 총 금액 (KRW)',
@@ -91,7 +91,7 @@
 
 ## SQL Style
 
-### Uppercase Keywords
+### Keyword Uppercase
 
 - **Rule**: [MUST] SQL reserved words (keywords) must be written in uppercase.
 - **Good Example**:
@@ -145,8 +145,8 @@
 | Type | Size | Range (UNSIGNED) | Usage Criteria |
 |------|------|-----------------|----------|
 | TINYINT | 1 byte | 0 ~ 255 | boolean, status values |
-| INT | 4 bytes | 0 ~ ~4.2 billion | general integers |
-| BIGINT | 8 bytes | 0 ~ ~18.4 quintillion | `_no`, large-scale counters |
+| INT | 4 bytes | 0 ~ approx. 4.2 billion | general integers |
+| BIGINT | 8 bytes | 0 ~ approx. 18.44 quintillion | `_no`, high-volume counters |
 
 - **Rule**: [SHOULD] Use TINYINT(1) for boolean values. (MySQL does not have a native BOOLEAN type)
 
@@ -154,11 +154,11 @@
 
 | Type | Usage Criteria |
 |------|----------|
-| VARCHAR(n) | Strings with predictable maximum length (up to 65,535 bytes) |
+| VARCHAR(n) | Strings with a predictable maximum length (up to 65,535 bytes) |
 | TEXT | Long text where length is difficult to predict |
 | CHAR(n) | Fixed-length strings (e.g., country code `KR`, currency code `KRW`) |
 
-- **Rule**: [MUST NOT] Do not specify meaninglessly large lengths for VARCHAR. (Temporary tables may allocate memory up to the specified maximum length)
+- **Rule**: [MUST NOT] Do not specify an unnecessarily large length for VARCHAR. (When creating temporary tables, memory may be allocated up to the specified maximum length)
 
 ### Date/Time Types
 
@@ -168,12 +168,12 @@
 | TIMESTAMP | 1970-01-01 ~ 2038-01-19 | 4 bytes | Do not use (see rule below) |
 | DATE | 1000-01-01 ~ 9999-12-31 | 3 bytes | When only the date is needed (e.g., date of birth) |
 
-- **Rule**: [MUST] Date/time fields must use the DATETIME type. Do not use TIMESTAMP. (TIMESTAMP has a 2038 limitation, and automatic timezone conversion causes confusion under a UTC storage policy)
-- **Rule**: [MUST NOT] Do not store date/time values as strings (VARCHAR).
+- **Rule**: [MUST] Date/time fields must use the DATETIME type. Do not use TIMESTAMP. (TIMESTAMP has the 2038 limitation, and its automatic timezone conversion causes confusion under a UTC storage policy)
+- **Rule**: [MUST NOT] Do not store date/time as strings (VARCHAR).
 
 ### JSON Type
 
-- **Rule**: [MAY] JSON type may be used for unstructured data with flexible structure or frequently changing schemas.
+- **Rule**: [MAY] The JSON type may be used for unstructured data with flexible structure or frequently changing schemas.
 - **Rule**: [MUST NOT] Do not store structured data that can be normalized in JSON. (Fields within JSON are difficult to index directly and cannot be joined)
 - **Good Example**:
   ```sql
@@ -221,7 +221,7 @@
 ### Partitioning Strategy
 
 - **Rule**: [MAY] Partitioning may be considered for large-scale tables (tens of millions of rows or more).
-- **Rule**: [SHOULD] Choose partition keys from columns frequently used in query WHERE conditions.
+- **Rule**: [SHOULD] Choose a partitioning key from columns frequently used in the WHERE conditions of queries.
 - **Good Example**:
   ```sql
   CREATE TABLE log (
@@ -243,7 +243,7 @@
 
 ### Using EXPLAIN
 
-- **Rule**: [MUST] New queries or queries suspected of performance issues must be verified with EXPLAIN to check the execution plan.
+- **Rule**: [MUST] New queries or queries suspected of performance issues must have their execution plans verified with EXPLAIN.
 - **Good Example**:
   ```sql
   EXPLAIN SELECT o.id, o.total_amount
@@ -261,21 +261,21 @@
 ### Slow Queries
 
 - **Rule**: [MUST] Enable slow query logging and monitor it periodically.
-- **Rule**: [SHOULD] Set the slow query threshold to 1 second. (Adjustable based on project characteristics)
+- **Rule**: [SHOULD] Set the slow query threshold to 1 second. (May be adjusted based on project characteristics)
 
-### Precautions When Analyzing Execution Plans
+### Execution Plan Analysis Considerations
 
 | EXPLAIN Item | Warning Signal | Action |
 |-------------|----------|----------|
 | type = ALL | Full Table Scan | Add appropriate indexes |
 | type = index | Full Index Scan | Review indexes matching WHERE conditions |
 | Extra: Using filesort | File sort occurring | Add index on ORDER BY columns |
-| Extra: Using temporary | Temporary table usage | Optimize GROUP BY/ORDER BY |
-| Very large rows value | Large-scale row scan | Improve indexes or query structure |
+| Extra: Using temporary | Temporary table used | Optimize GROUP BY/ORDER BY |
+| Very large rows value | Large row scan | Improve indexes or query structure |
 
 ### Pagination
 
-- **Rule**: [SHOULD] For large data pagination, use cursor-based (keyset) pagination instead of OFFSET-based pagination.
+- **Rule**: [SHOULD] For large data pagination, use cursor-based (keyset) pagination instead of OFFSET-based.
 - **Good Example**:
   ```sql
   -- 커서 기반 페이지네이션 (이전 페이지 마지막 id 이후의 데이터 조회)
@@ -304,7 +304,7 @@
 
 ### Index Invalidation Patterns
 
-- **Rule**: [MUST NOT] Do not apply functions or operations to indexed columns.
+- **Rule**: [MUST NOT] Do not apply functions or operations on indexed columns.
 - **Good Example**:
   ```sql
   -- 범위 조건으로 변환하여 인덱스 활용
@@ -324,7 +324,7 @@
 
 ### Bulk Data Batch Processing
 
-- **Rule**: [MUST NOT] Do not process large INSERT/UPDATE/DELETE operations in a single transaction. (Long transactions cause lock contention, replication lag, and undo log bloat)
+- **Rule**: [MUST NOT] Do not process large volumes of INSERT/UPDATE/DELETE in a single transaction. (Long transactions cause lock contention, replication lag, and undo log bloat)
 - **Good Example**:
   ```sql
   -- 배치 단위로 나누어 처리

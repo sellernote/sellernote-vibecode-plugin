@@ -5,7 +5,7 @@
 
 ## Tech Stack
 
-| Item | Version/Setting |
+| Item | Version/Config |
 |------|----------|
 | Database | MySQL (default) |
 
@@ -83,7 +83,7 @@ description: string | null;
 
 ### Domain Model Interface Pattern
 
-- [MUST] Entity `implements` `IOrderModel` (data fields only) + `IOrderModelRelation` (relation fields only).
+- [MUST] Entity must `implements` `IOrderModel` (data fields only) + `IOrderModelRelation` (relation fields only).
 - [MUST] Do not include relation fields in Domain Model Interface (ORM-dependent).
 
 ```typescript
@@ -120,7 +120,7 @@ export class Order extends BaseEntity implements IOrderModel, IOrderModelRelatio
 
 ### Monetary Field Custom Transformer
 
-- [MUST] Apply `DecimalTransformer` to monetary (decimal) columns. Note: Without it, `number` operations will behave as string concatenation, causing bugs.
+- [MUST] Apply `DecimalTransformer` to monetary (decimal) columns. Warning: without it, `number` operations will behave as string concatenation, causing bugs.
 - [MUST] Define `DecimalTransformer` as a shared utility in one place and reuse it.
 
 ```typescript
@@ -140,7 +140,7 @@ totalAmount: number;
 
 ### Relation Definition
 
-- [MUST] Use the `Relation<>` wrapper for relation types. Note: Direct reference like `user: User` risks circular dependencies.
+- [MUST] Use the `Relation<>` wrapper for relation types. Warning: direct reference like `user: User` → risk of circular dependency.
 - [MUST] Explicitly define FK columns in `@ManyToOne` (allows direct FK access when relation is not loaded).
 - [MUST] Place `@JoinColumn()` only on the owning side (`@ManyToOne` side).
 - [MUST] Do not hardcode FK column names in `@JoinColumn()`. `SnakeNamingStrategy` handles automatic conversion.
@@ -157,10 +157,10 @@ userId: string;
 user: Relation<User>;
 ```
 
-### Index
+### Indexes
 
-- [MUST] Specify the index name in `@Index()` using the format `idx_{table_name}_{column_name}`. (Refer to DATABASE_CONVENTION.md)
-- [SHOULD] Unique constraint: `@Index('uq_user_email', ['email'], { unique: true })`.
+- [MUST] Specify index names in `@Index()` using the format `idx_{table_name}_{column_name}`. (Refer to DATABASE_CONVENTION.md)
+- [SHOULD] Unique constraints: `@Index('uq_user_email', ['email'], { unique: true })`.
 
 ```typescript
 @Entity()
@@ -172,7 +172,7 @@ export class Order extends BaseEntity { ... }
 ### Enum Handling
 
 - [MUST] Use string-based TypeScript Enum + `type: 'varchar'`. Do not use `type: 'enum'` (MySQL ENUM causes ALTER TABLE issues).
-  - Note: Numeric-based Enums and untyped strings are also prohibited.
+  - Warning: Numeric-based Enums and untyped strings are also prohibited.
 - [SHOULD] Define Enums in separate files (`enums/` directory).
 
 ```typescript
@@ -194,7 +194,7 @@ status: OrderStatus;
 ## Repository Pattern
 
 - [SHOULD] Simple CRUD → Repository API. Complex queries (OR, subqueries, aggregation, bulk UPDATE/DELETE) → QueryBuilder.
-- [MUST] When using `find` methods, explicitly specify options such as `relations`, `select`, `order`, `take`, etc.
+- [MUST] When using `find` methods, explicitly specify options such as `relations`, `select`, `order`, `take`.
 - [SHOULD] Prefer `findOne` + null check over `findOneOrFail` (provides business-context errors).
 
 ```typescript
@@ -218,8 +218,8 @@ const orders = await this.orderRepository.find({
 ## QueryBuilder
 
 - [MUST] Parameter binding: use `:paramName` syntax. Do not use string interpolation (SQL Injection).
-- [SHOULD] Select only necessary columns. Use `leftJoinAndSelect` when relation data is needed, `leftJoin` when only conditions are needed.
-- [MAY] Subqueries may be used for complex aggregation/conditions.
+- [SHOULD] Select only the required columns. Use `leftJoinAndSelect` when relation data is needed, `leftJoin` when only conditions are needed.
+- [MAY] Subqueries may be used for complex aggregations/conditions.
 
 ```typescript
 const orders = await this.orderRepository
@@ -233,8 +233,8 @@ const orders = await this.orderRepository
 
 ### typeorm-transactional
 
-- [MUST] Modifying multiple tables simultaneously → transaction required.
-- [MUST] Use the `@Transactional()` decorator (based on Async Local Storage, uses existing Repository as-is).
+- [MUST] Modifying multiple tables simultaneously → transactions are required.
+- [MUST] Use the `@Transactional()` decorator (based on Async Local Storage, works with existing Repositories as-is).
 
 ### Initial Setup
 
@@ -270,11 +270,11 @@ async createOrder(dto: CreateOrderDto): Promise<Order> {
 
 | Propagation | Behavior | Use Case |
 |-------------|------|----------|
-| `REQUIRED` (default) | Joins existing, creates if none | General business logic |
+| `REQUIRED` (default) | Joins existing, creates new if none exists | General business logic |
 | `REQUIRES_NEW` | Always creates a new transaction | Audit logs, independent commits |
-| `MANDATORY` | Requires existing, throws error if none | Internal-only methods |
+| `MANDATORY` | Requires existing, throws error if none exists | Internal-only methods |
 
-- [MUST] Manage transactions in the Service layer. Do not initiate from Controller/Repository.
+- [MUST] Manage transactions in the Service layer. Do not start transactions in Controller/Repository.
 - [MUST NOT] Do not use QueryRunner-based manual transactions. Use `@Transactional()`.
 
 ## Migration Management
@@ -284,20 +284,20 @@ async createOrder(dto: CreateOrderDto): Promise<Order> {
 
 | Command | Purpose |
 |--------|------|
-| `migration:generate` | Auto-generate based on Entity |
+| `migration:generate` | Auto-generate based on Entities |
 | `migration:create` | Manually create an empty file |
-| `migration:run` | Apply migration |
+| `migration:run` | Apply migrations |
 | `migration:revert` | Rollback the last migration |
 
 - [MUST] File naming: timestamp + meaningful description (e.g., `1706000000000-CreateOrderTable.ts`).
-- [MUST NOT] Do not use `synchronize: true` in production. [MAY] Allowed in local environment.
+- [MUST NOT] Do not use `synchronize: true` in production. [MAY] Allowed in local environments.
 - [MUST] Implement both `up()` and `down()`. (Refer to DATABASE_CONVENTION.md rollback strategy)
 
 ## Performance Optimization
 
-- [MUST] Default relation loading: keep lazy (default). Explicitly load with `relations` option when needed.
-- [MUST NOT] Do not load relations individually inside loops (N+1 problem). Use `relations` option or `leftJoinAndSelect`.
-- [SHOULD] Query only necessary columns using the `select` option.
+- [MUST] Default relation loading: keep lazy (default). Explicitly load when needed using the `relations` option.
+- [MUST NOT] Do not load relations individually inside loops (N+1 problem). Use the `relations` option or `leftJoinAndSelect`.
+- [SHOULD] Query only the required columns using the `select` option.
 - [MUST] Apply `take`/`skip` pagination for list queries.
 - [SHOULD] Use `findAndCount` to retrieve data and count in a single query.
 
@@ -314,7 +314,7 @@ const [items, totalItems] = await this.orderRepository.findAndCount({
 
 - [MUST] Use `TypeOrmModule.forRootAsync()` + ConfigService for environment variable-based configuration.
 - [MUST] Register `TypeOrmModule.forFeature([Entity])` in Feature Modules.
-- [MUST] Repository: constructor injection with `@InjectRepository()`.
+- [MUST] Repository: inject via constructor using `@InjectRepository()`.
 - [MUST] When DataSource is needed, inject via NestJS DI.
 
 ## Anti-Patterns
@@ -324,4 +324,4 @@ const [items, totalItems] = await this.orderRepository.findAndCount({
 - [MUST NOT] Do not execute raw SQL with `query()`. Use QueryBuilder/Repository API.
 - [MUST NOT] Do not omit transactions when modifying multiple tables.
 - [MUST NOT] Do not use string interpolation in QueryBuilder (SQL Injection).
-- [MUST NOT] Do not reference Entities directly without the `Relation<>` wrapper (circular dependencies).
+- [MUST NOT] Do not reference Entities directly without the `Relation<>` wrapper (circular dependency).

@@ -1,35 +1,33 @@
-# React 컨벤션
+# React Convention
 
-> 이 문서는 React 19 프로젝트에 적용되는 규칙을 정의합니다.
-> 상위 규칙: [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)
+> This document defines rules that apply to React 19 projects.
+> Parent rules: FRONTEND_CONVENTION.md
 
 ---
 
-## 1. 기술 스택
+## 1. Technology Stack
 
-| 항목 | 버전/설정 |
+| Item | Version/Configuration |
 | --- | --- |
-| React | 19 |
+| React | 19.2+ |
 | TypeScript | 5.x |
-| React Compiler | 활성화 권장 |
+| React Compiler | v1.0 — must be enabled |
 | Error Boundary | react-error-boundary |
-| UI 컴포넌트 | @sellernote/design-system |
-| 가상화 | @tanstack/react-virtual (필요 시) |
+| Virtualization | @tanstack/react-virtual (when needed) |
 
-> **React 19 문법 변경 사항**: 이 문서의 코드 예시는 React 19 기준으로 작성되었습니다.
-> - Context: `<MyContext.Provider value={...}>` 대신 `<MyContext value={...}>` 축약 문법 사용
-> - ref: `forwardRef` 대신 ref를 일반 prop으로 직접 전달
-> - 이전 버전(React 18 이하)에서는 해당 문법이 동작하지 않습니다.
+> **React 19 Syntax Changes**: The code examples in this document are written based on React 19.
+> - Context: In React 19, the `<MyContext value={...}>` syntax can be used. `<MyContext.Provider>` is the legacy syntax from before React 19.
+> - ref: In React 19, `ref` can be passed as a regular prop. `forwardRef` still works but is scheduled to be deprecated in a future release.
+> - In earlier versions (React 18 and below), this syntax does not work.
 
 ---
 
-## 2. 컴포넌트 패턴
+## 2. Component Patterns
 
 ### Compound Components
 
-- **규칙**: [SHOULD] 논리적으로 연관된 컴포넌트 그룹은 Compound Component 패턴으로 묶어 표현한다.
-- **이유**: `<Select>`, `<Select.Option>` 처럼 관련 컴포넌트를 하나의 네임스페이스로 묶으면 사용처에서 의도가 명확하게 드러나고, 내부 상태를 Context로 공유하면서도 외부 API는 선언적으로 유지할 수 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Logically related component groups should be expressed using the Compound Component pattern.
+- **Good Example**:
 
 ```typescript
 import { createContext, useContext } from "react";
@@ -43,7 +41,7 @@ const SelectContext = createContext<SelectContextValue | null>(null);
 
 function useSelectContext() {
   const ctx = useContext(SelectContext);
-  if (!ctx) throw new Error("Select.Option은 Select 내부에서만 사용할 수 있습니다.");
+  if (!ctx) throw new Error("Select.Option은 Select 내부에서만 사용할 수 있다.");
   return ctx;
 }
 
@@ -89,27 +87,10 @@ export { Select };
 </Select>
 ```
 
-> **참고**: `@sellernote/design-system`이 `Select`, `Combobox`, `RadioGroup`, `CheckboxGroup` 등 복합 입력 컴포넌트를 제공한다. Compound Component를 직접 구현하기 전에 DS 컴포넌트를 먼저 확인한다.
+### Controlled vs Uncontrolled Components
 
-- **나쁜 예시**:
-
-```typescript
-// options를 배열 prop으로 전달 - 확장성이 떨어지고 커스텀 렌더링이 어렵다
-<Select
-  value={selected}
-  onChange={setSelected}
-  options={[
-    { value: "kr", label: "한국" },
-    { value: "us", label: "미국" },
-  ]}
-/>
-```
-
-### Controlled vs Uncontrolled 컴포넌트
-
-- **규칙**: [MUST] 폼 내 입력 컴포넌트는 제어 컴포넌트(Controlled)로 작성한다. 단, 외부에서 값을 관리할 필요가 없는 일회성 내부 UI는 비제어(Uncontrolled)로 두어도 무방하다.
-- **이유**: 제어 컴포넌트는 React 상태가 단일 진실의 원천(single source of truth)이 되어 값 동기화, 유효성 검사, 폼 초기화가 명확하다. 단, React Hook Form 사용 시 내부적으로 비제어 방식으로 동작하므로 register 패턴을 따른다.
-- **좋은 예시**:
+- **Rule**: [MUST] Input components within forms must be written as controlled components. However, one-off internal UI elements that do not need external value management may remain uncontrolled.
+- **Good Example**:
 
 ```typescript
 interface EmailInputProps {
@@ -133,72 +114,25 @@ function SignupForm() {
 }
 ```
 
-- **나쁜 예시**:
+### Conditional Rendering
 
-```typescript
-// 비제어 컴포넌트를 폼에서 사용 - 값 추적이 어렵고 초기화 처리가 복잡해진다
-function EmailInput() {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  function handleSubmit() {
-    console.log(inputRef.current?.value); // ref로 직접 값을 읽어야 함
-  }
-
-  return <input type="email" defaultValue="" ref={inputRef} />;
-}
-```
-
-- **DS 컴포넌트 연동 예시**:
-
-```typescript
-import { useState } from "react";
-import { TextField, Select } from "@sellernote/design-system";
-
-function SignupForm() {
-  const [email, setEmail] = useState("");
-  const [country, setCountry] = useState("");
-
-  return (
-    <form className="flex flex-col gap-400">
-      <TextField
-        label="이메일"
-        value={email}
-        onChange={setEmail}
-      />
-      <Select
-        label="국가"
-        value={country}
-        items={[
-          { label: "한국", value: "kr" },
-          { label: "미국", value: "us" },
-        ]}
-        onSelectedChange={setCountry}
-      />
-    </form>
-  );
-}
-```
-
-### 조건부 렌더링
-
-- **규칙**: [MUST] 조건부 렌더링 시 `&&` 연산자 왼쪽에 숫자형 값(number)을 직접 사용하지 않는다. 복잡한 조건은 삼항 연산자 또는 early return 패턴을 사용한다.
-- **이유**: `count && <Component />` 에서 `count`가 `0`이면 React는 `0`을 그대로 렌더링한다. Boolean으로 명시적 변환이 필요하다. 조건이 복잡할수록 early return으로 가독성을 높이는 것이 낫다.
-- **좋은 예시**:
+- **Rule**: [MUST] When using conditional rendering, do not use numeric values (number) directly on the left side of the `&&` operator. Use ternary operators or early return patterns for complex conditions.
+- **Good Example**:
 
 ```typescript
 // 1. boolean 변환 후 && 연산자 사용
 function OrderList({ orders }: { orders: Order[] }) {
   return (
     <div>
-      {orders.length > 0 && <p>총 {orders.length}건의 주문이 있습니다.</p>}
+      {orders.length > 0 && <p>총 {orders.length}건의 주문이 있다.</p>}
     </div>
   );
 }
 
 // 2. 상태에 따른 early return
 function UserProfile({ user }: { user: User | null }) {
-  if (!user) return <p>로그인이 필요합니다.</p>;
-  if (user.isSuspended) return <p>정지된 계정입니다.</p>;
+  if (!user) return <p>로그인이 필요하다.</p>;
+  if (user.isSuspended) return <p>정지된 계정이다.</p>;
 
   return (
     <div>
@@ -214,31 +148,10 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 }
 ```
 
-- **나쁜 예시**:
+### List Rendering and key
 
-```typescript
-function OrderList({ orders }: { orders: Order[] }) {
-  return (
-    <div>
-      {/* orders.length가 0이면 화면에 "0"이 렌더링된다 */}
-      {orders.length && <p>총 {orders.length}건</p>}
-
-      {/* JSX 내부 복잡한 중첩 삼항 - 가독성이 매우 나쁘다 */}
-      {orders.length > 10
-        ? orders.length > 50
-          ? <p>주문이 너무 많습니다</p>
-          : <p>주문이 많습니다</p>
-        : <p>주문이 적습니다</p>}
-    </div>
-  );
-}
-```
-
-### 리스트 렌더링과 key
-
-- **규칙**: [MUST NOT] 리스트 렌더링 시 `key`로 배열 인덱스(`index`)를 사용하지 않는다. 데이터 고유 식별자(ID)를 `key`로 사용해야 한다.
-- **이유**: React는 `key`를 통해 리스트 항목의 동일성을 추적한다. 인덱스를 `key`로 사용하면 항목 추가/삭제/재정렬 시 React가 잘못된 컴포넌트를 재사용하여 상태 오염, 애니메이션 버그, 포커스 손실 등이 발생한다.
-- **좋은 예시**:
+- **Rule**: [MUST NOT] Do not use array index (`index`) as `key` when rendering lists. Use a unique data identifier (ID) as the `key`.
+- **Good Example**:
 
 ```typescript
 function ProductList({ products }: { products: Product[] }) {
@@ -254,7 +167,7 @@ function ProductList({ products }: { products: Product[] }) {
 }
 ```
 
-- **나쁜 예시**:
+- **Bad Example**:
 
 ```typescript
 function ProductList({ products }: { products: Product[] }) {
@@ -271,11 +184,10 @@ function ProductList({ products }: { products: Product[] }) {
 }
 ```
 
-### children과 합성 패턴 심화
+### children and Advanced Composition Patterns
 
-- **규칙**: [SHOULD] 레이아웃이나 래퍼 컴포넌트는 `children` prop을 통한 합성 패턴을 사용한다. Render Props는 훅으로 대체할 수 없는 JSX 렌더링 제어가 필요할 때에만 사용한다.
-- **이유**: `children` 합성은 결합도를 낮추고 부모가 자식의 렌더링을 제어할 수 있게 한다. Polymorphic component(`as` prop)는 HTML 시맨틱을 유지하면서 스타일을 재사용할 때 유용하다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Layout or wrapper components should use the composition pattern via `children` prop. Render Props should only be used when JSX rendering control is needed that cannot be replaced by hooks.
+- **Good Example**:
 
 ```typescript
 // Polymorphic component - as prop으로 렌더링할 HTML 요소를 외부에서 결정
@@ -299,13 +211,12 @@ function Text<T extends React.ElementType = "p">({
 
 ---
 
-## 3. Hooks 규칙
+## 3. Hooks Rules
 
-### 기본 규칙
+### Basic Rules
 
-- **규칙**: [MUST] Hook은 반드시 컴포넌트 함수 또는 Custom Hook의 최상위(top level)에서만 호출한다. 조건문, 반복문, 중첩 함수 내에서 호출하지 않는다.
-- **이유**: React는 Hook 호출 순서를 기반으로 각 Hook의 상태를 추적한다. 조건부 호출이 발생하면 렌더링마다 Hook 호출 순서가 달라져 상태 불일치가 발생한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Hooks must only be called at the top level of component functions or Custom Hooks. Do not call them inside conditionals, loops, or nested functions.
+- **Good Example**:
 
 ```typescript
 function UserProfile({ userId }: { userId: string }) {
@@ -320,25 +231,10 @@ function UserProfile({ userId }: { userId: string }) {
 }
 ```
 
-- **나쁜 예시**:
+### useState Patterns
 
-```typescript
-function UserProfile({ userId, isAdmin }: { userId: string; isAdmin: boolean }) {
-  // 조건부 Hook 호출 - React 규칙 위반
-  if (isAdmin) {
-    const adminData = useAdminData();
-  }
-
-  const [isEditing, setIsEditing] = useState(false);
-  return <div />;
-}
-```
-
-### useState 패턴
-
-- **규칙**: [MUST] 이전 상태에 의존하는 업데이트는 함수형 업데이트(functional update)를 사용한다. 객체 상태는 불변성을 지켜 스프레드로 업데이트한다.
-- **이유**: 함수형 업데이트는 클로저 내 stale state 문제를 방지한다. 객체를 직접 변경하면 React가 변경을 감지하지 못한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Use functional updates when the update depends on the previous state. Update object state immutably using spread.
+- **Good Example**:
 
 ```typescript
 function Counter() {
@@ -369,33 +265,12 @@ function ProfileForm() {
 }
 ```
 
-- **나쁜 예시**:
+### useEffect Rules
 
-```typescript
-function Counter() {
-  const [count, setCount] = useState(0);
-  // stale closure 위험 - 비동기 상황에서 count가 오래된 값을 캡처할 수 있다
-  const increment = () => setCount(count + 1);
-  return <button onClick={increment}>{count}</button>;
-}
-
-function ProfileForm() {
-  const [form, setForm] = useState({ name: "", email: "" });
-  const handleNameChange = (value: string) => {
-    form.name = value; // 직접 변경 금지
-    setForm(form);     // 같은 참조 - 리렌더링 발생하지 않음
-  };
-  return <div />;
-}
-```
-
-### useEffect 규칙
-
-- **규칙**: [MUST] `useEffect`의 의존성 배열에 Effect 내부에서 참조하는 모든 반응형 값을 빠짐없이 명시한다. ESLint `exhaustive-deps` 규칙을 반드시 활성화한다.
-- **규칙**: [MUST] `useEffect`는 외부 시스템과의 동기화(DOM 조작, 구독, 타이머)에만 사용한다. 이벤트 핸들링이나 파생 상태 계산에는 사용하지 않는다.
-- **규칙**: [MUST] 구독, 타이머, 연결 등 정리(cleanup)가 필요한 Effect에는 반드시 cleanup 함수를 반환한다.
-- **이유**: 의존성 누락은 stale closure로 인한 버그의 주요 원인이다. Cleanup 없이 구독이나 타이머를 등록하면 메모리 누수가 발생한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Include all reactive values referenced inside the Effect in the `useEffect` dependency array without omission. The ESLint `exhaustive-deps` rule must be enabled.
+- **Rule**: [MUST] `useEffect` should only be used for synchronization with external systems (DOM manipulation, subscriptions, timers). Do not use it for event handling or derived state computation.
+- **Rule**: [MUST] Effects that require cleanup (subscriptions, timers, connections) must return a cleanup function.
+- **Good Example**:
 
 ```typescript
 // 외부 시스템 동기화 - 올바른 useEffect 사용
@@ -420,37 +295,11 @@ function ProductList({ products }: { products: Product[] }) {
 }
 ```
 
-- **나쁜 예시**:
+### useRef Usage Patterns
 
-```typescript
-// 파생 상태를 Effect로 동기화 - 불필요한 렌더링 사이클
-function ProductList({ products }: { products: Product[] }) {
-  const [activeProducts, setActiveProducts] = useState<Product[]>([]);
-
-  useEffect(() => {
-    setActiveProducts(products.filter((p) => p.isActive));
-  }, [products]); // 렌더링 → Effect → setState → 리렌더링
-
-  return <ul>{activeProducts.map((p) => <li key={p.id}>{p.name}</li>)}</ul>;
-}
-
-// cleanup 없는 구독 - 메모리 누수
-function PriceTracker({ productId }: { productId: string }) {
-  useEffect(() => {
-    const subscription = priceSocket.subscribe(productId, updatePrice);
-    // cleanup 없음!
-  }, [productId]);
-
-  return <div />;
-}
-```
-
-### useRef 사용 패턴
-
-- **규칙**: [MUST] 신규 컴포넌트 작성 시 `forwardRef` 대신 `ref`를 직접 prop으로 수신한다. 기존 `forwardRef` 코드는 점진적으로 마이그레이션한다. (상세 패턴은 섹션 4 "ref를 prop으로 직접 전달" 참조)
-- **규칙**: [SHOULD] 렌더링 결과에 영향을 주지 않는 값(타이머 ID, 이전 값 추적, 플래그)은 `useState` 대신 `useRef`로 저장한다.
-- **이유**: `useRef`로 저장한 값 변경은 리렌더링을 유발하지 않으므로, 렌더링과 무관한 값에 적합하다.
-- **좋은 예시**:
+- **Rule**: [MUST] When writing new components, receive `ref` directly as a prop instead of using `forwardRef`. Gradually migrate existing `forwardRef` code. (See Section 4 "Passing ref Directly as a Prop" for detailed patterns)
+- **Rule**: [SHOULD] Values that do not affect rendering results (timer IDs, previous value tracking, flags) should be stored with `useRef` instead of `useState`.
+- **Good Example**:
 
 ```typescript
 // React 19 - ref prop 직접 수신
@@ -476,27 +325,12 @@ function DebouncedSearch({ onSearch }: { onSearch: (q: string) => void }) {
 }
 ```
 
-- **나쁜 예시**:
-
-```typescript
-// 렌더링 무관 값에 useState 사용 - 불필요한 리렌더링
-function DebouncedSearch({ onSearch }: { onSearch: (q: string) => void }) {
-  const [timerId, setTimerId] = useState<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (timerId) clearTimeout(timerId);
-    setTimerId(setTimeout(() => onSearch(e.target.value), 300)); // 리렌더링 발생
-  };
-
-  return <input onChange={handleChange} />;
-}
-```
-
 ### useMemo / useCallback
 
-- **규칙**: [SHOULD] React Compiler가 활성화된 프로젝트에서는 `useMemo`와 `useCallback`을 수동으로 작성하지 않는다. Compiler가 없는 프로젝트에서는 `memo`로 감싼 자식에 전달하는 함수/객체, 또는 비용이 실측으로 확인된 계산에만 사용한다.
-- **이유**: `useMemo`와 `useCallback` 자체도 비용이 있으며, React Compiler가 자동으로 최적화를 수행하므로 수동 메모이제이션은 중복이다. Compiler가 없다면 `memo`와 함께 사용할 때만 실질적인 효과가 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD NOT] Do not use `useMemo`, `useCallback`, or `React.memo` by default in new code. Rely on the Compiler's automatic optimization by default.
+- **Rule**: [MAY] Use them only in limited cases where measured performance issues exist or third-party compatibility issues arise.
+> **Note**: Manual memo and `"use no memo"` are separate concepts. `"use no memo"` is not a tool for using manual memo — it is an **escape hatch that disables compiler optimization for that specific function**. See the `"use no memo"` section below for details.
+- **Good Example**:
 
 ```typescript
 // React Compiler 활성화 시 - 수동 메모이제이션 불필요
@@ -519,30 +353,10 @@ function ProductList({ products, filter }: { products: Product[]; filter: string
 }
 ```
 
-- **나쁜 예시**:
+### Custom Hooks Design
 
-```typescript
-// memo도 없는 컴포넌트에 전달하는 단순 핸들러에 useCallback 적용 - 효과 없음
-function UserInfo({ user }: { user: User }) {
-  const handleClick = useCallback(() => {
-    console.log(user.name);
-  }, [user.name]);
-
-  // 단순한 문자열 포맷팅에 useMemo 적용 - 오버엔지니어링
-  const displayName = useMemo(
-    () => `${user.firstName} ${user.lastName}`,
-    [user.firstName, user.lastName]
-  );
-
-  return <button onClick={handleClick}>{displayName}</button>;
-}
-```
-
-### Custom Hooks 설계
-
-- **규칙**: [MUST] Custom Hook 이름은 반드시 `use`로 시작한다. Hook은 단일 관심사만 담당하며, 반환값은 구조분해가 자연스러운 경우 객체, 단순한 값/함수 쌍은 배열(튜플)로 반환한다.
-- **이유**: `use` 접두사는 React가 Hook 규칙을 적용하는 기준이다. 단일 책임을 가진 Hook은 테스트, 재사용, 교체가 쉽다.
-- **좋은 예시**:
+- **Rule**: [MUST] Custom Hook names must start with `use`. Hooks should handle a single concern only, and return values should be objects when destructuring is natural, or arrays (tuples) for simple value/function pairs.
+- **Good Example**:
 
 ```typescript
 // 튜플 반환 - useState와 동일한 패턴
@@ -556,16 +370,13 @@ function useLocalStorage<T>(key: string, initialValue: T) {
     }
   });
 
-  const setStoredValue = useCallback(
-    (newValue: T | ((prev: T) => T)) => {
-      setValue((prev) => {
-        const next = newValue instanceof Function ? newValue(prev) : newValue;
-        localStorage.setItem(key, JSON.stringify(next));
-        return next;
-      });
-    },
-    [key]
-  );
+  const setStoredValue = (newValue: T | ((prev: T) => T)) => {
+    setValue((prev) => {
+      const next = newValue instanceof Function ? newValue(prev) : newValue;
+      localStorage.setItem(key, JSON.stringify(next));
+      return next;
+    });
+  };
 
   return [value, setStoredValue] as const;
 }
@@ -584,36 +395,23 @@ function useProductSearch() {
 }
 ```
 
-- **나쁜 예시**:
-
-```typescript
-// 여러 관심사를 하나의 Hook에 혼합
-function useUserAndOrders(userId: string) {
-  const [user, setUser] = useState<User | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [theme, setTheme] = useState("light"); // 관련 없는 관심사
-
-  useEffect(() => { fetchUser(userId).then(setUser); }, [userId]);
-  useEffect(() => { fetchOrders(userId).then(setOrders); }, [userId]);
-
-  return { user, orders, theme, setTheme };
-}
-```
-
 ---
 
-## 4. React 19 기능
+## 4. React 19 Features
 
 ### use() Hook
 
-- **규칙**: [SHOULD] Promise 또는 Context 값을 읽을 때 `use()` hook을 사용하고, Promise를 소비하는 컴포넌트는 반드시 `<Suspense>` 경계 안에 배치한다.
-- **이유**: `use()`는 조건문이나 반복문 안에서도 호출할 수 있는 유일한 hook이다. 단, 렌더 함수 내부에서 직접 생성한 Promise는 `use()`에 전달하면 안 된다 (매 렌더마다 새 Promise가 생성되어 무한 서스펜스가 발생한다).
-- **좋은 예시**:
+- **Rule**: [SHOULD] Use the `use()` hook to read Promise or Context values, and components consuming Promises must be placed inside a `<Suspense>` boundary.
+
+> **Note**: The pattern of consuming Promises with `use()` works by receiving a Promise created in a parent component via props. For most data fetching, use TanStack Query (`useQuery`, `useSuspenseQuery`), and use `use()` for reading already-created Promises or conditionally reading Context.
+
+- **Good Example**:
 
 ```typescript
-// server-component.tsx (서버 컴포넌트에서 Promise 생성)
+// PostPage.tsx - 부모에서 Promise를 생성하여 전달
 import { Suspense } from 'react';
 
+// fetchComments는 캐싱된 Promise를 반환하는 유틸 (예: React cache 또는 외부 캐시)
 export default function PostPage({ postId }: { postId: string }) {
   const commentsPromise = fetchComments(postId);
 
@@ -627,9 +425,7 @@ export default function PostPage({ postId }: { postId: string }) {
   );
 }
 
-// CommentsPanel.tsx (클라이언트 컴포넌트에서 use()로 소비)
-'use client';
-
+// CommentsPanel.tsx - use()로 Promise 소비
 import { use } from 'react';
 
 export function CommentsPanel({ commentsPromise }: { commentsPromise: Promise<Comment[]> }) {
@@ -643,27 +439,35 @@ export function CommentsPanel({ commentsPromise }: { commentsPromise: Promise<Co
     </ul>
   );
 }
-```
 
-- **나쁜 예시**:
-
-```typescript
-'use client';
-
+// Context를 조건부로 읽는 패턴
 import { use } from 'react';
 
-export function CommentsPanel({ postId }: { postId: string }) {
-  // 렌더 함수 내부에서 Promise를 직접 생성 - 무한 루프 발생
-  const comments = use(fetch(`/api/posts/${postId}/comments`).then(r => r.json()));
-  return <ul>{comments.map(c => <li key={c.id}>{c.text}</li>)}</ul>;
+function ThemeText({ showTheme }: { showTheme: boolean }) {
+  if (showTheme) {
+    const theme = use(ThemeContext);
+    return <p>현재 테마: {theme}</p>;
+  }
+  return <p>테마 숨김</p>;
 }
 ```
 
-### React Compiler (React Forget)
+### React Compiler (v1.0 Stable)
 
-- **규칙**: [SHOULD] React Compiler가 활성화된 프로젝트에서는 `useMemo`, `useCallback`, `React.memo`를 수동으로 추가하지 않는다.
-- **이유**: React Compiler는 렌더 로직을 정적 분석하여 자동으로 메모이제이션을 적용한다. 수동 memo가 공존하면 의도가 불명확해지고 중복 최적화로 인한 혼란이 생긴다.
-- **좋은 예시**:
+- **Rule**: [MUST] Enable React Compiler from the start in new projects.
+- **Rule**: [SHOULD NOT] Do not use manual memo by default in new code. Use it only as an exception when necessary. (See the `useMemo / useCallback` section above for detailed criteria)
+
+> **v1.0 Major Changes**:
+> - `eslint-plugin-react-compiler` has been integrated into `eslint-plugin-react-hooks`. In Flat Config, applying the `react-hooks/recommended` or `recommended-latest` preset enables Compiler-related lint rules.
+> - In projects with Compiler enabled, do not use manual memo by default. Use it only as an exception when necessary.
+
+#### Compiler + ESLint Operational Rules
+
+- **Rule**: [MUST] Use the latest version of `eslint-plugin-react-hooks` and apply the `react-hooks/recommended` or `recommended-latest` preset based on Flat Config.
+- **Rule**: [MUST] Enforce `rules-of-hooks`, `immutability`, `purity`, `refs`, `set-state-in-render` rules as `error` in CI.
+- **Rule**: [MUST] Treat React Compiler solely as a performance optimization tool. Write code so that logic correctness is maintained even if the compiler is turned off.
+
+- **Good Example**:
 
 ```typescript
 // React Compiler 활성화 시 - 수동 메모이제이션 불필요
@@ -686,59 +490,50 @@ function ProductList({ products, filter }: ProductListProps) {
 }
 ```
 
-- **나쁜 예시**:
+### "use no memo" Directive
+
+- **Rule**: [MAY] When React Compiler is incompatible with a specific component/Hook and causes behavioral issues, declare `"use no memo"` at the top of that function to **exclude only that function from compiler optimization**.
+- **Rule**: [SHOULD] `"use no memo"` is **not a means to use manual memo**, but should only be used as an **emergency workaround** when the compiler's transformations cause problems. Leave a comment explaining the cause and removal conditions when using it.
+- **Good Example**:
 
 ```typescript
-// React Compiler 활성화 시 - 수동 메모이제이션 중복 적용
-import { useMemo, useCallback, memo } from 'react';
+// 서드파티 라이브러리와의 호환성 문제가 확인된 경우에만 사용
+"use no memo";
 
-const ProductList = memo(function ProductList({ products, filter }: ProductListProps) {
-  const filteredProducts = useMemo(
-    () => products.filter((p) => p.name.toLowerCase().includes(filter.toLowerCase())),
-    [products, filter]
-  );
+import { ThirdPartyChart } from "third-party-chart-lib";
 
-  const handleSelect = useCallback((id: string) => {
-    console.log("선택:", id);
-  }, []);
+function RevenueChart({ data }: { data: ChartData[] }) {
+  // 이 컴포넌트는 Compiler 자동 메모이제이션에서 제외된다
+  const chartConfig = {
+    type: "line",
+    animation: true,
+    data,
+  };
 
-  return (
-    <ul>
-      {filteredProducts.map((p) => (
-        <ProductItem key={p.id} product={p} onSelect={handleSelect} />
-      ))}
-    </ul>
-  );
-});
+  return <ThirdPartyChart config={chartConfig} />;
+}
 ```
 
 ### Actions (useActionState, useFormStatus)
 
-- **규칙**: [SHOULD] 폼 제출 로직은 `useActionState`로 상태를 관리하고, 제출 버튼의 pending 상태는 `useFormStatus`를 사용하는 별도의 자식 컴포넌트에서 처리한다.
-- **이유**: `useFormStatus`는 가장 가까운 부모 `<form>`의 제출 상태를 구독하므로, 반드시 `<form>` 내부의 자식 컴포넌트에서 호출해야 한다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Manage form submission logic state with `useActionState`, and handle the submit button's pending state in a separate child component using `useFormStatus`.
+
+> **Note**: Use TanStack Query's `useMutation` for server data mutations. `useActionState` is used for client form state management (validation, error/success feedback, etc.).
+
+- **Additional Rules**:
+  - `dispatchAction` (or `formAction`) should only be called via the `<form action={...}>` path or inside `startTransition()`.
+  - `useActionState` action receives the **previous state** as its first argument.
+
+- **Good Example**:
 
 ```typescript
-'use client';
-
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface FormState {
   error: string | null;
   success: boolean;
-}
-
-async function updateUserName(
-  prevState: FormState,
-  formData: FormData
-): Promise<FormState> {
-  const name = formData.get('name') as string;
-  if (!name || name.length < 2) {
-    return { error: '이름은 2자 이상이어야 합니다.', success: false };
-  }
-  await updateName(name);
-  return { error: null, success: true };
 }
 
 // 제출 버튼은 별도 컴포넌트로 분리
@@ -752,36 +547,39 @@ function SubmitButton() {
 }
 
 export function UserNameForm() {
-  const [state, formAction] = useActionState(updateUserName, {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (name: string) => updateUserNameApi(name),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: userKeys.all }),
+  });
+
+  async function formAction(
+    prevState: FormState,
+    formData: FormData
+  ): Promise<FormState> {
+    const name = formData.get('name') as string;
+    if (!name || name.length < 2) {
+      return { error: '이름은 2자 이상이어야 한다.', success: false };
+    }
+    try {
+      await mutation.mutateAsync(name);
+      return { error: null, success: true };
+    } catch {
+      return { error: '이름 변경에 실패했다.', success: false };
+    }
+  }
+
+  const [state, action, isPending] = useActionState(formAction, {
     error: null,
     success: false,
   });
 
   return (
-    <form action={formAction}>
+    <form action={action}>
       <input type="text" name="name" placeholder="새 이름 입력" />
       {state.error && <p role="alert">{state.error}</p>}
-      {state.success && <p>이름이 업데이트되었습니다.</p>}
+      {state.success && <p>이름이 업데이트되었다.</p>}
       <SubmitButton />
-    </form>
-  );
-}
-```
-
-- **나쁜 예시**:
-
-```typescript
-'use client';
-
-export function UserNameForm() {
-  const [state, formAction] = useActionState(updateUserName, { error: null });
-  // useFormStatus를 form과 같은 컴포넌트에서 호출하면 동작하지 않는다
-  const { pending } = useFormStatus(); // 항상 { pending: false }를 반환
-
-  return (
-    <form action={formAction}>
-      <input type="text" name="name" />
-      <button type="submit" disabled={pending}>저장</button>
     </form>
   );
 }
@@ -789,13 +587,10 @@ export function UserNameForm() {
 
 ### useOptimistic
 
-- **규칙**: [MAY] 서버 응답을 기다리지 않고 즉각적인 UI 피드백이 필요한 경우 `useOptimistic`을 사용하고, 반드시 Transition 또는 Action 내부에서 낙관적 상태를 업데이트한다.
-- **이유**: `useOptimistic`은 비동기 액션이 진행되는 동안 임시로 낙관적 상태를 보여주고, 액션이 완료되면 실제 서버 값으로 자동 교체한다. Transition 외부에서 호출하면 즉시 원래 값으로 되돌아간다.
-- **좋은 예시**:
+- **Rule**: [MAY] Use `useOptimistic` when immediate UI feedback is needed without waiting for a server response, and always update optimistic state inside a Transition or Action.
+- **Good Example**:
 
 ```typescript
-'use client';
-
 import { useState, useOptimistic, useTransition } from 'react';
 
 export function LikeButton({ postId, initialIsLiked }: { postId: string; initialIsLiked: boolean }) {
@@ -822,11 +617,75 @@ export function LikeButton({ postId, initialIsLiked }: { postId: string; initial
 }
 ```
 
-### ref를 prop으로 직접 전달
+### useEffectEvent (stable, React 19.2+)
 
-- **규칙**: [MUST] React 19에서 함수형 컴포넌트에 ref를 전달할 때 `forwardRef`를 사용하지 않고 일반 prop으로 직접 전달한다.
-- **이유**: React 19부터 `ref`를 일반 prop처럼 받을 수 있다. `forwardRef`는 deprecated이며 향후 버전에서 제거될 예정이다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Wrap callbacks used inside Effects but that should not be included in the dependency array (logging, analytics events, etc.) with `useEffectEvent`.
+- **Additional Rules**:
+  - Functions created with `useEffectEvent` should only be called inside Effects.
+  - Do not pass Effect Event functions as props or use them as external utility functions.
+  - Do not include the Effect Event itself in the dependency array.
+- **Good Example**:
+
+```typescript
+import { useEffect, useEffectEvent } from 'react';
+
+function ChatRoom({ roomId, theme }: { roomId: string; theme: string }) {
+  // theme은 Effect의 의존성이 아니지만, 최신 값이 필요한 콜백
+  const onConnected = useEffectEvent((connectedRoomId: string) => {
+    showNotification(`${connectedRoomId}에 연결됨`, theme); // 항상 최신 theme
+  });
+
+  useEffect(() => {
+    const connection = createChatConnection(roomId);
+    connection.on('connected', () => onConnected(roomId));
+    connection.connect();
+    return () => connection.disconnect();
+  }, [roomId]); // theme이 의존성에서 제외됨
+
+  return <div>채팅방: {roomId}</div>;
+}
+```
+
+### Activity (stable, React 19.2+)
+
+- **Rule**: [MAY] For UI that is hidden from the screen but needs to preserve its state (tab switching, back navigation cache, etc.), the `<Activity>` component can be used. It works via `display: none` + state preservation.
+- **Good Example**:
+
+```typescript
+import { Activity, useState } from 'react';
+
+type Tab = 'overview' | 'orders' | 'settings';
+
+function DashboardTabs() {
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
+
+  return (
+    <div>
+      <nav>
+        <button onClick={() => setActiveTab('overview')}>개요</button>
+        <button onClick={() => setActiveTab('orders')}>주문</button>
+        <button onClick={() => setActiveTab('settings')}>설정</button>
+      </nav>
+
+      {/* 각 탭의 상태가 보존됨 - 스크롤 위치, 입력값 등 유지 */}
+      <Activity mode={activeTab === 'overview' ? 'visible' : 'hidden'}>
+        <OverviewPanel />
+      </Activity>
+      <Activity mode={activeTab === 'orders' ? 'visible' : 'hidden'}>
+        <OrdersPanel />
+      </Activity>
+      <Activity mode={activeTab === 'settings' ? 'visible' : 'hidden'}>
+        <SettingsPanel />
+      </Activity>
+    </div>
+  );
+}
+```
+
+### Passing ref Directly as a Prop
+
+- **Rule**: [MUST] In React 19, when passing ref to a function component, pass it directly as a regular prop without using `forwardRef`.
+- **Good Example**:
 
 ```typescript
 import { type Ref } from 'react';
@@ -847,29 +706,10 @@ function TextInput({ label, placeholder, ref }: TextInputProps) {
 }
 ```
 
-- **나쁜 예시**:
+### Metadata Support
 
-```typescript
-import { forwardRef } from 'react';
-
-// React 19에서는 forwardRef가 불필요하다 (deprecated)
-const TextInput = forwardRef<HTMLInputElement, { label: string }>(
-  function TextInput({ label }, ref) {
-    return (
-      <label>
-        {label}
-        <input ref={ref} />
-      </label>
-    );
-  }
-);
-```
-
-### Metadata 지원
-
-- **규칙**: [SHOULD] React 19는 컴포넌트 내부에서 `<title>`, `<meta>` 태그를 직접 렌더링하면 자동으로 `<head>`에 호이스팅한다. 단, Next.js App Router 환경에서는 **`generateMetadata`/`metadata` export가 우선**이며, 이 방식으로 커버할 수 없는 컴포넌트 수준의 동적 메타데이터에만 React 내장 지원을 사용한다.
-- **이유**: Next.js의 `generateMetadata`는 메타데이터 중복 제거, 상속, `<head>` 스트리밍을 자동 처리하므로 페이지 단위 메타데이터에 더 적합하다. React 19의 내장 지원은 모달 타이틀 오버라이드 등 컴포넌트 수준의 동적 변경에 활용한다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] React 19 automatically hoists `<title>` and `<meta>` tags rendered inside components to `<head>`. If the router framework provides a route-level metadata API, prefer using that API, and use React's built-in support for component-level dynamic metadata.
+- **Good Example**:
 
 ```typescript
 export default function BlogPostPage({ post }: { post: Post }) {
@@ -884,32 +724,37 @@ export default function BlogPostPage({ post }: { post: Post }) {
 }
 ```
 
-- **나쁜 예시**:
+### Root Error Callbacks (`createRoot` Options)
+
+- **Rule**: [SHOULD] Projects that require global error collection (Sentry, etc.) should use the `onUncaughtError`, `onCaughtError`, and `onRecoverableError` callbacks of `createRoot`/`hydrateRoot`.
+- **Good Example**:
 
 ```typescript
-'use client';
+import { createRoot } from 'react-dom/client';
 
-import { useEffect } from 'react';
+const root = createRoot(document.getElementById('root')!, {
+  onUncaughtError: (error, errorInfo) => {
+    reportError(error, { kind: 'uncaught', componentStack: errorInfo.componentStack });
+  },
+  onCaughtError: (error, errorInfo) => {
+    reportError(error, { kind: 'caught', componentStack: errorInfo.componentStack });
+  },
+  onRecoverableError: (error, errorInfo) => {
+    reportError(error, { kind: 'recoverable', componentStack: errorInfo.componentStack });
+  },
+});
 
-export default function BlogPostPage({ post }: { post: Post }) {
-  // React 19에서는 useEffect로 title을 직접 조작할 필요가 없다
-  useEffect(() => {
-    document.title = `${post.title} | Sellernote 블로그`;
-  }, [post.title]);
-
-  return <article><h1>{post.title}</h1></article>;
-}
+root.render(<App />);
 ```
 
 ---
 
-## 5. 이벤트 처리
+## 5. Event Handling
 
-### 핸들러 네이밍
+### Handler Naming
 
-- **규칙**: [MUST] Props로 노출하는 이벤트 콜백은 `onXxx`, 컴포넌트 내부 핸들러 함수는 `handleXxx` 형식으로 명명한다.
-- **이유**: `on` 접두사는 "이벤트 핸들러를 전달하세요"라는 계약을 표현하고, `handle` 접두사는 실제 로직을 담는 내부 함수임을 구분해준다.
-- **좋은 예시**:
+- **Rule**: [MUST] Event callbacks exposed via props should use `onXxx` format, and internal handler functions within the component should use `handleXxx` format.
+- **Good Example**:
 
 ```typescript
 // Props - onXxx 형식
@@ -934,21 +779,10 @@ function ProductCard({ product, onAddToCart, onWishlistToggle }: ProductCardProp
 }
 ```
 
-- **나쁜 예시**:
+### Event Types
 
-```typescript
-interface ProductCardProps {
-  product: Product;
-  addToCart: (id: string) => void;      // on 접두사 없음
-  handleWishlist: (id: string) => void; // handle은 내부 함수에 사용
-}
-```
-
-### 이벤트 타입
-
-- **규칙**: [MUST] 이벤트 핸들러를 별도 함수로 추출할 때는 올바른 React 이벤트 타입을 명시한다. `any` 또는 DOM 네이티브 `Event` 타입을 사용하지 않는다.
-- **이유**: React의 합성 이벤트(SyntheticEvent)는 DOM 네이티브 `Event`와 다르다. 정확한 타입을 명시해야 TypeScript의 타입 추론이 정확하다.
-- **좋은 예시**:
+- **Rule**: [MUST] When extracting event handlers into separate functions, specify the correct React event types. Do not use `any` or DOM native `Event` types.
+- **Good Example**:
 
 ```typescript
 function SearchForm() {
@@ -972,18 +806,10 @@ function SearchForm() {
 }
 ```
 
-- **나쁜 예시**:
+### Synthetic Event Considerations
 
-```typescript
-const handleChange = (e: any) => { setQuery(e.target.value); };
-const handleSubmit = (e: Event) => { e.preventDefault(); }; // DOM 네이티브 타입
-```
-
-### 합성 이벤트 주의점
-
-- **규칙**: [SHOULD] `stopPropagation()`은 이벤트 버블링이 실제로 문제가 되는 상황에서만 사용한다. `preventDefault()`는 브라우저 기본 동작을 막아야 할 명확한 이유가 있을 때만 사용한다.
-- **이유**: `stopPropagation()`을 무분별하게 사용하면 분석 도구(GA, Hotjar 등)의 이벤트 추적이 차단될 수 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Use `stopPropagation()` only when event bubbling actually causes problems. Use `preventDefault()` only when there is a clear reason to prevent the browser's default behavior.
+- **Good Example**:
 
 ```typescript
 // stopPropagation - 카드 내 버튼 클릭이 카드 전체 클릭으로 버블링되는 것 방지
@@ -1004,13 +830,12 @@ function ProductCard({ product, onClick }: { product: Product; onClick: () => vo
 
 ---
 
-## 6. 성능 최적화
+## 6. Performance Optimization
 
-### 리렌더링 이해와 방지
+### Understanding and Preventing Re-renders
 
-- **규칙**: [MUST] 렌더 함수 외부에 상수 객체/배열을 정의하여 매 렌더링마다 새 참조가 생성되는 것을 방지한다.
-- **이유**: React 컴포넌트는 (1) state 변경, (2) 부모 리렌더링, (3) Context 값 변경 시 리렌더링된다. 렌더 함수 내부에서 객체를 새로 생성하여 자식에 전달하면 불필요한 리렌더링이 발생한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Define constant objects/arrays outside the render function to prevent new references from being created on every render.
+- **Good Example**:
 
 ```typescript
 const DEFAULT_SORT_OPTIONS = { field: 'name', direction: 'asc' } as const;
@@ -1028,24 +853,10 @@ function ProductTable({ products }: { products: Product[] }) {
 }
 ```
 
-- **나쁜 예시**:
+### State Colocation
 
-```typescript
-function ProductTable({ products }: { products: Product[] }) {
-  return (
-    <div>
-      {/* 매 렌더마다 새 객체가 생성되어 ProductHeader가 항상 리렌더링 */}
-      <ProductHeader sortOptions={{ field: 'name', direction: 'asc' }} />
-    </div>
-  );
-}
-```
-
-### 상태 위치 최적화 (State Colocation)
-
-- **규칙**: [MUST] 상태는 해당 상태를 실제로 사용하는 컴포넌트와 최대한 가깝게 배치한다. 불필요하게 상위 컴포넌트로 끌어올리지 않는다.
-- **이유**: 상태를 너무 높은 곳에 배치하면 무관한 컴포넌트도 리렌더링된다.
-- **좋은 예시**:
+- **Rule**: [MUST] Place state as close as possible to the components that actually use it. Do not unnecessarily lift it up to parent components.
+- **Good Example**:
 
 ```typescript
 function ProductPage() {
@@ -1068,26 +879,10 @@ function SearchPanel() {
 }
 ```
 
-- **나쁜 예시**:
+### Lazy Initialization
 
-```typescript
-function ProductPage() {
-  const [query, setQuery] = useState('');
-  // query가 변경될 때마다 ProductGrid까지 리렌더링된다
-  return (
-    <div>
-      <SearchPanel query={query} onQueryChange={setQuery} />
-      <ProductGrid /> {/* 무관하지만 리렌더링됨 */}
-    </div>
-  );
-}
-```
-
-### 지연 초기화 (Lazy Initialization)
-
-- **규칙**: [MUST] `useState`의 초기값이 비용이 큰 연산(로컬스토리지 접근, 파싱 등)의 결과인 경우, 함수 호출이 아닌 함수 참조를 전달한다.
-- **이유**: `useState(fn())`은 매 렌더링마다 `fn()`을 호출하지만 반환값은 첫 렌더에서만 사용된다. `useState(fn)`으로 함수 참조를 전달하면 초기 마운트 시에만 호출된다.
-- **좋은 예시**:
+- **Rule**: [MUST] When the initial value of `useState` is the result of an expensive computation (localStorage access, parsing, etc.), pass a function reference, not a function call.
+- **Good Example**:
 
 ```typescript
 function getInitialCart(): CartItem[] {
@@ -1102,25 +897,12 @@ function ShoppingCart() {
 }
 ```
 
-- **나쁜 예시**:
+### Large List Optimization
+
+- **Rule**: [SHOULD] Apply a virtualization library for lists rendering hundreds or more items.
+- **Good Example**:
 
 ```typescript
-function ShoppingCart() {
-  // 함수를 즉시 호출 - 매 리렌더링마다 localStorage를 파싱한다
-  const [cartItems, setCartItems] = useState<CartItem[]>(getInitialCart());
-  return <CartView items={cartItems} />;
-}
-```
-
-### 큰 리스트 최적화
-
-- **규칙**: [SHOULD] 수백 개 이상의 아이템을 렌더링하는 리스트에는 가상화(virtualization) 라이브러리를 적용한다.
-- **이유**: DOM 노드가 많아질수록 초기 렌더링, 스크롤 성능, 메모리 사용량이 급격히 증가한다. `@tanstack/react-virtual`은 뷰포트에 보이는 아이템만 렌더링하여 이를 해결한다.
-- **좋은 예시**:
-
-```typescript
-'use client';
-
 import { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -1155,11 +937,10 @@ export function VirtualOrderList({ orders }: { orders: Order[] }) {
 
 ## 7. Error Boundary
 
-### 에러 경계 구현
+### Error Boundary Implementation
 
-- **규칙**: [SHOULD] `react-error-boundary` 라이브러리를 사용한다. 직접 구현이 필요한 경우 `getDerivedStateFromError`와 `componentDidCatch`를 모두 구현한다.
-- **이유**: `react-error-boundary`는 reset 기능, fallback render props, hook 등을 제공하여 클래스 컴포넌트 구현의 복잡성을 줄인다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Use the `react-error-boundary` library. If custom implementation is needed, implement both `getDerivedStateFromError` and `componentDidCatch`.
+- **Good Example**:
 
 ```typescript
 import { ErrorBoundary } from 'react-error-boundary';
@@ -1170,7 +951,7 @@ function ErrorFallback({ error, resetErrorBoundary }: {
 }) {
   return (
     <div role="alert">
-      <h2>문제가 발생했습니다</h2>
+      <h2>문제가 발생했다</h2>
       <p>{error.message}</p>
       <button onClick={resetErrorBoundary}>다시 시도</button>
     </div>
@@ -1189,34 +970,36 @@ export function ProductSection({ productId }: { productId: string }) {
 }
 ```
 
-- **DS 컴포넌트 활용 예시**:
+- **Example**:
 
 ```typescript
 import { ErrorBoundary } from 'react-error-boundary';
-import { ActionButton, Alert } from "@sellernote/design-system";
 
 function ErrorFallback({ error, resetErrorBoundary }: {
   error: Error;
   resetErrorBoundary: () => void;
 }) {
   return (
-    <div role="alert" className="flex flex-col gap-400 p-600">
-      <Alert variant="error" title="문제가 발생했습니다" open>
-        {error.message}
-      </Alert>
-      <ActionButton variant="secondary" onClick={resetErrorBoundary}>
+    <div role="alert" className="flex flex-col gap-4 p-6">
+      <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+        <p className="font-semibold">문제가 발생했다</p>
+        <p>{error.message}</p>
+      </div>
+      <button
+        className="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+        onClick={resetErrorBoundary}
+      >
         다시 시도
-      </ActionButton>
+      </button>
     </div>
   );
 }
 ```
 
-### 복구 전략 (Reset 패턴)
+### Recovery Strategy (Reset Pattern)
 
-- **규칙**: [MUST] 모든 Error Boundary의 fallback UI에는 복구 수단을 제공한다. `resetKeys` prop을 활용하여 의존 데이터가 변경될 때 자동으로 재시도한다.
-- **이유**: 복구 경로가 없는 UI는 사용자에게 새로고침 외에 선택지를 주지 않아 이탈률을 높인다.
-- **좋은 예시**:
+- **Rule**: [MUST] All Error Boundary fallback UIs must provide a recovery mechanism. Use the `resetKeys` prop to automatically retry when dependent data changes.
+- **Good Example**:
 
 ```typescript
 export function OrderDetailPage({ orderId }: { orderId: string }) {
@@ -1232,11 +1015,10 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
 }
 ```
 
-### 에러 경계 배치 전략
+### Error Boundary Placement Strategy
 
-- **규칙**: [MUST] 루트에 최소 1개의 전역 경계를 두고, 독립적으로 실패할 수 있는 UI 섹션마다 추가 경계를 배치한다.
-- **이유**: 단일 전역 경계만 있으면 작은 오류 하나가 전체 페이지를 대체한다. 독립적인 UI 섹션에 별도 경계를 두면 나머지 페이지는 정상 동작한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Place at least one global boundary at the root, and add additional boundaries for each UI section that can fail independently.
+- **Good Example**:
 
 ```typescript
 // 대시보드 - 섹션별 경계로 장애 격리
@@ -1259,44 +1041,109 @@ export default function DashboardPage() {
 }
 ```
 
-- **나쁜 예시**:
+---
 
-```typescript
-// 단일 전역 경계만 존재: 어느 한 위젯의 오류가 대시보드 전체를 교체한다
-export default function DashboardPage() {
-  return (
-    <ErrorBoundary FallbackComponent={GlobalErrorFallback}>
-      <div className="dashboard">
-        <RevenueChart />       {/* 여기서 오류 발생 시 */}
-        <OrderStatusPanel />   {/* 이 위젯도 사라진다 */}
-        <InventoryAlerts />    {/* 이 위젯도 사라진다 */}
-      </div>
-    </ErrorBoundary>
-  );
-}
-```
+## 8. Suspense Strategy
+
+### useSuspenseQuery and Suspense Boundaries
+
+- **Rule**: [SHOULD] Use `useSuspenseQuery` as the default for data fetching, and handle loading/error states declaratively with `Suspense` + `ErrorBoundary`.
+- **Good Example**:
+  ```tsx
+  // 경계 컴포넌트 — Page 또는 Feature wrapper에서 설정
+  import { Suspense } from 'react';
+  import { ErrorBoundary } from 'react-error-boundary';
+
+  export default function OrdersPage() {
+    return (
+      <PageLayout title="주문 관리">
+        <ErrorBoundary FallbackComponent={OrdersErrorFallback}>
+          <Suspense fallback={<OrderListSkeleton />}>
+            <OrderList />
+          </Suspense>
+        </ErrorBoundary>
+      </PageLayout>
+    );
+  }
+
+  // Feature 컴포넌트 — 로딩/에러 분기 없이 데이터만 소비
+  import { useSuspenseQuery } from '@tanstack/react-query';
+
+  function OrderList() {
+    const filters = { /* ... */ };
+    const { data } = useSuspenseQuery(orderKeys.list(filters));
+    // data는 항상 T 타입 (undefined 불가)
+    return <DataTable columns={ORDER_COLUMNS} data={data} />;
+  }
+  ```
+### When to Use useQuery
+
+- **Rule**: [MAY] `useQuery` can be used instead of `useSuspenseQuery` in the following situations.
+
+| Situation | Reason |
+|-----------|--------|
+| When conditional fetching is needed (`enabled` option) | `useSuspenseQuery` does not support `enabled` |
+| When partial loading is needed (displaying some data first) | `useSuspenseQuery` suspends the entire component until data is ready |
+| When the design does not yet have skeleton/fallback components | Suspense boundaries require fallback UI |
+
+- **Good Example**:
+  ```typescript
+  // 조건부 페칭 — enabled가 필요하므로 useQuery 사용
+  function UserOrders({ userId }: { userId?: string }) {
+    const { data, isLoading } = useQuery({
+      ...orderKeys.list({ userId }),
+      enabled: !!userId, // userId가 없으면 호출하지 않음
+    });
+
+    if (!userId) return <SelectUserPrompt />;
+    if (isLoading) return <Skeleton />;
+    return <OrderList orders={data} />;
+  }
+  ```
+
+### Suspense Boundary Placement Principles
+
+- **Rule**: [SHOULD] Place Suspense boundaries per independently-loading UI unit. Do not wrap the entire page in a single Suspense.
+- **Good Example**:
+  ```tsx
+  // 섹션별 독립 Suspense 경계 — 각 섹션이 독립적으로 로딩
+  export default function DashboardPage() {
+    return (
+      <PageLayout title="대시보드">
+        <Suspense fallback={<StatsSkeleton />}>
+          <DashboardStats />
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          <RevenueChart />
+        </Suspense>
+        <Suspense fallback={<TableSkeleton />}>
+          <RecentOrders />
+        </Suspense>
+      </PageLayout>
+    );
+  }
+  ```
+> **Note**: The specific placement of Suspense boundaries and skeleton designs should be determined in consultation with the design team. For sections where skeleton components are not yet available, use `useQuery`, and switch to `useSuspenseQuery` when skeletons are ready.
 
 ---
 
-## 8. Context API
+## 9. Context API
 
-### Context vs Zustand 선택 기준
+### Context vs Zustand Selection Criteria
 
-- **규칙**: [MUST] 전역 클라이언트 상태(여러 페이지에서 공유, 자주 업데이트)는 Zustand를 사용한다. Context API는 변경 빈도가 낮은 설정값이나 Compound Component의 내부 상태 공유에 사용한다.
-- **이유**: Context 값이 변경되면 해당 Context를 구독하는 모든 컴포넌트가 리렌더링된다. Zustand는 선택적 구독(selector)을 지원해 필요한 상태가 변경될 때만 리렌더링된다.
+- **Rule**: [MUST] Use Zustand for **pure UI state** shared across multiple pages. Use Context API for infrequently changing configuration values (theme/locale) or internal state sharing within Compound Components. Use TanStack Query, nuqs, and React Hook Form for server data, URL state, and form state respectively. (See STATE_CONVENTION.md for details)
 
-| 기준 | Context API | Zustand |
-|------|-------------|---------|
-| 변경 빈도 | 낮음 (테마, 로케일) | 높음 (장바구니, 알림) |
-| 범위 | 특정 트리 내부 | 앱 전역 |
-| 선택적 구독 | 불가 | 가능 (selector) |
-| 적합한 사례 | 테마, 언어, Compound Component | UI 상태, 사용자 설정 |
+| Criterion | Context API | Zustand |
+|-----------|-------------|---------|
+| Change Frequency | Low (theme, locale) | High (cart, notifications) |
+| Scope | Within a specific tree | App-wide |
+| Selective Subscription | Not possible | Possible (selector) |
+| Suitable Cases | Theme, language, Compound Component | Global UI state (sidebar, toast, etc.) |
 
-### Provider 패턴
+### Provider Pattern
 
-- **규칙**: [MUST] Context Provider에 전달하는 값이 객체나 함수를 포함하는 경우 참조를 안정화한다. React Compiler 미활성화 시 `useMemo`와 `useCallback`을 수동으로 적용하고, Compiler 활성화 시에는 자동 처리에 맡긴다. Provider는 별도 컴포넌트로 분리한다.
-- **이유**: Provider 컴포넌트가 리렌더링될 때 `value`로 새 객체 리터럴을 전달하면 값이 변경되지 않았더라도 모든 구독 컴포넌트가 리렌더링된다.
-- **좋은 예시**:
+- **Rule**: [MUST] Separate Context Provider into a dedicated component. Since React Compiler automatically handles Provider value stabilization, manual `useMemo`/`useCallback` is unnecessary.
+- **Good Example**:
 
 ```typescript
 interface AuthContextValue {
@@ -1309,55 +1156,29 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth는 AuthProvider 내부에서 사용해야 합니다.");
+  if (!ctx) throw new Error("useAuth는 AuthProvider 내부에서 사용해야 한다.");
   return ctx;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  const login = useCallback(async (credentials: Credentials) => {
+  const login = async (credentials: Credentials) => {
     const user = await authApi.login(credentials);
     setCurrentUser(user);
-  }, []);
+  };
 
-  const logout = useCallback(() => setCurrentUser(null), []);
+  const logout = () => setCurrentUser(null);
 
-  const value = useMemo(
-    () => ({ currentUser, login, logout }),
-    [currentUser, login, logout]
-  );
-
-  return <AuthContext value={value}>{children}</AuthContext>;
+  // React Compiler가 자동으로 value 객체를 메모이제이션한다
+  return <AuthContext value={{ currentUser, login, logout }}>{children}</AuthContext>;
 }
 ```
 
-- **나쁜 예시**:
+### Context Separation Principle
 
-```typescript
-function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  // 매 렌더링마다 새 객체 + 새 함수 참조 생성 - 전체 구독자 리렌더링
-  return (
-    <AuthContext
-      value={{
-        currentUser,
-        login: async (credentials) => { /* ... */ },
-        logout: () => setCurrentUser(null),
-      }}
-    >
-      <Layout />
-    </AuthContext>
-  );
-}
-```
-
-### Context 분리 원칙
-
-- **규칙**: [MUST] 하나의 거대한 Context 대신 변경 빈도와 관심사에 따라 Context를 분리한다.
-- **이유**: 하나의 Context에 모든 값을 넣으면 일부 값만 변경되어도 전체 구독 컴포넌트가 리렌더링된다.
-- **좋은 예시**:
+- **Rule**: [MUST] Instead of one monolithic Context, separate Contexts by change frequency and concern.
+- **Good Example**:
 
 ```typescript
 // 관심사별로 분리된 Context
@@ -1380,35 +1201,14 @@ function Header() {
 }
 ```
 
-- **나쁜 예시**:
-
-```typescript
-// 하나의 거대한 Context
-const AppContext = createContext<{
-  theme: string;
-  locale: string;
-  currentUser: User | null;
-  cartItems: CartItem[];
-  notifications: Notification[];
-} | null>(null);
-// cartItems가 변경될 때 theme만 사용하는 Header도 리렌더링된다
-```
-
 ---
 
-## 9. TypeScript 연동
+## 10. TypeScript Integration
 
-> **참고**: DS에서 제공하는 타입을 활용한다.
-> ```typescript
-> import type { OptionItem, OptionGroup } from "@sellernote/design-system";
-> import type { ActionButtonProps, DialogProps } from "@sellernote/design-system";
-> ```
+### Extending HTML Attributes in Component Props
 
-### 컴포넌트 Props에 HTML 속성 확장
-
-- **규칙**: [MUST] 네이티브 HTML 요소를 래핑하는 컴포넌트는 `ComponentPropsWithoutRef`(또는 ref 전달 시 `ComponentPropsWithRef`)로 HTML 속성을 확장한다.
-- **이유**: HTML 속성을 수동으로 나열하면 `className`, `aria-*`, `data-*` 등이 누락되어 사용처에서 타입 에러가 발생한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Components wrapping native HTML elements should extend HTML attributes using `ComponentPropsWithoutRef` (or `ComponentPropsWithRef` when forwarding ref).
+- **Good Example**:
 
 ```typescript
 import { type ComponentPropsWithoutRef, type ComponentPropsWithRef } from "react";
@@ -1423,7 +1223,7 @@ function Chip({ variant, onRemove, children, ...rest }: ChipProps) {
   return (
     <span className={`chip-${variant}`} {...rest}>
       {children}
-      {onRemove && <button onClick={onRemove}>×</button>}
+      {onRemove && <button onClick={onRemove}>x</button>}
     </span>
   );
 }
@@ -1445,23 +1245,10 @@ function TextInput({ label, error, ref, ...rest }: TextInputProps) {
 }
 ```
 
-- **나쁜 예시**:
+### Typing Props Variants with Discriminated Unions
 
-```typescript
-// HTML 속성을 수동으로 나열 - className, aria-* 등 누락
-interface TextInputProps {
-  label: string;
-  placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-```
-
-### Discriminated Union으로 Props 변형 타이핑
-
-- **규칙**: [SHOULD] 컴포넌트가 여러 변형(variant)을 가지며 변형마다 허용 props가 다를 경우 discriminated union을 사용한다.
-- **이유**: optional props를 모두 나열하면 잘못된 조합을 타입 수준에서 방지할 수 없다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] When a component has multiple variants with different allowed props per variant, use discriminated unions.
+- **Good Example**:
 
 ```typescript
 interface SolidButtonProps {
@@ -1488,11 +1275,10 @@ function Button(props: ButtonProps) {
 }
 ```
 
-### Hook 타이핑
+### Hook Typing
 
-- **규칙**: [MUST] `useState`에 유니온 타입을 사용할 때 제네릭으로 명시하고, `useRef`에 DOM 요소를 참조할 때 초기값으로 `null`을 전달한다. 커스텀 Hook의 튜플 반환에는 `as const`를 사용한다.
-- **이유**: 제네릭 없이 초기값만 전달하면 TypeScript가 초기값의 타입으로 좁게 추론한다.
-- **좋은 예시**:
+- **Rule**: [MUST] When using union types with `useState`, specify them via generics. When referencing DOM elements with `useRef`, pass `null` as the initial value. Use `as const` for tuple returns from custom Hooks.
+- **Good Example**:
 
 ```typescript
 // useState: 유니온 타입 명시
@@ -1508,32 +1294,16 @@ const inputRef = useRef<HTMLInputElement>(null);
 // 커스텀 Hook: 튜플 반환 시 as const
 function useToggle(initial = false) {
   const [value, setValue] = useState(initial);
-  const toggle = useCallback(() => setValue((prev) => !prev), []);
+  const toggle = () => setValue((prev) => !prev);
   return [value, toggle] as const;
   // 반환 타입: readonly [boolean, () => void]
 }
 ```
 
-- **나쁜 예시**:
+### Generic Components
 
-```typescript
-const [status, setStatus] = useState("idle"); // string으로 추론 - 잘못된 값 허용
-const [user, setUser] = useState(null);        // null로만 추론
-const inputRef = useRef<HTMLInputElement>();    // undefined 가능 - DOM API와 불일치
-
-function useToggle(initial = false) {
-  const [value, setValue] = useState(initial);
-  const toggle = () => setValue((prev) => !prev);
-  return [value, toggle];
-  // 반환 타입: (boolean | (() => void))[] - 구조분해 시 유니온
-}
-```
-
-### Generic 컴포넌트
-
-- **규칙**: [SHOULD] 데이터 타입에 의존하지 않는 범용 UI 컴포넌트는 제네릭 props 패턴으로 구현한다.
-- **이유**: `any`를 사용하면 콜백 인자 타입 정보가 유실된다. 제네릭을 사용하면 사용처까지 타입이 정확히 흐른다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] General-purpose UI components that do not depend on a specific data type should be implemented using generic props patterns.
+- **Good Example**:
 
 ```typescript
 interface Column<T> {
@@ -1572,11 +1342,10 @@ function DataTable<T extends { id: string | number }>({
 }
 ```
 
-### children 타이핑
+### children Typing
 
-- **규칙**: [MUST] `children` 타입은 기본적으로 `React.ReactNode`를 사용한다. `React.ReactElement`는 특정 React 요소만 허용해야 하는 경우에만 사용한다.
-- **이유**: `React.ReactNode`는 문자열, 숫자, `null`, 배열, React 요소 등 렌더링 가능한 모든 값을 포괄한다. `JSX.Element`는 React 19에서 권장하지 않는다.
-- **좋은 예시**:
+- **Rule**: [MUST] Use `React.ReactNode` as the default type for `children`. Use `React.ReactElement` only when only specific React elements should be allowed.
+- **Good Example**:
 
 ```typescript
 // 일반적인 래퍼 - ReactNode
@@ -1592,23 +1361,55 @@ interface TooltipTriggerProps {
 }
 ```
 
-- **나쁜 예시**:
+---
+
+## 11. Anti-patterns
+
+### No Inline Functions in JSX
+
+- **Rule**: [MUST NOT] Do not define functions inline in JSX props. Extract handlers as named functions in the component body.
+- **Good Example**:
 
 ```typescript
-interface CardProps {
-  children: JSX.Element; // 문자열, 숫자, 배열 전달 불가
+function OrderItem({ order }: OrderItemProps) {
+  const handleDelete = () => {
+    deleteOrder(order.id);
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    updateOrderStatus(order.id, e.target.value as OrderStatus);
+  };
+
+  return (
+    <div>
+      <select onChange={handleStatusChange}>
+        {/* options */}
+      </select>
+      <button onClick={handleDelete}>삭제</button>
+    </div>
+  );
 }
 ```
 
----
+- **Bad Example**:
 
-## 10. 안티패턴
+```typescript
+function OrderItem({ order }: OrderItemProps) {
+  return (
+    <div>
+      <select onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}>
+        {/* options */}
+      </select>
+      <button onClick={() => deleteOrder(order.id)}>삭제</button>
+    </div>
+  );
+}
+```
 
-### 불필요한 상태와 파생 상태 동기화
+### Unnecessary State and Derived State Synchronization
 
-- **규칙**: [MUST NOT] 기존 state나 props로부터 계산 가능한 값을 별도의 state로 만들거나, `useEffect`로 동기화한다. 렌더링 중 직접 계산한다.
-- **이유**: 별도 state로 관리하면 (1) 원본 변경 시 두 번 렌더링되고, (2) 한 프레임 동안 stale 값이 노출되며, (3) 동기화를 빠뜨리면 추적하기 어려운 버그가 발생한다. 렌더링 중 직접 계산하면 항상 최신 값이 보장된다.
-- **좋은 예시**:
+- **Rule**: [MUST NOT] Do not create separate state for values that can be computed from existing state or props, or synchronize them with `useEffect`. Compute them directly during rendering.
+- **Good Example**:
 
 ```typescript
 function Cart() {
@@ -1626,7 +1427,7 @@ function Cart() {
 }
 ```
 
-- **나쁜 예시**:
+- **Bad Example**:
 
 ```typescript
 function Cart() {
@@ -1644,17 +1445,16 @@ function Cart() {
 }
 ```
 
-### useEffect를 이벤트 핸들러로 사용
+### Using useEffect as an Event Handler
 
-- **규칙**: [MUST NOT] 사용자 액션에 대한 응답 로직(API 호출, 토스트, 네비게이션 등)을 `useEffect`에 넣는다.
-- **이유**: `useEffect`는 외부 시스템 동기화용 API이다. 이벤트 응답 로직을 Effect에 넣으면 트리거 시점이 불명확해지고, Strict Mode에서 두 번 실행될 수 있다.
-- **좋은 예시**:
+- **Rule**: [MUST NOT] Do not put response logic for user actions (API calls, toasts, navigation, etc.) in `useEffect`.
+- **Good Example**:
 
 ```typescript
 function OrderForm() {
   const handleSubmit = async () => {
     await submitOrder();
-    toast.success("주문이 완료되었습니다");
+    toast.success("주문이 완료되었다");
     router.push("/orders");
   };
 
@@ -1662,7 +1462,7 @@ function OrderForm() {
 }
 ```
 
-- **나쁜 예시**:
+- **Bad Example**:
 
 ```typescript
 function OrderForm() {
@@ -1671,7 +1471,7 @@ function OrderForm() {
   useEffect(() => {
     if (!isSubmitted) return;
     submitOrder().then(() => {
-      toast.success("주문이 완료되었습니다");
+      toast.success("주문이 완료되었다");
       router.push("/orders");
     }).finally(() => setIsSubmitted(false));
   }, [isSubmitted]);
@@ -1680,11 +1480,10 @@ function OrderForm() {
 }
 ```
 
-### key를 사용한 컴포넌트 리셋 미활용
+### Not Utilizing key for Component Reset
 
-- **규칙**: [SHOULD] 특정 값이 바뀔 때 컴포넌트의 모든 내부 상태를 초기화해야 한다면, `useEffect`로 개별 state를 리셋하는 대신 `key` prop에 해당 값을 전달한다.
-- **이유**: `key`가 변경되면 React는 컴포넌트를 언마운트 후 새로 마운트하여 모든 내부 상태를 자동 초기화한다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] When all internal state of a component needs to be reset when a specific value changes, pass that value to the `key` prop instead of resetting individual states with `useEffect`.
+- **Good Example**:
 
 ```typescript
 function ChatPage({ rooms }: { rooms: ChatRoom[] }) {
@@ -1700,33 +1499,14 @@ function ChatPage({ rooms }: { rooms: ChatRoom[] }) {
 }
 ```
 
-- **나쁜 예시**:
+### Lying About useEffect Dependencies
 
-```typescript
-function ChatPanel({ roomId }: { roomId: string }) {
-  const [message, setMessage] = useState("");
-  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+- **Rule**: [MUST NOT] Do not exclude actually used values from the `useEffect` dependency array, or suppress dependency warnings with `eslint-disable`.
 
-  // 수동 리셋 - 새 state 추가 시마다 리셋 코드도 추가해야 함
-  useEffect(() => {
-    setMessage("");
-    setIsEmojiOpen(false);
-  }, [roomId]);
+### Side Effects During Rendering
 
-  return <div />;
-}
-```
-
-### useEffect 의존성 거짓말
-
-- **규칙**: [MUST NOT] `useEffect`의 의존성 배열에서 실제 사용하는 값을 제외하거나, `eslint-disable`로 의존성 경고를 무시한다.
-- **이유**: 의존성 배열은 "Effect가 사용하는 모든 반응형 값의 목록"이다. 값을 누락하면 stale closure가 발생하여 추적하기 어려운 버그가 생긴다. 의존성을 줄이고 싶다면 Effect 내부 코드를 리팩토링해야 한다.
-
-### 렌더링 중 부수효과
-
-- **규칙**: [MUST NOT] 컴포넌트 함수 본문(렌더링 페이즈)에서 API 호출, `localStorage` 접근, DOM 직접 조작 등 부수효과를 실행한다.
-- **이유**: React는 컴포넌트 함수를 언제든 다시 호출할 수 있다(Strict Mode에서 두 번 호출). 렌더링 함수는 순수 함수여야 한다. 부수효과는 `useEffect`(외부 동기화)나 이벤트 핸들러(사용자 액션)에서 실행한다.
-- **좋은 예시**:
+- **Rule**: [MUST NOT] Do not execute side effects such as API calls, `localStorage` access, or direct DOM manipulation in the component function body (render phase).
+- **Good Example**:
 
 ```typescript
 function AnalyticsDashboard() {
@@ -1746,7 +1526,7 @@ function AnalyticsDashboard() {
 }
 ```
 
-- **나쁜 예시**:
+- **Bad Example**:
 
 ```typescript
 function AnalyticsDashboard() {
@@ -1757,14 +1537,3 @@ function AnalyticsDashboard() {
   return <div />;
 }
 ```
-
----
-
-## 11. 참고 자료
-
-- [React 공식 문서](https://react.dev)
-- [React 19 블로그 포스트](https://react.dev/blog/2024/12/05/react-19)
-- [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app)
-- [react-error-boundary](https://github.com/bvaughn/react-error-boundary)
-- [TanStack Virtual](https://tanstack.com/virtual/latest)
-- [React Compiler](https://react.dev/learn/react-compiler)

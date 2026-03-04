@@ -1,225 +1,287 @@
-# 상태 관리 컨벤션
+# State Management Convention
 
-> 이 문서는 프론트엔드의 상태 관리 전략을 정의합니다.
-> 클라이언트 상태(Zustand)와 서버 상태(TanStack Query)를 명확히 분리합니다.
-> 상위 규칙: [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)
+> This document defines the state management strategy for the frontend.
+> Parent rules: FRONTEND_CONVENTION.md
 
-## 상태 분류 기준
+---
 
-- **규칙**: [MUST] 모든 상태는 아래 4가지 유형 중 하나로 분류하고, 각 유형에 맞는 도구를 사용한다.
-- **이유**: 상태의 성격에 따라 적절한 도구를 선택해야 캐싱, 동기화, 리렌더링 최적화 등의 이점을 얻을 수 있다.
+## 1. Minimize Global State Principle
 
-| 상태 유형 | 설명 | 도구 | 예시 |
+- **Rule**: [MUST] Global state (Zustand) is a **last resort**. Before adding new state, always verify "Does this state really need to be global?"
+
+```text
+새로운 상태가 필요하다
+|
++-- 서버에서 온 데이터인가? (API 응답)
+|   +-- YES -> TanStack Query — Zustand에 복사 금지
+|
++-- URL에 반영해야 하는가? (필터, 정렬, 페이지네이션, 탭)
+|   +-- YES -> nuqs — 링크 공유, 북마크, 뒤로가기 보존
+|
++-- 폼 입력값인가?
+|   +-- YES -> React Hook Form — 전역 store 불필요
+|
++-- 단일 컴포넌트에서만 사용하는가?
+|   +-- YES -> useState / useReducer — 전역화 금지
+|
++-- 부모-자식 2단계 이하에서 공유하는가?
+|   +-- YES -> props 전달 또는 Compound Component 패턴
+|
++-- 부모-자식 3단계 이상인가?
+|   +-- YES -> Context/Compound 우선
+|            여러 페이지 전역 UI 상태라면 Zustand
+|
++-- 위 모두 해당하지 않고, 여러 페이지에서 공유하는 순수 UI 상태인가?
+    +-- YES -> Zustand (이 경우에만 사용)
+    예시: 사이드바 열림/닫힘, 토스트 큐, 테마 설정
+```
+
+## 2. State Classification Criteria
+
+- **Rule**: [MUST] All state must be classified into one of the following 4 types, and the appropriate tool must be used for each type.
+
+| State Type | Description | Tool | Example |
 |----------|------|------|------|
-| 서버 상태 | API에서 가져온 데이터 | TanStack Query | 상품 목록, 사용자 프로필, 주문 내역 |
-| 클라이언트 상태 | UI 상태, 사용자 설정 | Zustand | 사이드바 열림/닫힘, 테마, 알림 |
-| 로컬 상태 | 단일 컴포넌트 내 상태 | useState | 모달 열림, 입력값, 토글 |
-| URL 상태 | 라우트 파라미터, 검색 | useSearchParams | 페이지네이션, 필터, 정렬 |
+| Server State | Data fetched from APIs | TanStack Query | Product list, user profile, order history |
+| URL State | Route parameters, search | nuqs | Pagination, filters, sorting |
+| Local State | State within a single component | useState / useReducer | Modal open, input values, toggle |
+| Global UI State | Pure UI state shared across multiple pages | Zustand (last resort) | Sidebar open/close, toast queue |
 
-- **규칙**: [MUST] 서버에서 온 데이터는 반드시 TanStack Query로 관리한다.
-- **이유**: TanStack Query는 캐싱, 자동 재요청, stale 판별, 백그라운드 갱신 등을 자동으로 처리한다.
+- **Rule**: [MUST] Data from the server must always be managed with TanStack Query.
 
-- **규칙**: [MUST] 단일 컴포넌트에서만 사용하는 상태는 useState를 사용한다.
-- **이유**: 전역 store에 로컬 상태를 넣으면 불필요한 의존성이 생기고, 컴포넌트의 재사용성이 떨어진다.
+- **Rule**: [MUST] State used only in a single component must use useState. Do not put it in a global store.
 
-- **규칙**: [SHOULD] 여러 컴포넌트에서 공유하는 UI 상태는 Zustand를 사용한다.
-- **이유**: Props drilling 없이 여러 컴포넌트가 동일한 UI 상태에 접근할 수 있고, Context API 대비 리렌더링 최적화가 용이하다.
+- **Rule**: [SHOULD] Zustand should only be used for pure UI state shared across multiple pages. Do not use Zustand for server data, URL state, form state, or local state.
 
-## Zustand 패턴
+## 3. Zustand Patterns
 
-### Slice 패턴
+### Feature-Scoped Store
 
-- **규칙**: [MUST] `store/slices/` 디렉토리에 도메인별 slice 파일을 생성하고, `StateCreator` 타입을 사용한다.
-- **이유**: 도메인별로 slice를 분리하면 관심사가 명확히 나뉘고, 각 slice를 독립적으로 테스트할 수 있다.
-- **좋은 예시**:
+- **Rule**: [MUST] Create an independent Zustand store for each feature domain. Place it in the `features/{domain}/store/` directory.
+- **Good Example**:
   ```typescript
-  // store/slices/userSlice.ts
-  import { StateCreator } from 'zustand';
+  // features/ui/store/ui-store.ts
+  import { create } from 'zustand';
+  import { devtools, persist } from 'zustand/middleware';
 
-  export interface UserSlice {
-    user: User | null;
-    setUser: (user: User) => void;
-    updatePreferences: (prefs: Partial<UserPreferences>) => void;
-    logout: () => void;
-  }
-
-  export const createUserSlice: StateCreator<UserSlice & UISlice, [], [], UserSlice> = (set) => ({
-    user: null,
-    setUser: (user) => set({ user }),
-    updatePreferences: (prefs) =>
-      set((state) => ({
-        user: state.user
-          ? { ...state.user, preferences: { ...state.user.preferences, ...prefs } }
-          : null,
-      })),
-    logout: () => set({ user: null }),
-  });
-
-  // store/slices/uiSlice.ts
-  export interface UISlice {
+  interface UIStore {
     isSidebarOpen: boolean;
     notifications: Notification[];
     toggleSidebar: () => void;
     addNotification: (notification: Notification) => void;
   }
 
-  export const createUISlice: StateCreator<UserSlice & UISlice, [], [], UISlice> = (set) => ({
-    isSidebarOpen: true,
-    notifications: [],
-    toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-    addNotification: (notification) =>
-      set((state) => ({ notifications: [...state.notifications, notification] })),
-  });
-  ```
-
-### Store 결합
-
-- **규칙**: [MUST] `create` 함수에 `devtools`와 `persist` 미들웨어를 조합하여 store를 생성한다.
-- **이유**: `devtools`는 상태 변경 이력 추적을, `persist`는 새로고침 후에도 필요한 상태 유지를 지원한다.
-- **좋은 예시**:
-  ```typescript
-  // store/index.ts
-  import { create } from 'zustand';
-  import { devtools, persist } from 'zustand/middleware';
-
-  type StoreState = UserSlice & UISlice;
-
-  export const useStore = create<StoreState>()(
+  export const useUIStore = create<UIStore>()(
     devtools(
       persist(
-        (...a) => ({ ...createUserSlice(...a), ...createUISlice(...a) }),
+        (set) => ({
+          isSidebarOpen: true,
+          notifications: [],
+          toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+          addNotification: (notification) =>
+            set((state) => ({ notifications: [...state.notifications, notification] })),
+        }),
         {
-          name: 'app-store',
-          partialize: (state) => ({ user: state.user, isSidebarOpen: state.isSidebarOpen }),
+          name: 'ui-store',
+          partialize: (state) => ({ isSidebarOpen: state.isSidebarOpen }),
         },
       ),
-      { name: 'AppStore' },
+      { name: 'UIStore' },
     ),
   );
   ```
 
-### Selector 최적화
+### Selector Optimization
 
-- **규칙**: [MUST] 개별 selector를 내보내기하여 불필요한 리렌더링을 방지한다.
-- **이유**: store 전체를 구독하면 어떤 상태가 변경되든 해당 컴포넌트가 리렌더링된다. 필요한 값만 선택하면 해당 값 변경 시에만 리렌더링이 발생한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Export individual selectors to prevent unnecessary re-renders.
+- **Good Example**:
   ```typescript
-  // store/selectors.ts
-  export const useUser = () => useStore((state) => state.user);
-  export const useIsSidebarOpen = () => useStore((state) => state.isSidebarOpen);
-  export const useToggleSidebar = () => useStore((state) => state.toggleSidebar);
-  ```
-- **나쁜 예시**:
-  ```typescript
-  // 전체 store를 구독 - 어떤 상태든 변경되면 리렌더링 발생
-  const { user, isSidebarOpen } = useStore();
+  // Use individual selectors from each feature store
+  const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
+  const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const notifications = useUIStore((state) => state.notifications);
   ```
 
-### Persist 미들웨어
+### Selecting Multiple Values with useShallow
 
-- **규칙**: [SHOULD] `partialize`로 필요한 데이터만 localStorage에 저장한다.
-- **이유**: 전체 store를 persist하면 일시적인 UI 상태까지 저장되어 오래된 데이터가 복원될 수 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] When selecting multiple state values at once, use `useShallow` to prevent unnecessary re-renders through shallow comparison.
+- **Good Example**:
   ```typescript
-  persist(storeCreator, {
-    name: 'app-store',
-    partialize: (state) => ({
-      user: state.user,           // 유지 필요
-      isSidebarOpen: state.isSidebarOpen, // 유지 필요
-      // notifications 제외 - 일시적 데이터
-    }),
-  })
-  ```
-- **나쁜 예시**:
-  ```typescript
-  persist(storeCreator, {
-    name: 'app-store',
-    // partialize 미설정 - 모든 상태가 localStorage에 저장됨
-  })
+  import { useShallow } from 'zustand/react/shallow';
+
+  // Select multiple values at once with shallow comparison to optimize re-renders
+  const { isSidebarOpen, notifications } = useUIStore(
+    useShallow((s) => ({ isSidebarOpen: s.isSidebarOpen, notifications: s.notifications })),
+  );
   ```
 
-## TanStack Query 패턴
+### Persist Middleware
 
-### Query Key Factory
-
-- **규칙**: [MUST] `@lukemorales/query-key-factory`를 사용하여 query key를 일관되게 관리한다.
-- **이유**: 문자열 배열로 직접 query key를 관리하면 오타, 중복, 불일치가 발생하기 쉽다. Factory는 타입 안전한 key 생성과 계층적 invalidation을 지원한다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Use `partialize` to save only necessary data to localStorage.
+- **Good Example**:
   ```typescript
-  // queries/queryKeys.ts
-  import { createQueryKeys, mergeQueryKeys } from '@lukemorales/query-key-factory';
-
-  export const productKeys = createQueryKeys('products', {
-    all: null,
-    list: (filters: ProductFilters) => ({ queryKey: [filters] }),
-    detail: (id: string) => ({ queryKey: [id] }),
-  });
-
-  export const userKeys = createQueryKeys('users', {
-    all: null, me: null,
-    detail: (id: string) => ({ queryKey: [id] }),
-    orders: (userId: string) => ({ queryKey: [userId] }),
-  });
-
-  export const queryKeys = mergeQueryKeys(productKeys, userKeys);
-  ```
-- **나쁜 예시**:
-  ```typescript
-  // 문자열 배열로 직접 관리 - 오타와 불일치 위험
-  useQuery({ queryKey: ['produts', id], queryFn: () => fetchProduct(id) }); // 오타!
-  queryClient.invalidateQueries({ queryKey: ['products', id] }); // key 불일치
+  // features/ui/store/ui-store.ts — persist configuration example
+  persist(
+    (set) => ({ /* ... */ }),
+    {
+      name: 'ui-store',
+      partialize: (state) => ({
+        isSidebarOpen: state.isSidebarOpen, // Needs to be persisted
+        // notifications excluded - transient data
+      }),
+    },
+  )
   ```
 
-### 커스텀 훅
+## 4. TanStack Query Patterns
 
-- **규칙**: [MUST] `queries/` 디렉토리에 도메인별 파일을 생성하고, query/mutation 로직을 커스텀 훅으로 캡슐화한다.
-- **이유**: 컴포넌트에서 `useQuery`를 직접 호출하면 설정이 흩어진다. 커스텀 훅으로 캡슐화하면 변경이 한 곳에 집중되고 재사용이 가능하다.
-- **좋은 예시**:
+### Query Factory Pattern
+
+- **Rule**: [MUST] Define a factory object that integrates TanStack Query v5's built-in `queryOptions()` function with query keys. Place it in the `features/{domain}/api/` directory.
+- **Good Example**:
   ```typescript
-  // queries/useProducts.ts
-  import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-  import { productKeys } from './queryKeys';
+  // features/order/api/query-keys.ts
+  import { queryOptions } from '@tanstack/react-query';
+  import { fetchOrders, fetchOrder } from './order-api';
 
-  export function useProducts(filters: ProductFilters) {
-    return useQuery({
-      ...productKeys.list(filters),
-      queryFn: () => fetchProducts(filters),
-      staleTime: 5 * 60 * 1000,
-    });
+  export const orderKeys = {
+    all: () => ['orders'],
+    lists: () => [...orderKeys.all(), 'list'],
+    list: (filters: OrderFilters) =>
+      queryOptions({
+        queryKey: [...orderKeys.lists(), filters],
+        queryFn: () => fetchOrders(filters),
+        staleTime: 5 * 60 * 1000,
+      }),
+    detail: (id: string) =>
+      queryOptions({
+        queryKey: [...orderKeys.all(), 'detail', id],
+        queryFn: () => fetchOrder(id),
+      }),
+  };
+  ```
+
+### Custom Hooks
+
+- **Rule**: [MUST] Define query factories and custom hooks together in the `features/{domain}/api/` directory.
+- **Good Example**:
+  ```typescript
+  // features/order/api/use-orders-query.ts
+  import { useQuery, useQueryClient } from '@tanstack/react-query';
+  import { orderKeys } from './query-keys';
+
+  export function useOrdersQuery(filters: OrderFilters) {
+    return useQuery(orderKeys.list(filters));
   }
 
-  export function useProduct(id: string) {
-    return useQuery({
-      ...productKeys.detail(id),
-      queryFn: () => fetchProduct(id),
-      enabled: !!id,
-    });
+  export function useOrderQuery(id: string) {
+    return useQuery(orderKeys.detail(id));
   }
+  ```
 
-  export function useCreateProduct() {
+  ```typescript
+  // features/order/api/use-create-order-mutation.ts
+  import { useMutation, useQueryClient } from '@tanstack/react-query';
+  import { orderKeys } from './query-keys';
+
+  export function useCreateOrderMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: createProduct,
+      mutationFn: createOrder,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: productKeys.all.queryKey });
+        queryClient.invalidateQueries({ queryKey: orderKeys.all() });
       },
     });
   }
   ```
 
-### 캐시 전략
+### Using useSuspenseQuery
 
-- **규칙**: [SHOULD] 데이터의 변경 빈도에 따라 `staleTime`과 `gcTime`을 설정한다.
-- **이유**: 적절한 캐시 전략은 불필요한 네트워크 요청을 줄이고 사용자 경험을 향상시킨다.
+- **Rule**: [SHOULD] Use `useSuspenseQuery` for default data fetching.
+- **Rule**: [SHOULD] Use `useQuery` when conditional fetching (`enabled` option needed) or partial loading is required.
+- **Good Example**:
+  ```typescript
+  // features/order/api/use-orders-query.ts — default fetching
+  import { useSuspenseQuery } from '@tanstack/react-query';
+  import { orderKeys } from './query-keys';
 
-| 데이터 유형 | staleTime | gcTime | 예시 |
+  export function useOrdersQuery(filters: OrderFilters) {
+    return useSuspenseQuery(orderKeys.list(filters));
+    // data is always defined — no undefined check needed
+  }
+  ```
+
+  ```tsx
+  // features/order/components/order-list/OrderList.tsx — used with Suspense boundary
+  import { Suspense } from 'react';
+
+  function OrderPage() {
+    return (
+      <Suspense fallback={<OrderListSkeleton />}>
+        <OrderList />
+      </Suspense>
+    );
+  }
+
+  function OrderList() {
+    const { data } = useOrdersQuery(filters);
+    // data always exists, so it can be used directly
+    return <DataTable data={data.orders} columns={ORDER_COLUMNS} />;
+  }
+  ```
+
+  ```typescript
+  // When useQuery is appropriate — conditional fetching
+  export function useUserOrdersQuery(userId: string | undefined) {
+    return useQuery({
+      ...orderKeys.list({ userId }),
+      enabled: !!userId, // Only execute when userId exists
+    });
+  }
+  ```
+
+### Using Transform Functions from transforms/
+
+- **Rule**: [MUST] `queryFn` in `queryOptions` should only handle pure API calls. Do not define `select` options or data transformation logic directly in `api/` files.
+- **Rule**: [MUST] When data transformation is needed, define transform functions in the `transforms/` directory and import them in custom hooks to pass to `select`.
+- **Good Example**:
+  ```typescript
+  // features/order/transforms/to-order-list-item.ts — pure transform function
+  export const toOrderListItem = (data: OrdersResponse): OrderListItem[] =>
+    data.orders.map((order) => ({
+      id: order.id,
+      title: order.title,
+      statusLabel: ORDER_STATUS_LABEL[order.status],
+      formattedTotal: formatCurrency(order.totalAmount),
+    }));
+  ```
+
+  ```typescript
+  // features/order/api/use-order-list-items-query.ts — import from transforms/ and pass to select
+  import { useQuery } from '@tanstack/react-query';
+  import { orderKeys } from './query-keys';
+  import { toOrderListItem } from '@/features/order/transforms/to-order-list-item';
+
+  export function useOrderListItemsQuery(filters: OrderFilters) {
+    return useQuery({
+      ...orderKeys.list(filters),
+      select: toOrderListItem,
+    });
+  }
+  ```
+
+### Cache Strategy
+
+- **Rule**: [SHOULD] Set `staleTime` and `gcTime` based on how frequently the data changes.
+
+| Data Type | staleTime | gcTime | Example |
 |------------|-----------|--------|------|
-| 자주 변경 | 30초 ~ 1분 | 5분 | 실시간 재고, 알림 개수 |
-| 보통 | 5분 (기본값) | 10분 | 상품 목록, 주문 내역 |
-| 거의 변경 안 됨 | 30분 ~ 1시간 | 2시간 | 카테고리 목록, 공지사항 |
-| 변경되지 않음 | Infinity | 24시간 | 국가 코드, 환율 기준일 |
+| Frequently changing | 30s ~ 1min | 5min | Real-time inventory, notification count |
+| Normal | 5min (default) | 10min | Product list, order history |
+| Rarely changing | 30min ~ 1hr | 2hr | Category list, announcements |
+| Never changing | Infinity | 24hr | Country codes, exchange rate base date |
 
-- **좋은 예시**:
+- **Good Example**:
   ```typescript
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -235,30 +297,39 @@
 
 ### Optimistic Updates
 
-- **규칙**: [SHOULD] 사용자 경험이 중요한 mutation에는 optimistic update를 적용한다.
-- **이유**: 서버 응답을 기다리지 않고 UI를 즉시 업데이트하면 체감 속도가 향상된다. 에러 시 롤백으로 데이터 일관성을 보장한다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Apply optimistic updates for mutations where user experience is important.
+- **Good Example**:
   ```typescript
-  export function useUpdateProduct() {
+  export function useUpdateOrderMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: updateProduct,
-      onMutate: async (updatedProduct) => {
-        const detailKey = productKeys.detail(updatedProduct.id).queryKey;
-        await queryClient.cancelQueries({ queryKey: detailKey }); // 1. refetch 취소
-        const previousProduct = queryClient.getQueryData(detailKey); // 2. 스냅샷 저장
-        queryClient.setQueryData(detailKey, (old: Product) => ({ ...old, ...updatedProduct })); // 3. 낙관적 업데이트
-        return { previousProduct };
+      mutationFn: updateOrder,
+      onMutate: async (updatedOrder) => {
+        const queryKey = orderKeys.detail(updatedOrder.id).queryKey;
+
+        // 1. Cancel ongoing refetches — prevent overwriting optimistic update
+        await queryClient.cancelQueries({ queryKey });
+
+        // 2. Save current data snapshot — used for rollback on error
+        const previousOrder = queryClient.getQueryData(queryKey);
+
+        // 3. Optimistic update — reflect in UI immediately before server response
+        queryClient.setQueryData(queryKey, (old: Order) => ({ ...old, ...updatedOrder }));
+
+        return { previousOrder };
       },
-      onError: (_err, updatedProduct, context) => {
-        if (context?.previousProduct) { // 에러 시 롤백
+      onError: (_err, updatedOrder, context) => {
+        // 4. Rollback on error — restore original state from snapshot
+        if (context?.previousOrder) {
           queryClient.setQueryData(
-            productKeys.detail(updatedProduct.id).queryKey, context.previousProduct,
+            orderKeys.detail(updatedOrder.id).queryKey,
+            context.previousOrder,
           );
         }
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: productKeys.all.queryKey });
+      onSettled: (_data, _error, updatedOrder) => {
+        // 5. Sync with server data regardless of success/failure
+        queryClient.invalidateQueries({ queryKey: orderKeys.detail(updatedOrder.id).queryKey });
       },
     });
   }
@@ -266,77 +337,268 @@
 
 ### Mutation + Invalidation
 
-- **규칙**: [MUST] mutation 성공 후 반드시 관련 쿼리를 invalidate한다.
-- **이유**: invalidate하지 않으면 화면에 오래된 데이터가 표시되어 사용자에게 혼란을 야기한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Always invalidate related queries after a successful mutation.
+- **Good Example**:
   ```typescript
-  export function useDeleteProduct() {
+  export function useDeleteOrderMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: (id: string) => deleteProduct(id),
+      mutationFn: (id: string) => deleteOrder(id),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: productKeys.all.queryKey });
+        queryClient.invalidateQueries({ queryKey: orderKeys.all() });
       },
     });
   }
   ```
-- **나쁜 예시**:
-  ```typescript
-  export function useDeleteProduct() {
-    return useMutation({
-      mutationFn: (id: string) => deleteProduct(id),
-      // onSuccess 없음 - 삭제된 상품이 목록에 계속 표시됨
-    });
-  }
-  ```
 
-## 서버 상태 복제 금지
+## 5. TanStack Query Global Error/Success Handling
 
-- **규칙**: [MUST NOT] TanStack Query가 관리하는 서버 데이터를 Zustand store에 복사하지 않는다.
-- **이유**: 동일한 데이터가 두 곳에 존재하면 동기화 문제가 발생한다. TanStack Query가 백그라운드에서 데이터를 갱신해도 Zustand에 복사된 데이터는 오래된 상태로 남아 추적하기 어려운 버그를 유발한다.
-- **나쁜 예시**:
+### Global Error Handler
+
+- **Rule**: [MUST] Display global error toasts using `MutationCache.onError`.
+- **Rule**: [SHOULD] Detect 401 errors in `QueryCache.onError` and handle login redirect.
+
+```typescript
+// app/lib/query-client.ts
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
+import { ApiError } from '@/lib/api-error';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+  queryCache: new QueryCache({
+    onError: (error) => {
+      // 401 error → login redirect (when token refresh fails)
+      if (error instanceof ApiError && error.isUnauthorized()) {
+        window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+      }
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      // Global error toast — display ApiError's message
+      const message = error instanceof ApiError
+        ? error.message
+        : '알 수 없는 오류가 발생했습니다.';
+      toast.error(message);
+    },
+    onSuccess: (_data, _variables, _context, mutation) => {
+      // Display success toast if mutation.meta.successMessage exists
+      const successMessage = (mutation.options.meta as { successMessage?: string })?.successMessage;
+      if (successMessage) {
+        toast.success(successMessage);
+      }
+    },
+  }),
+});
+```
+
+### Mutation Feedback Pattern
+
+- **Rule**: [SHOULD] Provide feedback to users via toast on mutation success/error. Set `meta.successMessage` when using the global handler.
+
+```typescript
+// features/order/api/use-update-order-mutation.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
+import { orderKeys } from './query-keys';
+
+export function useUpdateOrderMutation(orderId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateOrderDto) => apiClient.put(`/orders/${orderId}`, data),
+    meta: { successMessage: '주문이 수정되었습니다.' }, // Toast displayed by global onSuccess
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orderKeys.all() });
+    },
+    // onError is handled by global MutationCache.onError
+  });
+}
+```
+
+## 6. URL State Management (nuqs)
+
+### nuqs Setup
+
+- **Rule**: [SHOULD] Use nuqs for URL state management.
+- **Rule**: [MUST] When using nuqs, wrap the root with `NuqsAdapter` in a React Router v7 environment.
+
+```typescript
+// app/root.tsx
+import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
+
+export default function App() {
+  return (
+    <NuqsAdapter>
+      <Outlet />
+    </NuqsAdapter>
+  );
+}
+```
+
+### Basic Principles
+
+- **Rule**: [MUST] Manage filters, sorting, and pagination as URL state using nuqs (`useQueryStates`). Do not manage them with Zustand or useState.
+
+### Defining searchParams Parsers
+
+- **Rule**: [MUST] Use nuqs built-in parsers such as `parseAsInteger`, `parseAsStringLiteral` to define searchParams in a type-safe manner.
+
+```typescript
+import { parseAsInteger, parseAsStringLiteral, useQueryStates } from 'nuqs';
+
+const searchParamsParsers = {
+  page: parseAsInteger.withDefault(1),
+  size: parseAsInteger.withDefault(20),
+  status: parseAsStringLiteral(['all', 'pending', 'confirmed'] as const).withDefault('all'),
+};
+```
+
+### searchParams → queryKey → useQuery Integration
+
+```typescript
+// features/order/components/order-list/OrderList.tsx
+import { parseAsInteger, parseAsStringLiteral, useQueryStates } from 'nuqs';
+import { useOrdersQuery } from '@/features/order/api/use-orders-query';
+
+const searchParamsParsers = {
+  page: parseAsInteger.withDefault(1),
+  size: parseAsInteger.withDefault(20),
+  status: parseAsStringLiteral(['all', 'pending', 'confirmed'] as const).withDefault('all'),
+};
+
+function OrderList() {
+  // 1. Parse URL parameters in a type-safe way with nuqs
+  const [{ page, size, status }, setParams] = useQueryStates(searchParamsParsers);
+
+  // 2. Include parsed values in queryKey → auto refetch on URL change
+  const { data, isPending } = useOrdersQuery({ page, size, status });
+
+  const handlePageChange = (nextPage: number) => {
+    setParams({ page: nextPage });
+  };
+
+  if (isPending) return <OrderListSkeleton />;
+
+  return (
+    <div>
+      <DataTable data={data?.orders ?? []} columns={ORDER_COLUMNS} />
+      <Pagination
+        currentPage={page}
+        totalPages={data?.totalPages ?? 1}
+        onPageChange={handlePageChange}
+      />
+    </div>
+  );
+}
+```
+
+## 7. Dependent Query Pattern
+
+- **Rule**: [SHOULD] Use the `enabled` option when the next query requires the result of a previous query.
+
+```typescript
+// Pattern: fetch user info first, then fetch the user's order list
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
+
+function UserOrders() {
+  // Step 1: Fetch current user info
+  const { data: user } = useCurrentUser();
+
+  // Step 2: Fetch order list only when user ID exists
+  const { data: orders, isPending } = useQuery({
+    queryKey: userQueries.orders(user?.id ?? '').queryKey,
+    queryFn: () => apiClient.get<Order[]>(`/users/${user!.id}/orders`),
+    enabled: !!user?.id, // Only execute when user.id exists
+  });
+
+  if (isPending) return <OrderListSkeleton />;
+
+  return <DataTable data={orders ?? []} columns={ORDER_COLUMNS} />;
+}
+```
+
+```typescript
+// Category selection → fetch product list for that category
+function CategoryProducts() {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+
+  const { data: categories } = useCategoriesQuery();
+
+  // Fetch product list only when selectedCategoryId exists
+  const { data: products, isPending } = useQuery({
+    ...categoryQueries.products(selectedCategoryId!),
+    enabled: !!selectedCategoryId,
+  });
+
+  return (
+    <div>
+      <CategorySelector
+        categories={categories ?? []}
+        selected={selectedCategoryId}
+        onSelect={setSelectedCategoryId}
+      />
+      {selectedCategoryId && (
+        isPending ? <ProductSkeleton /> : <ProductGrid products={products ?? []} />
+      )}
+    </div>
+  );
+}
+```
+
+## 8. No Server State Duplication
+
+- **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query into a Zustand store.
+- **Bad Example**:
   ```typescript
   function UserProfile() {
     const { data: user } = useUser();
-    const setUser = useStore((state) => state.setUser);
+    const setUser = useAuthStore((state) => state.setUser);
     useEffect(() => {
-      if (user) setUser(user); // TanStack Query 캐시와 Zustand 사이에 동기화 문제!
+      if (user) setUser(user); // Sync issue between TanStack Query cache and Zustand!
     }, [user, setUser]);
-    const storedUser = useStore((state) => state.user);
+    const storedUser = useAuthStore((state) => state.user);
     return <div>{storedUser?.name}</div>;
   }
   ```
-- **좋은 예시**:
+- **Good Example**:
   ```typescript
-  // TanStack Query 훅을 직접 사용 - 단일 데이터 소스 보장
+  // Use TanStack Query hook directly - guarantees single source of truth
   function UserProfile() {
     const { data: user, isLoading } = useUser();
     if (isLoading) return <Skeleton />;
     return <div>{user?.name}</div>;
   }
-  // 여러 컴포넌트에서 동일한 훅을 호출해도 캐시를 공유하므로 중복 요청 없음
+  // Even when multiple components call the same hook, they share the cache so there are no duplicate requests
   function UserAvatar() {
     const { data: user } = useUser();
     return <Avatar src={user?.avatarUrl} />;
   }
   ```
 
-## 안티패턴
+## 9. Anti-Patterns
 
-### 1. 전역 상태 남용
+### 1. Global State Abuse
 
-- **규칙**: [MUST NOT] 로컬 상태로 충분한 데이터를 Zustand에 저장하지 않는다.
-- **이유**: 단일 컴포넌트에서만 사용하는 데이터를 전역 store에 넣으면 store가 비대해지고, 컴포넌트 간 불필요한 결합이 생긴다.
-- **나쁜 예시**:
+- **Rule**: [MUST NOT] Do not store data in Zustand when local state is sufficient.
+- **Bad Example**:
   ```typescript
-  // Zustand store에 로컬 상태를 넣는다
+  // Putting local state in Zustand store
   interface StoreState {
     isDeleteModalOpen: boolean;
     searchInputValue: string;
     isDropdownOpen: boolean;
   }
   ```
-- **좋은 예시**:
+- **Good Example**:
   ```typescript
   function ProductCard() {
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -344,11 +606,10 @@
   }
   ```
 
-### 2. useEffect + fetch 패턴
+### 2. useEffect + fetch Pattern
 
-- **규칙**: [MUST NOT] TanStack Query 대신 useEffect 안에서 fetch를 호출하여 서버 데이터를 관리하지 않는다.
-- **이유**: useEffect + fetch 패턴은 로딩/에러 상태, 캐싱, 중복 요청 방지, 백그라운드 갱신 등을 모두 직접 구현해야 한다.
-- **나쁜 예시**:
+- **Rule**: [MUST NOT] Do not manage server data by calling fetch inside useEffect instead of using TanStack Query.
+- **Bad Example**:
   ```typescript
   function ProductList() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -362,7 +623,7 @@
     }, []);
   }
   ```
-- **좋은 예시**:
+- **Good Example**:
   ```typescript
   function ProductList() {
     const { data: products, isLoading, error } = useProducts(filters);
@@ -372,29 +633,26 @@
   }
   ```
 
-### 3. 모든 상태를 한 store에 몰아넣기
+### 3. Putting All State in a Single Store
 
-- **규칙**: [SHOULD NOT] 관심사가 다른 상태를 하나의 store에 모두 넣지 않는다. 도메인별로 slice를 분리한다.
-- **이유**: 하나의 거대한 store 파일은 코드 탐색이 어렵고, 여러 개발자가 동시에 수정할 때 충돌이 빈번하다.
+- **Rule**: [SHOULD NOT] Do not put state with different concerns into a single store. Separate into feature-scoped stores by domain.
 
-### 4. Selector 없이 전체 store 구독
+### 4. Subscribing to the Entire Store Without a Selector
 
-- **규칙**: [MUST NOT] selector 없이 store 전체를 구독하지 않는다.
-- **이유**: store의 어떤 값이 변경되든 해당 컴포넌트가 리렌더링되어 성능이 저하된다.
-- **나쁜 예시**:
+- **Rule**: [MUST NOT] Do not subscribe to the entire store without a selector.
+- **Bad Example**:
   ```typescript
-  const { user, isSidebarOpen, notifications, theme } = useStore();
+  const { isSidebarOpen, notifications, toggleSidebar } = useUIStore();
   ```
-- **좋은 예시**:
+- **Good Example**:
   ```typescript
-  const theme = useStore((state) => state.theme);
+  const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
   ```
 
-## 참고 자료
+### 5. Defining Transform Logic Directly in queryOptions
 
-- [Zustand GitHub](https://github.com/pmndrs/zustand)
-- [Zustand 공식 문서](https://docs.pmnd.rs/zustand)
-- [TanStack Query v5 공식 문서](https://tanstack.com/query/latest)
-- [@lukemorales/query-key-factory](https://github.com/lukemorales/query-key-factory)
-- [TanStack Query - Optimistic Updates](https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates)
-- [Zustand Slices Pattern](https://docs.pmnd.rs/zustand/guides/slices-pattern)
+- **Rule**: [MUST NOT] Do not define transform functions directly in queryOptions or custom hook files in the `api/` directory. Define transform functions in `transforms/` and import them in `api/` files to pass to `select`.
+
+### 6. Duplicating Server State to Zustand
+
+- **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query into a Zustand store using useEffect.

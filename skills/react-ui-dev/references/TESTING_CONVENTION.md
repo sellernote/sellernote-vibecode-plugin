@@ -1,58 +1,50 @@
-# 테스트 컨벤션
+# Testing Convention
 
-> 이 문서는 프론트엔드 테스트 전략과 Storybook 활용 방법을 정의합니다.
-> 상위 규칙: [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)
+> This document defines the frontend testing strategy and Storybook usage guidelines.
+> Parent rules: FRONTEND_CONVENTION.md
 
 ---
 
-## 1. 테스트 피라미드
+## 1. Test Pyramid
 
-프론트엔드 테스트는 아래 피라미드 구조를 따른다. 하위 레벨일수록 빠르고 안정적이며 비중이 높아야 한다.
+Frontend testing follows the pyramid structure below. Lower levels should be faster, more stable, and have a higher proportion.
 
-```
-        /  Visual  \          ← Visual Regression (Chromatic)
+```text
        /    E2E     \         ← Playwright, 핵심 사용자 시나리오
       /  Integration  \       ← React Testing Library, 컴포넌트 조합
      /   Component      \     ← Storybook Interaction Testing
-    /    Unit Testing     \   ← Jest, 유틸리티/훅 단위
+    /    Unit Testing     \   ← Vitest, 유틸리티/훅 단위
    ────────────────────────
 ```
 
-| 레벨 | 도구 | 대상 | 비중 |
+| Level | Tool | Target | Proportion |
 | --- | --- | --- | --- |
-| Unit | Jest | 유틸리티 함수, 커스텀 훅, 순수 로직 | 40% |
-| Component | Storybook + Interaction Testing | 개별 UI 컴포넌트의 렌더링과 인터랙션 | 25% |
-| Integration | React Testing Library | 여러 컴포넌트의 조합, 폼 제출 흐름 등 | 20% |
-| E2E | Playwright | 로그인, 주문 생성 등 핵심 사용자 시나리오 | 10% |
-| Visual | Chromatic | UI 스타일 변경 감지, 시각적 회귀 방지 | 5% |
+| Unit | Vitest | Utility functions, custom hooks, pure logic | 40% |
+| Component | Storybook + Interaction Testing | Rendering and interaction of individual UI components | 25% |
+| Integration | React Testing Library | Combination of multiple components, form submission flows, etc. | 25% |
+| E2E | Playwright | Core user scenarios such as login, order creation, etc. | 10% |
 
 ---
 
-## 2. Storybook 컨벤션
+## 2. Storybook Convention
 
-### 2-1. 설정
+### 2-1. Setup
 
-- **규칙**: [MUST] Storybook은 `@storybook/nextjs` 프레임워크를 사용하고, App Router를 활성화한다
-- **이유**: Next.js의 Image, Link, Router 등 내장 기능을 Storybook 환경에서도 동일하게 동작시키려면 전용 프레임워크 어댑터가 필요하다. `appDirectory: true` 설정은 App Router 기반 프로젝트와의 호환성을 보장한다.
+- **Rule**: [MUST] Storybook uses the `@storybook/react-vite` framework
 
 `.storybook/main.ts`:
 
 ```typescript
-import type { StorybookConfig } from "@storybook/nextjs";
+import type { StorybookConfig } from "@storybook/react-vite";
 
 const config: StorybookConfig = {
-  stories: ["../src/**/*.stories.@(ts|tsx)"],
+  stories: ["../app/**/*.stories.@(ts|tsx)"],
   addons: [
     "@storybook/addon-essentials",
     "@storybook/addon-interactions",
     "@storybook/addon-a11y",
   ],
-  framework: {
-    name: "@storybook/nextjs",
-    options: {
-      appDirectory: true,
-    },
-  },
+  framework: "@storybook/react-vite",
   staticDirs: ["../public"],
 };
 
@@ -63,7 +55,7 @@ export default config;
 
 ```typescript
 import type { Preview } from "@storybook/react";
-import "../src/app/globals.css";
+import "../app/globals.css";
 
 const preview: Preview = {
   parameters: {
@@ -73,44 +65,30 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-    nextjs: {
-      appDirectory: true,
-    },
+    layout: "fullscreen",
   },
 };
 
 export default preview;
 ```
 
-### 2-2. 스토리 파일 위치
+### 2-2. Story File Location
 
-- **규칙**: [MUST] 스토리 파일은 컴포넌트와 같은 폴더에 위치시키며, `[ComponentName].stories.tsx` 패턴을 따른다
-- **이유**: 컴포넌트와 스토리를 같은 폴더에 두면 관련 파일을 한눈에 파악할 수 있고, 컴포넌트 수정 시 스토리도 함께 업데이트할 가능성이 높아진다.
-- **좋은 예시**:
+- **Rule**: [MUST] Story files are placed in the same folder as the component, following the `[ComponentName].stories.tsx` pattern
+- **Good Example**:
 
-```
-src/components/ui/Button/
+```text
+app/components/ui/button/
 ├── Button.tsx
 ├── Button.stories.tsx
 ├── Button.test.tsx
-└── Button.types.ts
+└── button.types.ts
 ```
 
-- **나쁜 예시**:
+### 2-3. CSF3 Format
 
-```
-src/components/ui/Button/
-└── Button.tsx
-
-src/stories/
-└── Button.stories.tsx      ← 컴포넌트와 분리되어 관리가 어려움
-```
-
-### 2-3. CSF3 포맷
-
-- **규칙**: [MUST] Component Story Format 3(CSF3)을 사용하며, `Meta`와 `StoryObj` 타입을 적용한다
-- **이유**: CSF3은 Storybook 공식 표준 포맷으로, 타입 안전성과 자동 완성을 제공한다. `satisfies` 키워드를 사용하면 타입 추론과 타입 검증을 동시에 달성할 수 있다.
-- **좋은 예시**:
+- **Rule**: [MUST] Use Component Story Format 3 (CSF3) with `Meta` and `StoryObj` types
+- **Good Example**:
 
 ```typescript
 import type { Meta, StoryObj } from "@storybook/react";
@@ -163,37 +141,22 @@ export const Disabled: Story = {
 };
 ```
 
-- **나쁜 예시**:
+### 2-4. Story Hierarchy
 
-```typescript
-// CSF2 방식: 함수로 스토리를 정의하면 타입 안전성이 떨어짐
-export default {
-  title: "Button",
-  component: Button,
-};
+- **Rule**: [SHOULD] The `title` property should be written hierarchically according to the Atomic Design classification
 
-export const Primary = () => <Button variant="primary">버튼</Button>;
-export const Secondary = () => <Button variant="secondary">버튼</Button>;
-```
-
-### 2-4. 스토리 계층
-
-- **규칙**: [SHOULD] `title` 속성은 Atomic Design 분류에 따라 계층적으로 작성한다
-- **이유**: 일관된 계층 구조는 Storybook 사이드바에서 컴포넌트를 빠르게 탐색할 수 있게 하며, 팀원 간 컴포넌트 분류 기준을 통일한다.
-
-| 분류 | 대상 | 예시 |
+| Classification | Target | Example |
 | --- | --- | --- |
-| Atoms | 더 이상 분해할 수 없는 기본 요소 | `Atoms/Button`, `Atoms/Input`, `Atoms/Badge` |
-| Molecules | Atom을 조합한 단위 기능 | `Molecules/SearchField`, `Molecules/FormField` |
-| Organisms | Molecule을 조합한 독립 영역 | `Organisms/Header`, `Organisms/OrderTable` |
-| Templates | 페이지 레이아웃 구조 | `Templates/DashboardLayout` |
-| Pages | 실제 데이터가 연결된 페이지 | `Pages/OrderListPage` |
+| Atoms | Basic elements that cannot be broken down further | `Atoms/Button`, `Atoms/Input`, `Atoms/Badge` |
+| Molecules | Functional units composed of Atoms | `Molecules/SearchField`, `Molecules/FormField` |
+| Organisms | Independent sections composed of Molecules | `Organisms/Header`, `Organisms/OrderTable` |
+| Templates | Page layout structures | `Templates/DashboardLayout` |
+| Pages | Pages connected with actual data | `Pages/OrderListPage` |
 
 ### 2-5. Interaction Testing
 
-- **규칙**: [SHOULD] 사용자 인터랙션이 포함된 컴포넌트는 `play` 함수를 사용하여 Storybook 내에서 동작을 검증한다
-- **이유**: Interaction Testing은 브라우저 환경에서 실제 사용자 동작을 시뮬레이션하므로 DOM 기반 테스트보다 신뢰도가 높다. 또한 Storybook UI에서 테스트 과정을 시각적으로 확인할 수 있어 디버깅이 용이하다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Components with user interactions should use the `play` function to verify behavior within Storybook
+- **Good Example**:
 
 ```typescript
 import type { Meta, StoryObj } from "@storybook/react";
@@ -236,9 +199,8 @@ export const SubmitSuccess: Story = {
 
 ### 2-6. Autodocs
 
-- **규칙**: [SHOULD] 공용 컴포넌트는 `tags: ['autodocs']`를 설정하여 자동 문서화를 활성화한다
-- **이유**: Autodocs는 Props 테이블, Controls 패널, 코드 예제를 자동으로 생성하므로 별도 문서 작성 없이 컴포넌트 사용법을 전달할 수 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Shared components should enable automatic documentation by setting `tags: ['autodocs']`
+- **Good Example**:
 
 ```typescript
 const meta = {
@@ -261,13 +223,12 @@ const meta = {
 
 ---
 
-## 3. 단위 테스트 (Jest + React Testing Library)
+## 3. Unit Testing (Vitest + React Testing Library)
 
-### 3-1. 컴포넌트 테스트
+### 3-1. Component Testing
 
-- **규칙**: [MUST] 컴포넌트 테스트는 render -> interact -> assert 패턴을 따르며, `screen.getByRole`을 우선 사용한다
-- **이유**: `getByRole`은 접근성 트리를 기반으로 요소를 탐색하므로, 테스트가 통과하면 접근성도 함께 보장된다. 구현 세부사항이 아닌 사용자 관점에서 테스트하는 것이 리팩토링에 강한 테스트를 만든다.
-- **좋은 예시**:
+- **Rule**: [MUST] Component tests follow the render -> interact -> assert pattern, prioritizing `screen.getByRole`
+- **Good Example**:
 
 ```typescript
 import { render, screen } from "@testing-library/react";
@@ -299,29 +260,14 @@ describe("UserProfile", () => {
 });
 ```
 
-- **나쁜 예시**:
+### 3-2. Hook Testing
 
-```typescript
-describe("UserProfile", () => {
-  it("renders", () => {
-    const { container } = render(<UserProfile name="홍길동" email="hong@example.com" />);
-
-    // querySelector로 구현 세부사항에 의존
-    expect(container.querySelector(".user-name")).toHaveTextContent("홍길동");
-    expect(container.querySelector(".user-email")).toHaveTextContent("hong@example.com");
-  });
-});
-```
-
-### 3-2. Hook 테스트
-
-- **규칙**: [SHOULD] 커스텀 훅은 `renderHook`을 사용하여 독립적으로 테스트한다
-- **이유**: 훅을 컴포넌트와 분리하여 테스트하면 훅 자체의 로직을 정밀하게 검증할 수 있고, 컴포넌트 렌더링 없이 빠르게 테스트할 수 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Custom hooks should be tested independently using `renderHook`
+- **Good Example**:
 
 ```typescript
 import { renderHook, act } from "@testing-library/react";
-import { useCounter } from "./useCounter";
+import { useCounter } from "./use-counter";
 
 describe("useCounter", () => {
   it("초기값을 설정할 수 있다", () => {
@@ -352,31 +298,69 @@ describe("useCounter", () => {
 });
 ```
 
-### 3-3. 파일 위치
+### 3-3. useSuspenseQuery Testing
 
-- **규칙**: [MUST] 테스트 파일은 테스트 대상과 같은 폴더에 위치시키며, `*.test.tsx` (또는 `*.spec.tsx`) 패턴을 사용한다
-- **이유**: 테스트 파일이 대상 파일과 같은 폴더에 있으면 관련 코드를 한 곳에서 관리할 수 있고, 파일 탐색 비용이 줄어든다.
+- **Rule**: [SHOULD] Components using `useSuspenseQuery` should be tested with a `Suspense` boundary, and APIs should be mocked with MSW
+- **Good Example**:
 
+```typescript
+import { Suspense } from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { UserProfile } from "./UserProfile";
+
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <Suspense fallback={<div>로딩 중...</div>}>
+        {ui}
+      </Suspense>
+    </QueryClientProvider>
+  );
+}
+
+describe("UserProfile", () => {
+  it("로딩 후 사용자 정보를 표시한다", async () => {
+    // MSW로 API 응답 모킹 (setupServer에서 설정)
+    renderWithProviders(<UserProfile userId="1" />);
+
+    // Suspense fallback 확인
+    expect(screen.getByText("로딩 중...")).toBeInTheDocument();
+
+    // 데이터 로딩 완료 후 확인
+    await waitFor(() => {
+      expect(screen.getByText("홍길동")).toBeInTheDocument();
+    });
+  });
+});
 ```
-src/components/ui/Button/
+
+### 3-4. File Location
+
+- **Rule**: [MUST] Test files are placed in the same folder as the test target, using the `*.test.tsx` (or `*.spec.tsx`) pattern
+
+```text
+app/components/ui/button/
 ├── Button.tsx
 ├── Button.test.tsx          ← 컴포넌트 테스트
 ├── Button.stories.tsx       ← 스토리
-└── Button.types.ts
+└── button.types.ts
 
-src/hooks/
-├── useCounter.ts
-└── useCounter.test.ts       ← 훅 테스트
+app/hooks/
+├── use-counter.ts
+└── use-counter.test.ts      ← 훅 테스트
 
-src/utils/
-├── formatDate.ts
-└── formatDate.test.ts       ← 유틸리티 테스트
+app/utils/
+├── format-date.ts
+└── format-date.test.ts      ← 유틸리티 테스트
 ```
 
-### 3-4. Mock 패턴
+### 3-5. Mock Patterns
 
-- **규칙**: [SHOULD] 외부 의존성은 목적에 맞는 Mock 도구를 사용하여 격리한다
-- **이유**: 테스트의 격리성을 확보하면 외부 서비스 장애나 네트워크 상태에 영향받지 않고 안정적으로 테스트를 실행할 수 있다.
+- **Rule**: [SHOULD] External dependencies should be isolated using appropriate mock tools
 
 **API Mock (MSW)**:
 
@@ -420,29 +404,39 @@ describe("UserList", () => {
 });
 ```
 
-**Next.js Router Mock**:
+**React Router Mock**:
 
 ```typescript
-import { useRouter, usePathname } from "next/navigation";
+import { useNavigate, useLocation } from "react-router";
+import { vi } from "vitest";
 
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
-  usePathname: jest.fn(),
-  useSearchParams: jest.fn(() => new URLSearchParams()),
-}));
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
+  return {
+    ...actual,
+    useNavigate: vi.fn(),
+    useLocation: vi.fn(),
+  };
+});
 
 describe("Navigation", () => {
   it("로고 클릭 시 홈으로 이동한다", async () => {
-    const push = jest.fn();
-    (useRouter as jest.Mock).mockReturnValue({ push });
-    (usePathname as jest.Mock).mockReturnValue("/dashboard");
+    const navigate = vi.fn();
+    vi.mocked(useNavigate).mockReturnValue(navigate);
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: "/dashboard",
+      search: "",
+      hash: "",
+      state: null,
+      key: "default",
+    });
 
     const user = userEvent.setup();
     render(<Navigation />);
 
     await user.click(screen.getByRole("link", { name: "홈" }));
 
-    expect(push).toHaveBeenCalledWith("/");
+    expect(navigate).toHaveBeenCalledWith("/");
   });
 });
 ```
@@ -451,14 +445,15 @@ describe("Navigation", () => {
 
 ```typescript
 import { create } from "zustand";
+import { vi } from "vitest";
 
 // 테스트용 store를 직접 생성하여 초기 상태를 제어
 function createMockAuthStore(initialState = {}) {
   return create(() => ({
     user: null,
     isAuthenticated: false,
-    login: jest.fn(),
-    logout: jest.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
     ...initialState,
   }));
 }
@@ -479,11 +474,10 @@ describe("AuthenticatedContent", () => {
 
 ---
 
-## 4. E2E 테스트
+## 4. E2E Testing
 
-- **규칙**: [SHOULD] 핵심 사용자 시나리오에 대해 E2E 테스트를 작성하며, Playwright를 사용한다
-- **이유**: E2E 테스트는 실제 브라우저에서 전체 애플리케이션 흐름을 검증하므로 통합 문제를 발견하기에 가장 효과적이다. Playwright는 크로스 브라우저 지원, 자동 대기, 강력한 셀렉터 엔진을 제공한다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Write E2E tests for core user scenarios using Playwright
+- **Good Example**:
 
 ```typescript
 import { test, expect } from "@playwright/test";
@@ -515,22 +509,21 @@ test.describe("주문 생성 플로우", () => {
 });
 ```
 
-E2E 테스트는 비용이 높으므로 다음과 같은 핵심 시나리오에 집중한다:
+E2E tests are expensive, so focus on core scenarios such as the following:
 
-| 시나리오 | 검증 항목 |
+| Scenario | Verification Items |
 | --- | --- |
-| 로그인/로그아웃 | 인증 플로우, 세션 관리 |
-| 주문 CRUD | 생성, 조회, 수정, 삭제 전체 흐름 |
-| 검색/필터 | 검색 결과 정확성, 필터 동작 |
-| 결제 플로우 | 결제 정보 입력, 결제 완료 확인 |
+| Login/Logout | Authentication flow, session management |
+| Order CRUD | Full flow of create, read, update, delete |
+| Search/Filter | Search result accuracy, filter behavior |
+| Payment Flow | Payment information input, payment completion confirmation |
 
 ---
 
-## 5. 테스트 네이밍
+## 5. Test Naming
 
-- **규칙**: [SHOULD] `describe`로 테스트 대상을 명시하고, `it`에서 조건과 기대 결과를 작성한다
-- **이유**: 명확한 네이밍은 테스트 실패 시 문제 원인을 빠르게 파악할 수 있게 해주며, 테스트 코드가 곧 명세 문서 역할을 한다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Specify the test target with `describe`, and write the condition and expected result in `it`
+- **Good Example**:
 
 ```typescript
 describe("OrderTable", () => {
@@ -550,26 +543,14 @@ describe("OrderTable", () => {
 });
 ```
 
-- **나쁜 예시**:
-
-```typescript
-// 테스트 대상이 모호하고 기대 결과가 불명확함
-describe("tests", () => {
-  it("works", () => { /* ... */ });
-  it("test 1", () => { /* ... */ });
-  it("should render correctly", () => { /* ... */ });
-});
-```
-
 ---
 
-## 6. 안티패턴
+## 6. Anti-Patterns
 
-### 구현 세부사항 테스트
+### Testing Implementation Details
 
-- **규칙**: [MUST NOT] `data-testid`를 남용하거나 내부 구현에 의존하는 테스트를 작성하지 않는다. `getByRole`, `getByText`, `getByLabelText`를 우선 사용한다.
-- **이유**: 구현 세부사항에 의존하는 테스트는 리팩토링 시 쉽게 깨진다. 사용자가 실제로 인식하는 요소(텍스트, 역할, 레이블)를 기준으로 테스트하면 내부 구조가 변경되어도 동작이 동일한 한 테스트가 유지된다.
-- **좋은 예시**:
+- **Rule**: [MUST NOT] Do not overuse `data-testid` or write tests that depend on internal implementation. Prioritize `getByRole`, `getByText`, and `getByLabelText`.
+- **Good Example**:
 
 ```typescript
 // 사용자 관점에서 요소를 탐색
@@ -578,7 +559,7 @@ expect(screen.getByLabelText("이메일")).toHaveValue("hong@example.com");
 expect(screen.getByText("주문이 완료되었습니다.")).toBeInTheDocument();
 ```
 
-- **나쁜 예시**:
+- **Bad Example**:
 
 ```typescript
 // data-testid에 의존하면 접근성 검증이 누락되고 리팩토링에 취약함
@@ -587,16 +568,14 @@ expect(screen.getByTestId("email-input")).toHaveValue("hong@example.com");
 expect(screen.getByTestId("success-msg")).toBeInTheDocument();
 ```
 
-### 스냅샷 테스트 남용
+### Overuse of Snapshot Testing
 
-- **규칙**: [SHOULD NOT] 변경이 잦은 UI 컴포넌트에 스냅샷 테스트를 사용하지 않는다
-- **이유**: 스냅샷 테스트는 UI가 조금만 변경되어도 실패하므로, 변경이 잦은 컴포넌트에서는 의미 없는 스냅샷 업데이트가 반복된다. 이는 팀원들이 스냅샷 변경을 검토 없이 승인하게 만드는 습관을 유발한다. 스냅샷 테스트는 변경이 드문 디자인 시스템 컴포넌트 등에 제한적으로 사용한다.
+- **Rule**: [SHOULD NOT] Do not use snapshot testing for UI components that change frequently
 
-### 테스트 간 상태 공유
+### Sharing State Between Tests
 
-- **규칙**: [MUST NOT] 테스트 간 상태를 공유하지 않는다. 각 테스트는 독립적으로 실행되어야 한다.
-- **이유**: 상태를 공유하면 테스트 실행 순서에 따라 결과가 달라지는 flaky test가 발생한다. 모든 테스트는 자체적으로 필요한 상태를 설정하고 정리해야 한다.
-- **좋은 예시**:
+- **Rule**: [MUST NOT] Do not share state between tests. Each test must run independently.
+- **Good Example**:
 
 ```typescript
 describe("CartStore", () => {
@@ -618,7 +597,7 @@ describe("CartStore", () => {
 });
 ```
 
-- **나쁜 예시**:
+- **Bad Example**:
 
 ```typescript
 describe("CartStore", () => {
@@ -638,11 +617,10 @@ describe("CartStore", () => {
 });
 ```
 
-### 비동기 로직에서 waitFor 누락
+### Missing waitFor for Asynchronous Logic
 
-- **규칙**: [MUST NOT] 비동기로 렌더링되는 요소를 `waitFor` 없이 assertion하지 않는다
-- **이유**: API 호출 결과나 상태 업데이트로 렌더링되는 요소는 즉시 DOM에 나타나지 않는다. `waitFor` 없이 assertion하면 테스트가 간헐적으로 실패하는 flaky test가 된다.
-- **좋은 예시**:
+- **Rule**: [MUST NOT] Do not assert on asynchronously rendered elements without `waitFor`
+- **Good Example**:
 
 ```typescript
 it("사용자 목록을 로딩 후 표시한다", async () => {
@@ -655,7 +633,7 @@ it("사용자 목록을 로딩 후 표시한다", async () => {
 });
 ```
 
-- **나쁜 예시**:
+- **Bad Example**:
 
 ```typescript
 it("사용자 목록을 로딩 후 표시한다", () => {
@@ -665,15 +643,3 @@ it("사용자 목록을 로딩 후 표시한다", () => {
   expect(screen.getByText("홍길동")).toBeInTheDocument();
 });
 ```
-
----
-
-## 7. 참고 자료
-
-- [Storybook 공식 문서](https://storybook.js.org/docs)
-- [Testing Library 공식 문서](https://testing-library.com/docs)
-- [Kent C. Dodds - Write tests. Not too many. Mostly integration.](https://kentcdodds.com/blog/write-tests)
-- [Kent C. Dodds - Testing Implementation Details](https://kentcdodds.com/blog/testing-implementation-details)
-- [Playwright 공식 문서](https://playwright.dev/docs/intro)
-- [MSW(Mock Service Worker) 공식 문서](https://mswjs.io/docs)
-- [Chromatic 공식 문서](https://www.chromatic.com/docs)

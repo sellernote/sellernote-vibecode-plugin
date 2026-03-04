@@ -12,7 +12,7 @@ Orchestrate full Next.js feature development by analyzing requirements, designin
 Before starting, read from `references/` within this skill directory:
 
 1. **Always**: `references/FRONTEND_ARCHITECTURE_CONVENTION.md`, `references/NEXTJS_CONVENTION.md`
-2. **When relevant**: `references/FRONTEND_CONVENTION.md`
+2. **When relevant**: `references/FRONTEND_CONVENTION.md`, `references/REACT_CONVENTION.md`
 
 ## Orchestration Workflow
 

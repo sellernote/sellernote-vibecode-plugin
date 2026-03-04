@@ -91,7 +91,7 @@
 - **Good Example**:
   ```typescript
   const userName = 'John';
-  const items = [1, 2, 3]; // Array contents can be modified, so const is fine
+  const items = [1, 2, 3]; // Array content can be modified, so const is fine
 
   let count = 0;
   count += 1; // Reassignment needed → let
@@ -131,7 +131,7 @@
 
 ### Async Handling — async/await
 
-- **Rule**: [MUST] Use `async/await` when working with Promises. Avoid `.then()` chains.
+- **Rule**: [MUST] Use `async/await` when dealing with Promises. Avoid `.then()` chaining.
 - **Good Example**:
   ```typescript
   async function fetchUser(id: string): Promise<User> {
@@ -209,7 +209,7 @@
 
 - **Good Example**:
   ```typescript
-  // Simple string set — union type
+  // Simple set of strings — union type
   type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered';
 
   function updateStatus(orderId: string, status: OrderStatus): void {
@@ -217,7 +217,7 @@
   }
   ```
 
-### as const Object Usage (When Value References Are Needed)
+### as const Object Usage (When Value Reference Is Needed)
 
 - **Good Example**:
   ```typescript
@@ -227,7 +227,7 @@
     Processing: 'processing',
     Shipped: 'shipped',
     Delivered: 'delivered',
-  } as const;  // Identical to snake_case when value is a single word
+  } as const;  // When the value is a single word, it is the same as snake_case
 
   type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
@@ -239,7 +239,7 @@
 
 ### When Enum Is Allowed
 
-- **Rule**: [MAY] `enum` may be used only when numeric mapping is needed or when iteration over values is required.
+- **Rule**: [MAY] `enum` may be used only when numeric mapping is needed or iteration over values is required.
 - **Good Example**:
   ```typescript
   enum HttpStatus {
@@ -256,7 +256,7 @@
 
 ### Import Ordering Rules
 
-- **Rule**: [MUST] Group import statements in the following order, with a blank line between groups.
+- **Rule**: [MUST] Group import statements in the following order, with blank lines between groups.
 
 ```typescript
 // 1. Node.js built-in modules
@@ -291,8 +291,8 @@ import { styles } from './styles';
 
 ### Barrel Export
 
-- **Rule**: [SHOULD] Expose public APIs of packages or modules through barrel exports via `index.ts`.
-- **Rule**: [MUST NOT] Do not import directly from deep paths. Use barrel-exported paths.
+- **Rule**: [SHOULD] Expose the public API of packages or modules through barrel exports via `index.ts`.
+- **Rule**: [MUST NOT] Do not import directly from deep paths. Use barrel-exported paths instead.
 - **Good Example**:
   ```typescript
   // packages/utils/src/index.ts
@@ -330,7 +330,7 @@ import { styles } from './styles';
   );
   ```
 
-### ESLint Enforcement
+### ESLint Execution Requirements
 
 - **Rule**: [MUST] Running ESLint is mandatory for all code changes.
 
@@ -363,9 +363,9 @@ import { styles } from './styles';
 
 ### Prettier
 
-- **Rule**: [MUST] Use Prettier as the code formatter, and prevent conflicts with ESLint using `eslint-config-prettier`.
+- **Rule**: [MUST] Use Prettier as the code formatter and prevent conflicts with ESLint using `eslint-config-prettier`.
 
-- **Rule**: [SHOULD] Use the following Prettier settings as defaults. (Can be adjusted by team agreement)
+- **Rule**: [SHOULD] Use the following Prettier settings as defaults. (Adjustable by team agreement)
 
 ```json
 {
@@ -382,7 +382,7 @@ import { styles } from './styles';
 
 - **Rule**: [SHOULD] Use Husky + lint-staged to run automatic linting/formatting before commits.
 
-## Anti-patterns
+## Anti-Patterns
 
 ### Overuse of as Casting
 
@@ -403,11 +403,11 @@ import { styles } from './styles';
 
 ### Using any
 
-- **Rule**: [MUST NOT] Do not use `any`. Replace with `unknown` and narrow using type guards.
+- **Rule**: [MUST NOT] Do not use `any`. Replace with `unknown` and narrow with type guards.
 
 ### Overuse of Non-null Assertion (!)
 
-- **Rule**: [MUST NOT] Do not habitually use non-null assertion (`!`).
+- **Rule**: [MUST NOT] Do not habitually use non-null assertions (`!`).
   - Note: Do not use patterns like `users.find(...)!` or `document.getElementById('app')!`.
 - **Good Example**:
   ```typescript
@@ -421,7 +421,7 @@ import { styles } from './styles';
 ### Overuse of @ts-ignore / @ts-expect-error
 
 - **Rule**: [MUST NOT] Do not use `@ts-ignore`.
-- **Rule**: [SHOULD] Use `@ts-expect-error` when unavoidable, and always leave a comment explaining the reason.
+- **Rule**: [SHOULD] In unavoidable cases, use `@ts-expect-error` and always leave a comment explaining the reason.
 - **Good Example**:
   ```typescript
   // @ts-expect-error: Library type definitions have not been updated yet (issue: #123)

@@ -1,6 +1,6 @@
 # Database Convention
 
-> This document defines common rules that apply across the entire database.
+> This document defines common rules that apply to the entire database.
 > For rules specific to a particular database, refer to the documents in the subdirectories.
 >
 > - [MySQL Convention](mysql/MYSQL_CONVENTION.md)
@@ -11,17 +11,17 @@
 ### Normalization Level
 
 - **Rule**: [SHOULD] Design targeting Third Normal Form (3NF) by default.
-- **Rule**: [MAY] Intentional denormalization is allowed when read performance is critical. However, when denormalizing, the approach for maintaining data consistency must be documented.
+- **Rule**: [MAY] When read performance is critical, intentional denormalization is allowed. However, when denormalizing, the approach for maintaining data consistency must be documented.
 
-### ERD Standards
+### ERD Writing Standards
 
-- **Rule**: [MUST] Major domain entities and relationships must be documented as an ERD.
-- **Rule**: [SHOULD] The ERD should specify table names, key columns, PK/FK relationships, and cardinality.
+- **Rule**: [MUST] Major domain entities and relationships must be documented as ERDs.
+- **Rule**: [SHOULD] ERDs should specify table names, key columns, PK/FK relationships, and cardinality.
 
 ### Relationship Design Principles
 
-- **Rule**: [MUST] Define relationships between tables explicitly through foreign keys (FK).
-- **Rule**: [SHOULD] Many-to-many (M:N) relationships should use a junction table.
+- **Rule**: [MUST] Explicitly define relationships between tables through foreign keys (FK).
+- **Rule**: [SHOULD] Many-to-many (M:N) relationships should use junction tables.
 
 ## Naming Rules
 
@@ -57,7 +57,7 @@
   is_active TINYINT(1) NOT NULL DEFAULT 1
   has_verified_email TINYINT(1) NOT NULL DEFAULT 0
   ```
-- **Rule**: [MUST NOT] Do not use the `no_` prefix to express negation. `no_` causes confusion with sequential identifiers (`_no`) and can be mistaken as an abbreviation for Number. Instead, combine `is_`, `has_`, `can_` prefixes with clearly meaningful adjectives.
+- **Rule**: [MUST NOT] Do not use the `no_` prefix to express negation. `no_` causes confusion with the sequential identifier (`_no`) and can be mistaken as an abbreviation for Number. Instead, combine `is_`, `has_`, `can_` prefixes with clearly meaningful adjectives.
 - **Bad Example**:
   ```sql
   no_stock TINYINT(1) NOT NULL DEFAULT 0
@@ -104,7 +104,7 @@
 
 ### Soft Delete
 
-- **Rule**: [SHOULD] Tables that require deletion history for business purposes should apply soft delete via a `deleted_at` field.
+- **Rule**: [SHOULD] Tables that require deletion history for business purposes should apply soft delete via the `deleted_at` field.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -133,7 +133,7 @@
 
 ### ID Strategy
 
-- **Rule**: [MUST] PK (`id`) stores UUID (v4) values as `CHAR(36)` type.
+- **Rule**: [MUST] PK (`id`) stores UUID (v4) values in `CHAR(36)` type.
 - **Rule**: [MUST] All tables must have a `_no` column (BIGINT AUTO_INCREMENT) with a UNIQUE KEY index.
 - **Rule**: [MUST NOT] Do not expose `_no` values in external API responses. Always use `id` (UUID) for external interfaces.
 
@@ -141,11 +141,11 @@
 
 ### Type Selection Criteria
 
-- **Rule**: [MUST] Choose the smallest type appropriate for the data to be stored.
+- **Rule**: [MUST] Choose the smallest appropriate type for the data being stored.
 
 ### Strings
 
-- **Rule**: [SHOULD] Use `VARCHAR(n)` for strings with fixed or predictable length, and `TEXT` types for large text with unpredictable length.
+- **Rule**: [SHOULD] Use `VARCHAR(n)` for strings with fixed or predictable length, and use `TEXT` types for large text with unpredictable length.
 
 | Purpose | Recommended Type | Example |
 |---------|-----------------|---------|
@@ -156,10 +156,10 @@
 
 ### Date/Time
 
-- **Rule**: [MUST] Store date/time data in UTC, and convert to the appropriate timezone when displaying.
+- **Rule**: [MUST] Store date/time data in UTC and convert to the appropriate timezone when displaying.
 - **Rule**: [SHOULD] Use ISO 8601 format (YYYY-MM-DD HH:MM:SS) as the standard.
 
-### Monetary/Decimal Values
+### Currency/Decimal
 
 - **Rule**: [MUST] Use `DECIMAL(precision, scale)` type for monetary data. Do not use `FLOAT`/`DOUBLE`.
 - **Good Example**:
@@ -180,13 +180,13 @@
 - **Rule**: [MUST] In composite indexes, place columns with higher cardinality (better selectivity) first.
 - **Good Example**:
   ```sql
-  -- user_id has higher cardinality than status, so it is placed first
+  -- user_id의 카디널리티가 status보다 높으므로 앞에 배치
   CREATE INDEX idx_order_user_id_status ON `order` (user_id, status);
   ```
 
 ### Covering Index
 
-- **Rule**: [MAY] For frequently executed queries, a covering index that includes the SELECT target columns in the index may be used.
+- **Rule**: [MAY] For frequently executed queries, include the SELECT target columns in the index to utilize a covering index.
 - **Good Example**:
   ```sql
   -- user_id로 검색하고 email만 반환하는 쿼리가 빈번한 경우
@@ -201,7 +201,7 @@
 ### Migration File Management
 
 - **Rule**: [MUST] Schema changes must be managed through migration files. Do not execute DDL directly on the DB manually.
-- **Rule**: [MUST] Migration file names must be timestamp-based to guarantee ordering.
+- **Rule**: [MUST] Migration file names must use timestamp-based naming to guarantee ordering.
 - **Good Example**:
   ```
   20250101_000001_create_user_table.sql
@@ -231,14 +231,14 @@
 
 ### Zero-Downtime Schema Changes
 
-- **Rule**: [MUST] Schema changes in production must be performable without service interruption.
-- **Rule**: [SHOULD] Schema changes on large tables should follow this sequence:
+- **Rule**: [MUST] Schema changes in production environments must be performed without service interruption.
+- **Rule**: [SHOULD] Schema changes for large tables should follow this sequence:
   1. Add new column (nullable or with default value) -- compatible with existing code
   2. Deploy code to use the new column in the application
   3. Migrate existing data in batches
   4. Add NOT NULL constraint if needed
   5. Remove old column (in a separate migration)
-- **Rule**: [MUST NOT] Do not perform column renames or deletions in a single deployment in production.
+- **Rule**: [MUST NOT] Do not perform column renames or deletions in a single deployment in production environments.
 
 ## Business Logic Management
 
@@ -268,9 +268,9 @@
   SELECT id, email, name FROM user WHERE id = 'uuid-value';
   ```
 
-### N+1 Query
+### N+1 Queries
 
-- **Rule**: [MUST NOT] Do not execute queries repeatedly inside a loop.
+- **Rule**: [MUST NOT] Do not execute queries repeatedly inside loops.
 - **Good Example**:
   ```sql
   -- JOIN으로 한 번에 조회
@@ -282,7 +282,7 @@
 
 ### Implicit Type Conversion
 
-- **Rule**: [MUST NOT] Do not compare a column with a value of a different type in WHERE conditions. (This invalidates indexes and causes Full Table Scan)
+- **Rule**: [MUST NOT] Do not compare a column with a value of a different type in WHERE conditions. (This invalidates indexes and causes Full Table Scans)
 
 ### NULL Comparison Errors
 

@@ -20,8 +20,9 @@ React SPA(Vite + React Router) 프로젝트에서 UI 컴포넌트, 페이지, �
 
 2. **필요 시 읽기**:
    - `references/FORM_CONVENTION.md` - React Hook Form + Zod 폼
-   - `references/TESTING_CONVENTION.md` - Storybook, Jest, E2E 테스트
+   - `references/TESTING_CONVENTION.md` - Storybook, Vitest, RTL, Playwright
    - `references/REACT_CONVENTION.md` - React 19 패턴, Hooks 규칙, 성능 최적화, Error Boundary
+   - `references/REACT_ROUTER_CONVENTION.md` - React Router 7 Framework Mode, route modules
    - `references/COMMON_CONVENTION.md` - 네이밍, git, 에러 코드
    - `references/TYPESCRIPT_CONVENTION.md` - TS 스타일, imports, 타입
 
@@ -101,11 +102,10 @@ Sellernote 프론트엔드 컨벤션을 따릅니다:
 
 | 레벨 | 도구 | 대상 | 비중 |
 |------|------|------|------|
-| Unit | Jest | 유틸리티 함수, 커스텀 훅, 순수 로직 | 40% |
+| Unit | Vitest | 유틸리티 함수, 커스텀 훅, 순수 로직 | 40% |
 | Component | Storybook + Interaction Testing | 개별 UI 컴포넌트 렌더링/인터랙션 | 25% |
-| Integration | React Testing Library | 다중 컴포넌트 조합, 폼 플로우 | 20% |
+| Integration | React Testing Library | 다중 컴포넌트 조합, 폼 플로우 | 25% |
 | E2E | Playwright | 핵심 사용자 시나리오 (로그인, 주문 생성) | 10% |
-| Visual | Chromatic | UI 스타일 회귀 감지 | 5% |
 
 **핵심 제약:**
 - [MUST] CSF3 포맷, `satisfies Meta<typeof Component>`

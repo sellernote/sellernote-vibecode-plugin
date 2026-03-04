@@ -19,7 +19,7 @@ Before starting any work, Read the relevant reference files from `references/` w
 2. **Read when relevant**:
    - `references/NEXTJS_CONVENTION.md` - App Router, Server/Client Components, data fetching
    - `references/FORM_CONVENTION.md` - React Hook Form + Zod forms
-   - `references/TESTING_CONVENTION.md` - Storybook, Jest, E2E tests
+   - `references/TESTING_CONVENTION.md` - Storybook, Vitest, RTL, Playwright
    - `references/COMMON_CONVENTION.md` - Naming, git, error codes
    - `references/TYPESCRIPT_CONVENTION.md` - TS style, imports, types
    - `references/REACT_CONVENTION.md` - React 19 패턴, Hooks 규칙, 성능 최적화, Error Boundary
@@ -96,11 +96,10 @@ Follow the test pyramid distribution:
 
 | Level | Tool | Target | Ratio |
 |-------|------|--------|-------|
-| Unit | Jest | Utility functions, custom hooks, pure logic | 40% |
+| Unit | Vitest | Utility functions, custom hooks, pure logic | 40% |
 | Component | Storybook + Interaction Testing | Individual UI component rendering and interaction | 25% |
-| Integration | React Testing Library | Multi-component composition, form flows | 20% |
+| Integration | React Testing Library | Multi-component composition, form flows | 25% |
 | E2E | Playwright | Critical user scenarios (login, order creation) | 10% |
-| Visual | Chromatic | UI style regression detection | 5% |
 
 **Key constraints:** CSF3 format with `satisfies Meta<typeof Component>`, `play` functions for interactive components, `getByRole`/`getByLabelText`/`getByText` over `getByTestId`, MSW for API mocks, `waitFor` for async assertions, colocate test files with components.
 

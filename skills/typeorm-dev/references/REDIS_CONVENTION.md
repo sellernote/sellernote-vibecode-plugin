@@ -7,7 +7,7 @@
 
 ### Delimiters and Namespaces
 
-- **Rule**: [MUST] Key names use colons (`:`) as delimiters to represent hierarchical structures.
+- **Rule**: [MUST] Key names use colons (`:`) as delimiters to represent hierarchical structure.
 - **Good examples**:
   ```
   user:1001:profile
@@ -18,26 +18,26 @@
 
 ### Namespace Prefixes
 
-- **Rule**: [MUST] Keys must be prefixed with service/feature-specific namespace prefixes.
+- **Rule**: [MUST] Keys must be given namespace prefixes by service/feature.
 
 | Prefix | Purpose | Example |
 |--------|---------|---------|
 | `cache:` | Cache data (TTL required) | `cache:product:100` |
 | `session:` | Session data | `session:abc123` |
 | `lock:` | Distributed locks | `lock:order:create:5678` |
-| `queue:` | Task queues | `queue:email:send` |
+| `queue:` | Job queues | `queue:email:send` |
 | `rate:` | Rate Limiting | `rate:api:user:1001` |
 | `temp:` | Temporary data | `temp:import:batch:99` |
 | `config:` | Configuration values | `config:feature:dark_mode` |
 
-### Key Length Limits
+### Key Length Limit
 
 - **Rule**: [SHOULD] Key names should be kept as short as possible without losing meaning. Must not exceed 1024 bytes.
 
 ### Key Naming Patterns
 
 - **Rule**: [MUST] Key names use only lowercase letters, colons, and numbers. Do not include spaces or special characters.
-- **Rule**: [SHOULD] Key name patterns should follow the format `{namespace}:{entity}:{identifier}:{attribute}`.
+- **Rule**: [SHOULD] Key name patterns follow the format `{namespace}:{entity}:{identifier}:{attribute}`.
 
 ## Data Structure Selection
 
@@ -45,11 +45,11 @@
 
 | Data Structure | Selection Criteria | Representative Use Cases |
 |---------------|-------------------|------------------------|
-| String | Single value storage, counters, simple caching | Page cache, view counters, session tokens |
-| Hash | Object/entity representation (field-value pairs) | User profiles, product information, configuration values |
-| List | Ordered data, queues/stacks | Task queues, recent activity logs, timelines |
-| Set | Duplicate-free collections, tagging, unique tracking | Unique visitor counts, tag lists, liked-by users |
-| Sorted Set | Score-based sorting, ranking, scheduling | Leaderboards, Rate Limiter, scheduled tasks |
+| String | Single value storage, counters, simple caching | Page cache, view counter, session token |
+| Hash | Object/entity representation (field-value pairs) | User profile, product information, configuration values |
+| List | Ordered data, queue/stack | Job queue, recent activity log, timeline |
+| Set | Unique collection, tagging, unique tracking | Unique visitor count, tag list, liked users |
+| Sorted Set | Score-based sorting, ranking, scheduling | Leaderboard, Rate Limiter, scheduled tasks |
 
 ### String
 
@@ -111,15 +111,15 @@
 
 ### TTL Configuration Criteria
 
-- **Rule**: [MUST] Cache data (with `cache:` prefix) must always have a TTL set.
-- **Rule**: [SHOULD] Apply differentiated TTL values based on data change frequency.
+- **Rule**: [MUST] TTL must always be set for cache data (with `cache:` prefix).
+- **Rule**: [SHOULD] Apply different TTL values based on the data's change frequency.
 
 | Data Type | Recommended TTL | Example |
 |-----------|----------------|---------|
 | Frequently changing data | 1–5 minutes | Real-time inventory, trending search terms |
-| Semi-static data | 1–24 hours | User profiles, product details |
-| Rarely changing data | 24 hours–7 days | Category lists, configuration values |
-| Session data | 30 minutes–24 hours | Login sessions |
+| Semi-static data | 1–24 hours | User profile, product details |
+| Rarely changing data | 24 hours–7 days | Category list, configuration values |
+| Session data | 30 minutes–24 hours | Login session |
 
 - **Good examples**:
   ```redis
@@ -127,7 +127,7 @@
   SET session:abc123 '{"user_id":1001}' EX 1800
   ```
 
-### Cache Strategies
+### Cache Strategy
 
 #### Cache-Aside (Lazy Loading)
 
@@ -146,11 +146,11 @@
 
 #### Write-Through
 
-- **Rule**: [MAY] The Write-Through pattern may be applied when data consistency is critical. (Updates both cache and DB at write time)
+- **Rule**: [MAY] The Write-Through pattern may be applied when data consistency is important. (Updates both cache and DB at write time)
 
 ### Cache Invalidation
 
-- **Rule**: [MUST] When data is modified (CUD), related caches must be immediately invalidated (deleted).
+- **Rule**: [MUST] Related cache must be immediately invalidated (deleted) when data changes (CUD).
 - **Good examples**:
   ```python
   def update_product(product_id, data):
@@ -163,7 +163,7 @@
 
 ### Cache Stampede Prevention
 
-- **Rule**: [SHOULD] Prevent cache stampedes where many requests simultaneously try to refresh the same cache. Resolve using distributed locks or by adding random jitter to TTL.
+- **Rule**: [SHOULD] Prevent cache stampede where many concurrent requests update the same cache simultaneously. Resolve with distributed locks or by adding random jitter to TTL.
 - **Good examples**:
   ```python
   import random
@@ -177,12 +177,12 @@
 ### When to Use
 
 - **Rule**: [MAY] Redis Pub/Sub may be used when real-time event broadcasting is needed.
-- **Rule**: [MUST NOT] Do not use Pub/Sub for critical business logic where message loss is not acceptable. (Fire-and-forget approach causes message loss when subscribers are disconnected. Use Redis Streams or a separate message queue instead)
+- **Rule**: [MUST NOT] Do not use Pub/Sub for critical business logic where message loss is not acceptable. (Fire-and-forget approach causes message loss when subscribers are not connected. Use Redis Streams or a separate message queue instead)
 
 ### Message Design
 
-- **Rule**: [SHOULD] Pub/Sub channel names should follow the same colon (`:`) delimiter pattern as key naming.
-- **Rule**: [SHOULD] Message bodies should be serialized in JSON format, including `event`, `data`, and `timestamp` fields.
+- **Rule**: [SHOULD] Pub/Sub channel names should follow the same colon (`:`) delimited pattern as key naming.
+- **Rule**: [SHOULD] Message bodies should be serialized in JSON format and include `event`, `data`, and `timestamp` fields.
 - **Good examples**:
   ```json
   // 채널: event:order:status_changed
@@ -207,7 +207,7 @@
 
 ## Anti-Patterns
 
-### Big Keys
+### Big Key
 
 - **Rule**: [MUST NOT] Do not store excessively large values in a single key. (String: over 1MB, Collection: over 10,000 elements)
 - **Solution**: Split data by sharding across multiple keys.
@@ -217,7 +217,7 @@
   SADD users:group:2 "user:1001" "user:1002" ... "user:2000"
   ```
 
-### Using the KEYS Command
+### KEYS Command Usage
 
 - **Rule**: [MUST NOT] Do not use the `KEYS` command in production environments. (O(N) command that causes Redis server blocking)
 - **Good examples**:
@@ -230,10 +230,10 @@
 
 - **Rule**: [MUST NOT] Do not store temporary data or cache without setting a TTL. (Risk of OOM due to gradual memory increase)
 
-### Hot Key (Single Key Overload)
+### Single Key Overload (Hot Key)
 
-- **Rule**: [MUST NOT] Do not design systems where all traffic is concentrated on a single key. (Redis is single-threaded, so this affects overall performance)
-- **Solution**: Add a local cache layer or distribute across multiple keys via sharding.
+- **Rule**: [MUST NOT] Do not design systems where all traffic concentrates on a single key. (Redis is single-threaded, so this affects overall performance)
+- **Solution**: Add a local cache layer, or distribute the key across multiple shards.
 - **Good examples**:
   ```python
   import random
@@ -241,6 +241,6 @@
   value = redis.get(f"cache:hot_data:shard:{shard}")
   ```
 
-### Using Flush Commands
+### Flush Command Usage
 
 - **Rule**: [MUST NOT] Do not use `FLUSHDB` or `FLUSHALL` commands in production environments. (All data is immediately deleted and cannot be recovered)

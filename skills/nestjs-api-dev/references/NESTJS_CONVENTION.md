@@ -5,15 +5,15 @@
 
 ## Technology Stack
 
-| Item              | Version/Setting    |
-| ----------------- | ------------------ |
-| Test Framework    | Jest (NestJS default) |
+| Item             | Version/Setting    |
+| ---------------- | ------------------ |
+| Test Framework   | Jest (NestJS default) |
 
 ## Project Structure
 
 ### Directory Layout
 
-- **Rule**: [MUST] Follow a feature-based module structure.
+- **Rule**: [MUST] Follow a Feature-based module structure.
 
 ```
 src/
@@ -63,27 +63,27 @@ src/
 
 - **Rule**: [MUST] File names follow the `[name].[type].ts` pattern.
 
-| Type                   | Pattern                          | Example                          |
-| ---------------------- | -------------------------------- | -------------------------------- |
-| Module                 | `[name].module.ts`            | `order.module.ts`              |
-| Controller             | `[name].controller.ts`        | `order.controller.ts`          |
-| Controller (split)     | `[feature]-[name].controller.ts` | `order-crud.controller.ts`     |
-| Service                | `[name].service.ts`           | `order.service.ts`             |
-| Service (split)        | `[feature]-[name].service.ts`    | `order-fulfillment.service.ts` |
-| Repository             | `[name].repository.ts`        | `order.repository.ts`          |
-| Entity                 | `[name].entity.ts`            | `order.entity.ts`              |
-| DTO                    | `[action]-[name].dto.ts`        | `create-order.dto.ts`          |
-| Guard                  | `[name].guard.ts`             | `jwt-auth.guard.ts`            |
-| Interceptor            | `[name].interceptor.ts`       | `logging.interceptor.ts`       |
-| Pipe                   | `[name].pipe.ts`              | `parse-int.pipe.ts`            |
-| Filter                 | `[name].filter.ts`            | `http-exception.filter.ts`     |
-| Test                   | `[name].[type].spec.ts`       | `order.service.spec.ts`        |
+| Type              | Pattern                         | Example                        |
+| ----------------- | ------------------------------- | ------------------------------ |
+| Module            | `[name].module.ts`              | `order.module.ts`              |
+| Controller        | `[name].controller.ts`          | `order.controller.ts`          |
+| Controller (split)| `[feature]-[name].controller.ts`| `order-crud.controller.ts`     |
+| Service           | `[name].service.ts`             | `order.service.ts`             |
+| Service (split)   | `[feature]-[name].service.ts`   | `order-fulfillment.service.ts` |
+| Repository        | `[name].repository.ts`          | `order.repository.ts`          |
+| Entity            | `[name].entity.ts`              | `order.entity.ts`              |
+| DTO               | `[action]-[name].dto.ts`        | `create-order.dto.ts`          |
+| Guard             | `[name].guard.ts`               | `jwt-auth.guard.ts`            |
+| Interceptor       | `[name].interceptor.ts`         | `logging.interceptor.ts`       |
+| Pipe              | `[name].pipe.ts`                | `parse-int.pipe.ts`            |
+| Filter            | `[name].filter.ts`              | `http-exception.filter.ts`     |
+| Test              | `[name].[type].spec.ts`         | `order.service.spec.ts`        |
 
 ## Domain Model Interface
 
 ### Domain Model Interface Definition
 
-- **Rule**: [MUST] Define a Domain Model Interface for each domain model. Include only the data fields unique to that model, excluding relation fields.
+- **Rule**: [MUST] Define a Domain Model Interface for each domain model. Include only the model's own data fields, excluding relation fields.
 - **Good example**:
   ```typescript
   // modules/order/interfaces/order.model.interface.ts
@@ -132,7 +132,7 @@ src/
 
 ### Implementation in Entity
 
-- **Rule**: [MUST] Entity implements the Domain Model Interface using `implements`.
+- **Rule**: [MUST] Entity `implements` the Domain Model Interface.
 - **Good example**:
 
   ```typescript
@@ -152,7 +152,7 @@ src/
     @Column({ type: "char", length: 36 })
     userId: string;
 
-    // Relations are not included in the Interface -- defined only in Entity
+    // Relations are not included in the Interface -- defined only in the Entity
     @ManyToOne(() => User, (user) => user.orders)
     @JoinColumn({ name: "user_id" })
     user: Relation<User>;
@@ -161,7 +161,7 @@ src/
 
 ### Directory Structure
 
-- **Rule**: [MUST] Domain Model Interface files are placed in the `modules/{feature}/interfaces/` directory with the `{feature}.model.interface.ts` pattern.
+- **Rule**: [MUST] Domain Model Interface files are placed in the `modules/{feature}/interfaces/` directory following the `{feature}.model.interface.ts` pattern.
 
 ```
 modules/order/
@@ -186,10 +186,10 @@ modules/order/
 
   ```typescript
   export class CreateOrderDto {
-    @SellernoteApiDecimal({ description: "총 주문 금액", isRequired: true })
+    @SellernoteApiDecimal({ description: "Total order amount", isRequired: true })
     totalAmount: string;
 
-    @SellernoteApiDecimal({ description: "할인 금액", isRequired: false })
+    @SellernoteApiDecimal({ description: "Discount amount", isRequired: false })
     discountAmount?: string;
   }
   ```
@@ -201,9 +201,9 @@ modules/order/
 - **Rule**: [MUST] Use the `@SellernoteApiDecimal` decorator for Swagger documentation of monetary amount DTO fields.
   > [MUST NOT] Do not use `@SellernoteApiNumber` for monetary amounts.
 
-### Monetary Amount Arithmetic Library
+### Monetary Amount Calculation Library
 
-- **Rule**: [MUST] Use the `big.js` library for monetary amount arithmetic.
+- **Rule**: [MUST] Use the `big.js` library for monetary amount calculations.
 - **Good example**:
 
   ```typescript
@@ -227,7 +227,7 @@ modules/order/
 
 ## Controller / Service / Repository Splitting
 
-### Splitting Principle
+### Splitting Principles
 
 - **Rule**: [MUST] All feature modules use `controllers/`, `services/`, `repositories/` directories.
 
@@ -280,7 +280,7 @@ modules/order/
 
 - **Rule**: [MUST] Repositories are mapped 1:1 with Entities and placed in the `repositories/` directory.
 
-### Module Registration (When Splitting)
+### Module Registration (When Split)
 
 - **Rule**: [MUST] All split Controllers, Services, and Repositories must be registered in the corresponding Feature Module's `@Module()` decorator.
 - **Good example**:
@@ -300,7 +300,7 @@ modules/order/
   export class OrderModule {}
   ```
 
-## Module Configuration
+## Module Composition
 
 ### Feature Module
 
@@ -349,7 +349,7 @@ modules/order/
 
 ### Provider Registration
 
-- **Rule**: [MUST] All service classes use the `@Injectable()` decorator and are registered in the corresponding module's `providers`.
+- **Rule**: [MUST] All service classes use the `@Injectable()` decorator and are registered in the module's `providers`.
 
 ### Constructor Injection
 
@@ -393,7 +393,7 @@ modules/order/
 
 ### Custom Decorator Usage Criteria
 
-- **Rule**: [SHOULD] Use Custom Decorators when extracting repetitive logic.
+- **Rule**: [SHOULD] Use Custom Decorators to extract repetitive logic.
 - **Good example**:
 
   ```typescript
@@ -431,11 +431,11 @@ modules/order/
 
 - **Rule**: [MUST] Guard, Interceptor, and Pipe must each be used according to their designated roles.
 
-| Component       | Role                                      | When to Use                                              |
-| --------------- | ----------------------------------------- | -------------------------------------------------------- |
-| **Guard**       | Authentication/Authorization decisions    | Check access permissions before request reaches handler  |
-| **Interceptor** | Request/Response transformation, logging, caching | Add logic before and after handler execution (AOP) |
-| **Pipe**        | Input data transformation and validation  | When data is bound to handler parameters                 |
+| Component       | Role                                        | When to Use                                                  |
+| --------------- | ------------------------------------------- | ------------------------------------------------------------ |
+| **Guard**       | Authentication/Authorization decision       | Checks access permissions before the request reaches the handler |
+| **Interceptor** | Request/Response transformation, logging, caching | Adds logic before and after handler execution (AOP)          |
+| **Pipe**        | Input data transformation and validation    | When data is bound to handler parameters                     |
 
 ### Guard Usage
 
@@ -455,7 +455,7 @@ modules/order/
 
 ### Interceptor Usage
 
-- **Rule**: [SHOULD] Cross-cutting concerns such as response transformation, logging, and timeouts are handled with Interceptors.
+- **Rule**: [SHOULD] Cross-cutting concerns such as response transformation, logging, and timeouts are handled by Interceptors.
 - **Good example**:
   ```typescript
   @Injectable()
@@ -538,9 +538,9 @@ modules/order/
 
 ### API Property Management Library
 
-- **Rule**: [MUST] Use the in-house library `@sellernote/sellernote-nestjs-api-property` for API Property definitions in DTOs.
+- **Rule**: [MUST] Use the in-house library `@sellernote/sellernote-nestjs-api-property` for defining API Properties in DTOs.
 - **Rule**: [MUST NOT] Do not directly use `@ApiProperty()` from `@nestjs/swagger`. Do not directly use `class-validator`/`class-transformer` decorators either.
-- **Reference**: See the [sellernote-nestjs-api-property README](https://github.com/sellernote/sellernote-nestjs-api-property) for usage.
+- **Reference**: Refer to the [sellernote-nestjs-api-property README](https://github.com/sellernote/sellernote-nestjs-api-property) for usage.
 - **Good example**:
 
   ```typescript
@@ -551,17 +551,17 @@ modules/order/
 
   export class CreateOrderDto {
     @SellernoteApiString({
-      description: "상품명",
+      description: "Product name",
       maxLength: 100,
       isRequired: true,
     })
     productName: string;
 
-    @SellernoteApiNumber({ description: "수량", min: 1, isRequired: true })
+    @SellernoteApiNumber({ description: "Quantity", min: 1, isRequired: true })
     quantity: number;
 
     @SellernoteApiString({
-      description: "메모",
+      description: "Memo",
       maxLength: 500,
       isRequired: false,
     })
@@ -583,7 +583,7 @@ modules/order/
     async findOne(id: number): Promise<Order> {
       const order = await this.orderRepository.findOne(id);
       if (!order)
-        throw new NotFoundException(`주문 ID ${id}을(를) 찾을 수 없습니다.`);
+        throw new NotFoundException(`Order ID ${id} not found.`);
       return order;
     }
   }
@@ -598,7 +598,7 @@ modules/order/
     constructor(productId: number, requested: number, available: number) {
       super({
         code: "INSUFFICIENT_STOCK",
-        message: `상품 ${productId}의 재고가 부족합니다. (요청: ${requested}, 가용: ${available})`,
+        message: `Insufficient stock for product ${productId}. (Requested: ${requested}, Available: ${available})`,
       });
     }
   }
@@ -623,7 +623,7 @@ modules/order/
           ? exception.getResponse()
           : {
               code: "INTERNAL_ERROR",
-              message: "서버 내부 오류가 발생했습니다.",
+              message: "An internal server error occurred.",
             };
       response.status(status).json({
         success: false,
@@ -637,14 +637,14 @@ modules/order/
   }
   ```
 
-## Anti-patterns
+## Anti-Patterns
 
 ### Circular Dependencies
 
 - **Rule**: [MUST NOT] Do not create circular dependencies between modules or Providers.
 - **Resolution**: Extract common logic into a separate module, or use `forwardRef()` as a last resort.
 
-### Business Logic in Controller
+### Business Logic in Controllers
 
 - **Rule**: [MUST NOT] Do not write business logic in Controllers.
 
@@ -664,6 +664,6 @@ modules/order/
 
 - **Rule**: [SHOULD NOT] Do not overuse the `@Global()` decorator.
 
-### Using any Type
+### Using the any Type
 
 - **Rule**: [MUST NOT] Do not use the `any` type in TypeScript. Use explicit types or generics.

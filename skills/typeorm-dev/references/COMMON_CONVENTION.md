@@ -1,4 +1,4 @@
-# Common Conventions
+# Common Convention
 
 > Defines common rules that apply to all roles and tools.
 > For rules specific to a particular domain, refer to the documents in subdirectories.
@@ -7,7 +7,7 @@
 
 ## Domain Glossary
 
-Defines the business/technical terms used in the project.
+Defines business/technical terms used in the project.
 AI consistently uses the terms defined here for variable names, class names, etc. during code generation.
 
 | Term | English | Description |
@@ -15,16 +15,16 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 > Whenever a new term is added, this table must be updated to maintain terminology consistency across the team.
 
-## Naming Conventions
+## Naming Convention
 
 ### General Principles
 
-- **Rule**: [MUST] Use clear names that convey meaning from the name alone.
+- **Rule**: [MUST] Use clear names that convey meaning on their own.
 
 - **Rule**: [MUST] Only use abbreviations agreed upon by the team. Do not use abbreviations not registered in the domain glossary.
 
 - **Rule**: [MUST NOT] Do not include redundant type information in names. (No Hungarian notation)
-  - Note: Do not use type prefixes such as `strName`, `arrItems`.
+  - Note: Do not use type prefixes like `strName`, `arrItems`.
 
 ### Variable Names — camelCase
 
@@ -55,11 +55,11 @@ AI consistently uses the terms defined here for variable names, class names, etc
   const MAX_RETRY_COUNT = 3;
   const API_BASE_URL = 'https://api.example.com';
   ```
-- **Rule**: [SHOULD] Use camelCase for object properties and local constants. Use UPPER_SNAKE_CASE only for module-level global constants.
+- **Rule**: [SHOULD] Use camelCase for object properties or local constants. Use UPPER_SNAKE_CASE only for module-level global constants.
 
 ### File Names
 
-- **Rule**: [MUST] Follow the conventions of the respective framework/tool for file names. If no convention exists, use kebab-case as the default.
+- **Rule**: [MUST] File names follow the conventions of the respective framework/tool. If no convention exists, use kebab-case as the default.
 - **Good Example**:
   ```
   user-service.ts
@@ -69,7 +69,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### Boolean Naming
 
-- **Rule**: [MUST] Use prefixes such as `is`, `has`, `can`, `should` for boolean variables.
+- **Rule**: [MUST] Boolean variables use prefixes such as `is`, `has`, `can`, `should`.
 - **Good Example**:
   ```typescript
   const isActive = true;
@@ -77,7 +77,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
   const canEdit = user.role === 'admin';
   const shouldRefresh = Date.now() > expiresAt;
   ```
-  - Note: Do not use names without prefixes such as `active`, `permission` for booleans.
+  - Note: Do not use names without prefixes like `active`, `permission` for booleans.
 - **Rule**: [MUST NOT] Do not use the `no` prefix to express negation. Instead, combine `is`, `has`, `can`, `should` prefixes with clearly meaningful adjectives.
 - **Bad Example**:
   ```typescript
@@ -92,7 +92,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### Function Naming
 
-- **Rule**: [MUST] Function names must start with a verb and use camelCase.
+- **Rule**: [MUST] Function names start with a verb and use camelCase.
 - **Good Example**:
   ```typescript
   function getUserById(id: string): User { ... }
@@ -100,7 +100,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
   ```
   - Note: Do not use names without verbs (`user()`), or snake_case (`get_user_by_id()`).
 
-## Git Conventions
+## Git Convention
 
 ### Branch Strategy
 
@@ -114,9 +114,9 @@ AI consistently uses the terms defined here for variable names, class names, etc
 | `fix/<description>` | Bug fix | `fix/login-validation-error` |
 | `hotfix/<description>` | Production emergency fix | `hotfix/payment-crash` |
 | `refactor/<description>` | Refactoring | `refactor/order-service` |
-| `chore/<description>` | Build, configuration, and other maintenance | `chore/update-dependencies` |
+| `chore/<description>` | Build, configuration, and maintenance | `chore/update-dependencies` |
 
-- **Rule**: [MUST] Branch names must use only lowercase letters and hyphens (`-`), with a slash (`/`) separating the type and description.
+- **Rule**: [MUST] Branch names use only lowercase letters and hyphens (`-`), with slashes (`/`) separating the type and description.
 
 - **Rule**: [SHOULD] Include the issue number in the branch name when a Jira issue exists.
 - **Good Example**:
@@ -143,17 +143,17 @@ AI consistently uses the terms defined here for variable names, class names, etc
 |------|-------------|---------|
 | `feat` | Add new feature | `feat(auth): add JWT refresh token` |
 | `fix` | Bug fix | `fix(order): resolve null pointer in validation` |
-| `docs` | Documentation changes | `docs: update API documentation` |
+| `docs` | Documentation change | `docs: update API documentation` |
 | `style` | Code formatting, missing semicolons, etc. | `style: apply prettier formatting` |
-| `refactor` | Code restructuring without functionality changes | `refactor(user): extract validation logic` |
+| `refactor` | Code restructuring without functionality change | `refactor(user): extract validation logic` |
 | `perf` | Performance improvement | `perf(query): add index for user lookup` |
 | `test` | Add/modify tests | `test(auth): add login failure test cases` |
-| `chore` | Build, configuration, and other maintenance | `chore: update dependencies` |
-| `ci` | CI/CD configuration changes | `ci: add staging deployment workflow` |
+| `chore` | Build, configuration, and maintenance | `chore: update dependencies` |
+| `ci` | CI/CD configuration change | `ci: add staging deployment workflow` |
 
 - **Rule**: [MUST] Write commit titles in imperative mood. Keep them within 50 characters.
-- **Rule**: [MUST] Each commit must contain only one concern.
-- **Rule**: [SHOULD] If there is a Breaking Change, append `!` after the type and specify `BREAKING CHANGE:` in the footer.
+- **Rule**: [MUST] Each commit should contain only one concern.
+- **Rule**: [SHOULD] When there is a Breaking Change, append `!` after the type and specify `BREAKING CHANGE:` in the footer.
 - **Good Example**:
   ```
   feat(auth)!: change token expiry to 1 hour
@@ -161,20 +161,20 @@ AI consistently uses the terms defined here for variable names, class names, etc
   BREAKING CHANGE: token expiry changed from 24h to 1h.
   All existing tokens will be invalidated.
   ```
-  - Note: Do not omit the type (`fixed bug`), use past tense, or use meaningless descriptions (`update code`).
+  - Note: Do not omit the type (`fixed bug`), use past tense, or write meaningless descriptions (`update code`).
 
 ### PR Rules
 
-- **Rule**: [MUST] PR titles must follow the Conventional Commits format. (When using squash merge, the PR title becomes the commit message)
+- **Rule**: [MUST] PR titles follow the Conventional Commits format. (When squash merging, the PR title becomes the commit message)
 
 - **Rule**: [MUST] PR body must include the following:
   - Summary of changes
   - Related issue number (if applicable)
-  - Testing method or verification items
+  - Test method or verification items
 
 - **Rule**: [SHOULD] Create PRs in the smallest possible units. (Recommended: 10 or fewer changed files)
 
-- **Rule**: [MUST NOT] Do not merge directly into main/develop branches without review approval.
+- **Rule**: [MUST NOT] Do not merge directly to main/develop branches without review approval.
 
 ## Code Review
 
@@ -198,14 +198,14 @@ AI consistently uses the terms defined here for variable names, class names, etc
 - **Rule**: [SHOULD] For core logic changes, 2 or more approvals are recommended.
 - **Rule**: [MUST] All CI pipeline checks (build, test, lint) must pass before merging.
 
-### Review Comment Writing
+### Writing Review Comments
 
 - **Rule**: [SHOULD] Use the following prefixes in review comments to clarify intent.
 
 | Prefix | Meaning | Example |
 |--------|---------|---------|
 | `[MUST]` | Must be fixed (merge blocker) | `[MUST] There is a risk of SQL injection.` |
-| `[SHOULD]` | Recommended to fix | `[SHOULD] This part can be improved with an early return.` |
+| `[SHOULD]` | Recommended fix | `[SHOULD] This part can be improved with an early return.` |
 | `[NIT]` | Minor improvement suggestion | `[NIT] The variable name could be more descriptive.` |
 | `[Q]` | Question | `[Q] What is the intent of this logic?` |
 
@@ -225,7 +225,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### Error Response Format (HTTP API)
 
-- **Rule**: [MUST] API error responses must follow this standard format.
+- **Rule**: [MUST] API error responses follow this standard format.
 
 ```json
 {
@@ -238,7 +238,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 }
 ```
 
-- **Rule**: [SHOULD] Validation errors should include field-level error information in the `details` field.
+- **Rule**: [SHOULD] Validation errors include field-level error information in the `details` field.
 
 ```json
 {
@@ -275,15 +275,15 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 - **Rule**: [MUST NOT] Do not expose sensitive implementation details such as stack traces, DB queries, or internal paths in error responses.
 
-- **Rule**: [MUST NOT] Do not use messages that reveal account existence in authentication errors. (Prevent account enumeration attacks)
+- **Rule**: [MUST NOT] Do not use messages that reveal account existence in authentication errors. (Prevents account enumeration attacks)
 - **Good Example**: `"The authentication credentials are incorrect."`
-  - Note: Do not use specific messages like `"No user exists with that email address."`
+  - Note: Do not use specific messages like `"No user exists with that email."`
 
 ## Logging
 
 ### Log Levels
 
-- **Rule**: [MUST] Follow these log level standards.
+- **Rule**: [MUST] Follow the log level criteria below.
 
 | Level | Usage | Example |
 |-------|-------|---------|
@@ -321,15 +321,15 @@ AI consistently uses the terms defined here for variable names, class names, etc
 - **Rule**: [MUST] Never log the following information in plain text.
 
 | Sensitive Data Type | Masking Method | Example |
-|---------------------|---------------|---------|
+|---------------------|----------------|---------|
 | Password | Full masking | `****` |
 | Email | Partial masking | `j***@example.com` |
 | Phone number | Partial masking | `010-****-5678` |
-| Card number | Show last 4 digits only | `****-****-****-1234` |
-| Token/API key | Show first 4 characters only | `eyJh****` |
+| Card number | Show only last 4 digits | `****-****-****-1234` |
+| Token/API key | Show only first 4 characters | `eyJh****` |
 | National ID number | Full masking | `******-*******` |
 
-- **Rule**: [MUST NOT] Do not log entire request/response bodies. Log only the necessary fields selectively.
+- **Rule**: [MUST NOT] Do not log entire request/response bodies. Selectively log only necessary fields.
 
 - **Rule**: [SHOULD] Automate sensitive information masking in logging middleware or utilities.
 
@@ -356,14 +356,14 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 > Applies to all try-catch / try-except / rescue blocks regardless of language.
 
-- **Rule**: [MUST NOT] Do not leave catch blocks empty or silently ignore errors.
-- **Rule**: [MUST] At minimum, log at the appropriate level for the exception within the catch block. (Refer to `## Logging > Log Levels` in this document for log level standards)
+- **Rule**: [MUST NOT] Do not leave catch blocks empty or ignore errors.
+- **Rule**: [MUST] At minimum, log at the appropriate level for the exception in the catch block. (Refer to `## Logging > Log Levels` in this document for log level criteria)
 
 | Situation | Log Level |
 |-----------|-----------|
 | Unrecoverable error | `ERROR` |
 | Expected exception / fallback handling | `WARN` |
-| Catching as part of normal flow | `INFO` or `DEBUG` |
+| Caught as part of normal flow | `INFO` or `DEBUG` |
 
 - **Bad Example**:
   ```typescript
@@ -378,16 +378,16 @@ AI consistently uses the terms defined here for variable names, class names, etc
   try {
     await sendNotification(user);
   } catch (error) {
-    logger.warn('Notification send failed — applying fallback', { userId: user.id, error });
+    logger.warn('Notification sending failed — applying fallback', { userId: user.id, error });
   }
   ```
 
-- **Rule**: [MUST] If an error is intentionally ignored, document the reason with a comment.
+- **Rule**: [MUST] When intentionally ignoring an error, specify the reason in a comment.
 - **Good Example**:
   ```typescript
   try {
     await cacheClient.delete(key);
   } catch {
-    // Cache deletion failure is safe to ignore as it will be auto-cleaned on next TTL expiry
+    // Cache deletion failure is safe to ignore as it will be automatically cleaned up on the next TTL expiry
   }
   ```

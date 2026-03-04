@@ -14,6 +14,7 @@ React SPA(Vite + React Router) 프로젝트에서 전체 기능 개발을 요구
 작업 시작 전 반드시 다음 참조 파일을 읽습니다:
 
 1. **항상**: `references/FRONTEND_ARCHITECTURE_CONVENTION.md`, `references/FRONTEND_CONVENTION.md`
+2. **필요 시 읽기**: `references/REACT_CONVENTION.md`, `references/REACT_ROUTER_CONVENTION.md`
 
 > **참고**: 아키텍처 컨벤션의 Next.js 전용 내용(`app/` 디렉토리, Route Groups, Server Components, `'use client'`)은 React-only 프로젝트에 해당하지 않습니다. 컴포넌트 4분류 체계(UI/Feature/Layout/Page), 의존성 방향, 코로케이션, import 규칙 등 프레임워크 무관 규칙에 집중합니다.
 

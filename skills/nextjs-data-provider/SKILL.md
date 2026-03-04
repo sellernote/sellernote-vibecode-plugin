@@ -16,6 +16,8 @@ Before starting any work, read the relevant reference files from `references/` w
    - `references/NEXTJS_CONVENTION.md` - Server/Client Components, data fetching strategies, caching
 
 2. **Read when relevant**:
+   - `references/API_CLIENT_CONVENTION.md` - API client common rules, token management, error handling
+   - `references/API_CLIENT_AXIOS_CONVENTION.md` - Axios implementation, interceptors, refresh token flow
    - `references/FRONTEND_CONVENTION.md` - Component design, import rules, anti-patterns
    - `references/TYPESCRIPT_CONVENTION.md` - Type system, async/await, import ordering
    - `references/COMMON_CONVENTION.md` - Naming, error handling, logging

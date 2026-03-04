@@ -1,29 +1,26 @@
-# 폼 컨벤션
+# Form Convention
 
-> 이 문서는 폼 처리와 유효성 검사 패턴을 정의합니다.
-> 상위 규칙: [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)
-
----
-
-## 1. 폼 라이브러리
-
-- **규칙**: [MUST] React Hook Form + Zod 조합을 사용한다
-- **이유**: Zod는 스키마 기반으로 타입 안전한 유효성 검사를 제공하며, `z.infer`를 통해 TypeScript 타입을 자동 추론할 수 있어 스키마와 타입의 이중 관리가 불필요하다. React Hook Form은 비제어 컴포넌트 기반으로 동작하여 렌더링 횟수를 최소화하고, `zodResolver`를 통해 Zod 스키마를 직접 연동할 수 있다.
+> This document defines form handling and validation patterns.
+> Parent rules: FRONTEND_CONVENTION.md
 
 ---
 
-## 2. Zod 스키마 패턴
+## 1. Form Library
 
-### 스키마 위치
+- **Rule**: [MUST] Use the React Hook Form + Zod combination
 
-- **규칙**: [SHOULD] Zod 스키마는 feature 폴더 내부 또는 프로젝트 루트의 `schemas/` 디렉토리에 배치한다
-- **이유**: 특정 feature에만 사용되는 스키마는 해당 feature 폴더에, 여러 feature에서 공유하는 스키마는 `schemas/` 디렉토리에 두어 응집도와 재사용성을 모두 확보한다.
+---
 
-### 공통 스키마 재사용
+## 2. Zod Schema Patterns
 
-- **규칙**: [SHOULD] email, password, phone 등 반복 사용되는 검증 규칙은 `lib/schemas/common.ts`에 공통 스키마로 정의하고 재사용한다
-- **이유**: 동일한 검증 규칙이 여러 폼에 분산되면 규칙 변경 시 누락이 발생하기 쉽다. 공통 스키마를 한 곳에서 관리하면 검증 규칙의 일관성을 보장할 수 있다.
-- **좋은 예시**:
+### Schema Location
+
+- **Rule**: [SHOULD] Place Zod schemas inside the feature folder or in the `schemas/` directory at the project root
+
+### Common Schema Reuse
+
+- **Rule**: [SHOULD] Define frequently used validation rules such as email, password, phone as common schemas in `lib/schemas/common.ts` and reuse them
+- **Good Example**:
 ```typescript
 // lib/schemas/common.ts
 import { z } from "zod";
@@ -34,18 +31,10 @@ export const passwordSchema = z.string().min(8, "비밀번호는 8자 이상이�
   .regex(/[^A-Za-z0-9]/, "특수문자를 1개 이상 포함해야 합니다");
 export const phoneSchema = z.string().regex(/^01[016789]-?\d{3,4}-?\d{4}$/, "올바른 휴대폰 번호 형식이 아닙니다");
 ```
-- **나쁜 예시**:
-```typescript
-// 각 폼마다 동일한 검증 규칙을 중복 정의 — 메시지 불일치 위험
-const LoginSchema = z.object({ email: z.string().email("올바른 이메일 형식이 아닙니다") });
-const SignupSchema = z.object({ email: z.string().email("이메일 형식이 아닙니다") });
-```
+### Type Extraction
 
-### 타입 추출
-
-- **규칙**: [MUST] 폼 데이터 타입은 `z.infer<typeof schema>`로 추출한다. 별도의 interface를 수동으로 작성하지 않는다.
-- **이유**: 스키마와 타입을 별도로 관리하면 둘 사이의 불일치가 발생할 수 있다. `z.infer`를 사용하면 스키마가 단일 진실 공급원(Single Source of Truth)이 되어 타입 안전성이 보장된다.
-- **좋은 예시**:
+- **Rule**: [MUST] Extract form data types using `z.infer<typeof schema>`. Do not manually write separate interfaces.
+- **Good Example**:
 ```typescript
 import { emailSchema, passwordSchema, phoneSchema } from "@/lib/schemas/common";
 
@@ -57,32 +46,18 @@ export const CreateUserSchema = z.object({
 });
 export type CreateUserFormData = z.infer<typeof CreateUserSchema>;
 ```
-- **나쁜 예시**:
-```typescript
-const CreateUserSchema = z.object({ name: z.string().min(2), email: z.string().email() });
-// 스키마와 별도로 interface를 수동 정의 — 불일치 위험
-interface CreateUserFormData {
-  name: string;
-  email: string;
-  phone?: string; // 스키마에는 없는 필드
-}
-```
-
 ---
 
-## 3. React Hook Form + @sellernote/design-system 연동
+## 3. React Hook Form Integration
 
-- **규칙**: [MUST] `@sellernote/design-system` 컴포넌트와 React Hook Form의 `Controller`를 사용하여 폼 필드를 연결한다
-- **이유**: DS의 `TextField`, `Select` 등은 `value`/`onChange` 패턴을 따르므로 React Hook Form의 `Controller`와 자연스럽게 연동된다.
-- **규칙**: [MUST] `useForm`에 `zodResolver`를 설정하고, `mode: 'onBlur'`를 기본으로 사용한다
-- **이유**: `zodResolver`는 Zod 스키마를 React Hook Form의 유효성 검사 체계에 연결한다. `mode: 'onBlur'`는 사용자가 필드를 떠날 때 검증하여 입력 중 피로감을 줄이면서도 제출 전 피드백을 제공한다.
-- **좋은 예시**:
+- **Rule**: [MUST] Connect form fields using React Hook Form's `Controller`
+- **Rule**: [MUST] Set `zodResolver` in `useForm` and use `mode: 'onBlur'` as the default
+- **Good Example**:
 ```typescript
-"use client";
+// LoginForm.tsx
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TextField, PasswordField, ActionButton } from "@sellernote/design-system";
 import { emailSchema, passwordSchema } from "@/lib/schemas/common";
 
 const LoginSchema = z.object({ email: emailSchema, password: passwordSchema });
@@ -95,120 +70,170 @@ export function LoginForm() {
     defaultValues: { email: "", password: "" },
   });
   return (
-    <form onSubmit={handleSubmit((data) => login(data))} noValidate className="flex flex-col gap-400">
+    <form onSubmit={handleSubmit((data) => login(data))} noValidate className="flex flex-col gap-4">
       <Controller
         name="email"
         control={control}
         render={({ field }) => (
-          <TextField
-            label="이메일"
-            type="email"
-            value={field.value}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-            status={errors.email ? "error" : undefined}
-            helperText={errors.email?.message}
-          />
+          <div className="flex flex-col gap-1">
+            <label htmlFor="email" className="text-sm font-medium text-gray-700">이메일</label>
+            <input
+              id="email"
+              type="email"
+              className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              {...field}
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
+            />
+            {errors.email && (
+              <p id="email-error" className="text-xs text-red-600">{errors.email.message}</p>
+            )}
+          </div>
         )}
       />
       <Controller
         name="password"
         control={control}
         render={({ field }) => (
-          <PasswordField
-            label="비밀번호"
-            value={field.value}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-            status={errors.password ? "error" : undefined}
-            helperText={errors.password?.message}
-          />
+          <div className="flex flex-col gap-1">
+            <label htmlFor="password" className="text-sm font-medium text-gray-700">비밀번호</label>
+            <input
+              id="password"
+              type="password"
+              className="rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              {...field}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
+            />
+            {errors.password && (
+              <p id="password-error" className="text-xs text-red-600">{errors.password.message}</p>
+            )}
+          </div>
         )}
       />
-      <ActionButton type="submit" className="w-full" disabled={isSubmitting}>
+      <button
+        type="submit"
+        className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? "로그인 중..." : "로그인"}
-      </ActionButton>
+      </button>
     </form>
   );
 }
 ```
-- **나쁜 예시**:
+### FormProvider (When Separating Field Components)
+
+- **Rule**: [SHOULD] When separating form fields into separate components, use `FormProvider` + `useFormContext()`
+- **Good Example**:
+
 ```typescript
-// zodResolver 없이 useForm을 사용 — 타입 안전한 검증이 누락됨
-const { register, handleSubmit } = useForm<LoginFormData>();
-return (
-  <form onSubmit={handleSubmit(onSubmit)}>
-    <Input {...register("email")} placeholder="이메일" />
-  </form>
-);
+// features/user/components/create-user-form/CreateUserForm.tsx
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { NameField } from "./NameField";
+
+export function CreateUserForm() {
+  const methods = useForm<CreateUserFormData>({
+    resolver: zodResolver(CreateUserSchema),
+    mode: "onBlur",
+  });
+
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <NameField />
+        <button type="submit">생성</button>
+      </form>
+    </FormProvider>
+  );
+}
+
+// features/user/components/create-user-form/NameField.tsx
+import { useFormContext } from "react-hook-form";
+
+export function NameField() {
+  const { register, formState: { errors } } = useFormContext<CreateUserFormData>();
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor="name" className="text-sm font-medium text-gray-700">이름</label>
+      <input
+        id="name"
+        className="rounded border border-gray-300 px-3 py-2 text-sm"
+        {...register("name")}
+        aria-invalid={!!errors.name}
+      />
+      {errors.name && <p className="text-xs text-red-600">{errors.name.message}</p>}
+    </div>
+  );
+}
 ```
 
----
-
-## 4. 유효성 검사 전략
-
-- **규칙**: [MUST] 클라이언트와 서버 양쪽 모두에서 유효성 검사를 수행한다 (이중 검증 원칙)
-- **이유**: 클라이언트 검증은 사용자 경험을 개선하지만 브라우저 개발자 도구로 우회할 수 있다. 서버 검증은 데이터 무결성과 보안의 최종 방어선이다.
-- **규칙**: [MUST] 클라이언트 측 검증은 `onBlur` 시점에 필드별로 수행하여 즉시 피드백을 제공한다
-- **이유**: 사용자가 필드를 떠나는 시점에 에러를 표시하면, 입력 중 방해받지 않으면서도 다음 필드로 넘어가기 전에 문제를 인지할 수 있다.
-- **규칙**: [MUST] Server Action 또는 API 엔드포인트에서 동일한 Zod 스키마로 최종 검증을 수행한다
-- **이유**: 같은 Zod 스키마를 클라이언트와 서버에서 공유하면 검증 규칙의 일관성이 보장되며, 악의적인 요청을 차단한다.
-- **규칙**: [MUST NOT] 클라이언트 검증만으로 보안 검증을 대체하지 않는다
-- **이유**: 클라이언트 측 코드는 사용자가 임의로 수정하거나 API를 직접 호출하여 우회할 수 있으므로, 보안 관련 검증은 반드시 서버에서 수행해야 한다.
+> **Note**: If all fields are within the same component, it is sufficient to pass the `control` prop directly to `Controller` without using FormProvider.
 
 ---
 
-## 5. 에러 표시 패턴
+## 4. Validation Strategy
 
-### 필드별 인라인 에러
+- **Rule**: [MUST] Perform validation on both the client and server sides (dual validation principle)
+- **Rule**: [MUST] Perform client-side validation per field at the `onBlur` timing to provide immediate feedback
+- **Rule**: [MUST] Perform final validation at the API endpoint using the same Zod schema
+- **Rule**: [MUST NOT] Replace security validation with client-side validation alone
 
-- **규칙**: [MUST] 필드별 에러는 해당 필드 아래에 에러 메시지 컴포넌트로 표시한다
-- **이유**: 에러 메시지가 해당 필드에 인접해 있어야 사용자가 어떤 필드에 문제가 있는지 즉시 파악할 수 있다.
-- **좋은 예시**:
+---
+
+## 5. Error Display Patterns
+
+### Per-Field Inline Errors
+
+- **Rule**: [MUST] Display per-field errors as error messages below the corresponding field
+- **Good Example**:
 ```typescript
 <Controller
   name="email"
   control={control}
   render={({ field }) => (
-    <TextField
-      label="이메일"
-      type="email"
-      value={field.value}
-      onChange={field.onChange}
-      onBlur={field.onBlur}
-      status={errors.email ? "error" : undefined}
-      helperText={errors.email?.message}
-    />
+    <div className="flex flex-col gap-1">
+      <label htmlFor="email" className="text-sm font-medium text-gray-700">이메일</label>
+      <input
+        id="email"
+        type="email"
+        className="rounded border border-gray-300 px-3 py-2 text-sm"
+        {...field}
+        aria-invalid={!!errors.email}
+        aria-describedby={errors.email ? "email-error" : undefined}
+      />
+      {errors.email && (
+        <p id="email-error" className="text-xs text-red-600">{errors.email.message}</p>
+      )}
+    </div>
   )}
 />
 ```
 
-### 폼 레벨 에러
+### Form-Level Errors
 
-- **규칙**: [SHOULD] 서버 에러, 네트워크 에러 등 특정 필드에 귀속되지 않는 에러는 DS `Alert` 컴포넌트로 폼 상단에 표시한다
-- **이유**: 폼 레벨 에러는 개별 필드와 연결할 수 없으므로, 폼 전체에 대한 에러임을 명확히 전달하는 별도의 영역이 필요하다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Display errors that are not attributable to a specific field, such as server errors or network errors, in an error message area at the top of the form
+- **Good Example**:
 ```typescript
-import { Alert } from "@sellernote/design-system";
-
 const [formError, setFormError] = useState<string | null>(null);
 return (
   <form onSubmit={handleSubmit(onSubmit)}>
     {formError && (
-      <Alert variant="error" title="오류" open>
+      <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
         {formError}
-      </Alert>
+      </div>
     )}
-    {/* 폼 필드들 */}
+    {/* Form fields */}
   </form>
 );
 ```
 
-### 서버 에러 매핑
+### Server Error Mapping
 
-- **규칙**: [SHOULD] 서버에서 특정 필드에 대한 에러를 반환하면, `setError()`로 해당 필드에 에러를 매핑한다
-- **이유**: 서버에서 발생한 에러(예: 이메일 중복)를 해당 필드에 직접 표시하면, 사용자가 어떤 입력을 수정해야 하는지 명확히 알 수 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] When the server returns an error for a specific field, map the error to that field using `setError()`
+- **Good Example**:
 ```typescript
 const onSubmit = async (data: SignupFormData) => {
   try {
@@ -225,57 +250,105 @@ const onSubmit = async (data: SignupFormData) => {
 
 ---
 
-## 6. Server Actions 폼 패턴
+## 6. Server Data Mutation Patterns
 
-- **규칙**: [SHOULD] Next.js Server Actions와 React Hook Form을 연동하여 서버 측 검증과 데이터 처리를 수행한다
-- **이유**: Server Actions를 활용하면 별도의 API 엔드포인트 없이 서버에서 직접 폼 데이터를 처리할 수 있으며, 동일한 Zod 스키마로 검증 규칙을 공유할 수 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Handle server data mutations through form submission by integrating TanStack Query `useMutation` with React Hook Form
+- **Good Example**:
 ```typescript
-// actions/createUser.ts
-"use server";
-import { revalidatePath } from "next/cache";
-import { CreateUserSchema } from "@/schemas/user";
+// features/user/api/use-create-user-mutation.ts
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CreateUserSchema, type CreateUserFormData } from "@/features/user/schemas/user-create-schema";
+import { apiClient } from "@/lib/api-client";
 
-export async function createUser(formData: FormData) {
-  const raw = { name: formData.get("name"), email: formData.get("email"), password: formData.get("password") };
-  const result = CreateUserSchema.safeParse(raw);
-  if (!result.success) return { success: false, errors: result.error.flatten().fieldErrors };
-  await db.user.create({ data: result.data });
-  revalidatePath("/users");
-  return { success: true, errors: null };
+export function useCreateUserMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateUserFormData) => apiClient.post("/users", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
 }
 ```
 ```typescript
-// 클라이언트: Server Action 호출 후 서버 에러를 필드에 매핑
-const onSubmit = async (data: CreateUserFormData) => {
-  const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => formData.append(key, value));
-  const result = await createUser(formData);
-  if (!result.success && result.errors) {
-    Object.entries(result.errors).forEach(([field, messages]) => {
-      setError(field as keyof CreateUserFormData, { type: "server", message: (messages as string[])[0] });
-    });
-  }
-};
+// features/user/components/create-user-form/CreateUserForm.tsx
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CreateUserSchema, type CreateUserFormData } from "@/features/user/schemas/user-create-schema";
+import { useCreateUserMutation } from "@/features/user/api/use-create-user-mutation";
+
+export function CreateUserForm() {
+  const { control, handleSubmit, setError, formState: { errors } } = useForm<CreateUserFormData>({
+    resolver: zodResolver(CreateUserSchema),
+    mode: "onBlur",
+  });
+  const mutation = useCreateUserMutation();
+
+  const onSubmit = async (data: CreateUserFormData) => {
+    try {
+      await mutation.mutateAsync(data);
+    } catch (error) {
+      if (error instanceof ApiError && error.field) {
+        setError(error.field as keyof CreateUserFormData, {
+          type: "server",
+          message: error.message,
+        });
+      }
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <Controller
+        name="name"
+        control={control}
+        render={({ field }) => (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="name" className="text-sm font-medium text-gray-700">이름</label>
+            <input
+              id="name"
+              className="rounded border border-gray-300 px-3 py-2 text-sm"
+              {...field}
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? "name-error" : undefined}
+            />
+            {errors.name && (
+              <p id="name-error" className="text-xs text-red-600">{errors.name.message}</p>
+            )}
+          </div>
+        )}
+      />
+      <button
+        type="submit"
+        className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        disabled={mutation.isPending}
+      >
+        {mutation.isPending ? "생성 중..." : "생성"}
+      </button>
+    </form>
+  );
+}
 ```
 
 ---
 
-## 7. 복잡한 폼
+## 7. Complex Forms
 
-### 다단계 폼 (Wizard)
+### Multi-Step Forms (Wizard)
 
-- **규칙**: [SHOULD] 다단계 폼은 단계별로 Zod 스키마를 분리하고, Zustand store에 단계 간 임시 데이터를 저장한다
-- **이유**: 각 단계의 스키마를 독립적으로 정의하면 단계별 유효성 검사가 가능하고, 스키마 변경 시 다른 단계에 영향을 주지 않는다. Zustand에 임시 데이터를 저장하면 단계 이동 시 이전 입력값을 유지할 수 있다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] For multi-step forms, separate Zod schemas per step and store interim data between steps in a Zustand store
+- **Good Example**:
 ```typescript
-// schemas/signup-wizard.ts — 단계별 스키마 분리
+// schemas/signup-wizard.ts — Separate schemas per step
+import { z } from "zod";
+import { emailSchema, passwordSchema, phoneSchema } from "@/lib/schemas/common";
+
 export const Step1Schema = z.object({ email: emailSchema, password: passwordSchema });
 export const Step2Schema = z.object({ name: z.string().min(2), phone: phoneSchema });
 export const Step3Schema = z.object({ company: z.string().min(1), role: z.enum(["developer", "designer", "manager"]) });
 export const SignupWizardSchema = Step1Schema.merge(Step2Schema).merge(Step3Schema);
 
-// store/slices/signupWizardSlice.ts — 단계 간 데이터 유지
+// store/slices/signup-wizard-slice.ts — Maintain data between steps
 export const useSignupWizardStore = create<SignupWizardState>((set) => ({
   currentStep: 1,
   formData: {},
@@ -286,11 +359,10 @@ export const useSignupWizardStore = create<SignupWizardState>((set) => ({
 }));
 ```
 
-### 동적 필드
+### Dynamic Fields
 
-- **규칙**: [SHOULD] 동적으로 추가/삭제되는 필드 목록은 `useFieldArray`를 사용한다
-- **이유**: `useFieldArray`는 배열 형태의 필드를 효율적으로 관리하며, 추가/삭제 시 불필요한 리렌더링을 최소화한다. 수동으로 배열 상태를 관리하면 인덱스 관리와 유효성 검사 연동이 복잡해진다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] Use `useFieldArray` for dynamically added/removed field lists
+- **Good Example**:
 ```typescript
 const OrderSchema = z.object({
   items: z.array(z.object({
@@ -308,23 +380,42 @@ export function OrderForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       {fields.map((field, index) => (
-        <div key={field.id} className="flex gap-400 items-center">
+        <div key={field.id} className="flex items-center gap-4">
           <Controller name={`items.${index}.name`} control={control}
-            render={({ field }) => <TextField label="상품명" value={field.value} onChange={field.onChange} />} />
-          <IconButton icon="icon-utility-trash" onClick={() => remove(index)} disabled={fields.length === 1} aria-label="삭제" />
+            render={({ field }) => (
+              <input
+                className="rounded border border-gray-300 px-3 py-2 text-sm"
+                placeholder="상품명"
+                {...field}
+              />
+            )} />
+          <button
+            type="button"
+            className="rounded border border-gray-300 px-2 py-2 text-sm disabled:opacity-50"
+            onClick={() => remove(index)}
+            disabled={fields.length === 1}
+            aria-label="삭제"
+          >
+            삭제
+          </button>
         </div>
       ))}
-      <ActionButton type="button" variant="tertiary" onClick={() => append({ name: "", quantity: 1 })}>상품 추가</ActionButton>
+      <button
+        type="button"
+        className="rounded border border-gray-300 px-4 py-2 text-sm"
+        onClick={() => append({ name: "", quantity: 1 })}
+      >
+        상품 추가
+      </button>
     </form>
   );
 }
 ```
 
-### 조건부 필드
+### Conditional Fields
 
-- **규칙**: [SHOULD] 특정 필드 값에 따라 다른 필드를 표시/숨김 처리할 때는 `watch()`로 값을 감시하고 조건부 렌더링한다
-- **이유**: `watch()`는 특정 필드의 값 변경을 구독하여 실시간으로 UI를 업데이트한다. 조건부 필드의 유효성 검사는 Zod의 `discriminatedUnion`으로 처리하여 스키마 레벨에서 관리한다.
-- **좋은 예시**:
+- **Rule**: [SHOULD] When showing/hiding fields based on a specific field value, use `watch()` to observe the value and conditionally render
+- **Good Example**:
 ```typescript
 const ShippingSchema = z.discriminatedUnion("method", [
   z.object({ method: z.literal("delivery"), address: z.string().min(1, "주소를 입력해주세요") }),
@@ -332,90 +423,106 @@ const ShippingSchema = z.discriminatedUnion("method", [
 ]);
 
 export function ShippingForm() {
-  const { control, watch, register } = useForm({ resolver: zodResolver(ShippingSchema) });
+  const { control, watch, handleSubmit, formState: { errors } } = useForm<z.infer<typeof ShippingSchema>>({
+    resolver: zodResolver(ShippingSchema),
+    defaultValues: { method: "delivery", address: "" },
+  });
   const method = watch("method");
   return (
     <form>
-      {/* RadioGroup으로 method 선택 */}
+      {/* RadioGroup for method selection */}
       {method === "delivery" && (
-        <TextField label="배송 주소" {...register("address")} />
+        <Controller
+          name="address"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              label="배송 주소"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              status={errors.address ? "error" : undefined}
+              helperText={errors.address?.message}
+            />
+          )}
+        />
       )}
       {method === "pickup" && (
-        <TextField label="매장 선택" {...register("storeId")} />
+        <Controller
+          name="storeId"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              label="매장 선택"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              status={errors.storeId ? "error" : undefined}
+              helperText={errors.storeId?.message}
+            />
+          )}
+        />
       )}
     </form>
   );
 }
 ```
 
+### Async Validation
+
+- **Rule**: [SHOULD] Perform async validations such as email duplication checks at the `onBlur` timing with debounce applied
+- **Good Example**:
+```typescript
+import { useDebouncedCallback } from 'use-debounce';
+
+const debouncedCheck = useDebouncedCallback(async (value: string) => {
+  const exists = await checkEmailExists(value);
+  if (exists) setError("email", { message: "이미 사용 중인 이메일입니다" });
+}, 500);
+
+// Call debouncedCheck along with field.onChange inside Controller
+```
+
 ---
 
-## 8. 안티패턴
+## 8. Anti-Patterns
 
-### 클라이언트만 검증
+### Client-Only Validation
 
-- **규칙**: [MUST NOT] 서버 검증 없이 클라이언트 검증만으로 보안 검증을 대체한다
-- **이유**: 클라이언트 코드는 브라우저 개발자 도구로 수정하거나 API를 직접 호출하여 완전히 우회할 수 있다.
-- **나쁜 예시**:
+- **Rule**: [MUST NOT] Replace security validation with client-side validation alone without server validation
+- **Bad Example**:
 ```typescript
-export async function createUser(formData: FormData) {
+// Sending directly without Zod validation on API call — dangerous!
+const onSubmit = async (formData: FormData) => {
   const data = Object.fromEntries(formData);
-  await db.user.create({ data }); // Zod 검증 없이 바로 저장 — 위험!
-}
+  await apiClient.post("/users", data); // Trusting only client validation without server validation
+};
 ```
 
-### 에러 무시
+### Ignoring Errors
 
-- **규칙**: [MUST NOT] catch 블록에서 에러를 잡은 후 사용자에게 아무런 피드백을 제공하지 않는다
-- **이유**: 사용자가 폼을 제출했는데 아무 반응이 없으면 시스템 오류인지, 성공인지 알 수 없다.
-- **나쁜 예시**:
+- **Rule**: [MUST NOT] Catch errors in a catch block without providing any feedback to the user
+- **Bad Example**:
 ```typescript
 try { await submitForm(data); }
-catch (error) { console.error(error); } // 콘솔에만 출력하고 사용자에게는 미표시
+catch (error) { console.error(error); } // Only logging to console without displaying to the user
 ```
-- **좋은 예시**:
+- **Good Example**:
 ```typescript
 try { await submitForm(data); }
 catch (error) { setFormError("요청 처리 중 오류가 발생했습니다. 다시 시도해주세요."); }
 ```
 
-### 폼 상태의 전역 스토어 저장
+### Storing Form State in Global Store
 
-- **규칙**: [SHOULD NOT] 폼의 입력 상태를 Zustand 등 전역 스토어에 저장한다. React Hook Form이 폼 상태를 관리하도록 한다. 다단계 폼에서 단계 간 데이터를 유지해야 하는 경우는 예외이다.
-- **이유**: React Hook Form은 자체적으로 폼 상태를 관리하며, 전역 스토어에 중복 저장하면 상태 동기화 문제와 불필요한 리렌더링이 발생한다.
-- **나쁜 예시**:
-```typescript
-const useFormStore = create((set) => ({ email: "", setEmail: (email: string) => set({ email }) }));
-export function LoginForm() {
-  const { email, setEmail } = useFormStore();
-  return <Input value={email} onChange={(e) => setEmail(e.target.value)} />; // 동기화 문제 발생
-}
-```
+- **Rule**: [SHOULD NOT] Store form input state in a global store such as Zustand. Let React Hook Form manage the form state. The exception is when interim data needs to be maintained between steps in a multi-step form.
 
-### input onChange마다 API 호출
+### API Calls on Every input onChange
 
-- **규칙**: [MUST NOT] input의 `onChange` 이벤트마다 API를 호출한다. debounce를 적용하거나 `onBlur` 시점에 호출한다.
-- **이유**: 매 키 입력마다 API를 호출하면 불필요한 네트워크 요청이 대량 발생하고, 응답 순서가 보장되지 않아 race condition이 발생할 수 있다.
-- **나쁜 예시**:
+- **Rule**: [MUST NOT] Call APIs on every `onChange` event of an input. Apply debounce or call at the `onBlur` timing instead.
+- **Bad Example**:
 ```typescript
 <Input onChange={async (e) => {
-  const exists = await checkEmailExists(e.target.value); // 매 키 입력마다 호출
+  const exists = await checkEmailExists(e.target.value); // Called on every keystroke
 }} />
 ```
-- **좋은 예시**:
-```typescript
-const debouncedCheck = useDebouncedCallback(async (value: string) => {
-  const exists = await checkEmailExists(value);
-  if (exists) setError("email", { message: "이미 사용 중인 이메일입니다" });
-}, 500);
-// Controller 내부에서 field.onChange와 함께 debouncedCheck 호출
-```
-
----
-
-## 9. 참고 자료
-
-- [React Hook Form 공식 문서](https://react-hook-form.com)
-- [Zod 공식 문서](https://zod.dev)
-- [@sellernote/design-system](https://github.com/sellernote/sellernote-design-system)
-- [프론트엔드 공통 컨벤션](../FRONTEND_CONVENTION.md)

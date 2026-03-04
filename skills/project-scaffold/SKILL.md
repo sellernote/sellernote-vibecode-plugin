@@ -29,9 +29,13 @@ Before starting, Read the relevant reference files from `references/` within thi
    - `references/NEXTJS_CONVENTION.md` - App Router, Server/Client Components
 2. **Read when relevant**:
    - `references/FRONTEND_CONVENTION.md` - Frontend common rules
+   - `references/REACT_CONVENTION.md` - React 19 patterns, Hooks, performance
+   - `references/REACT_ROUTER_CONVENTION.md` - React Router 7 Framework Mode (for React-only projects)
    - `references/STATE_CONVENTION.md` - When scaffold includes state management
-   - `references/STYLING_CONVENTION.md` - When scaffold includes styled components
+   - `references/STYLING_CONVENTION.md` - Tailwind CSS v4, cn(), DS components
    - `references/FORM_CONVENTION.md` - When scaffold includes forms
+   - `references/API_CLIENT_CONVENTION.md` - When scaffold includes API client setup
+   - `references/API_CLIENT_AXIOS_CONVENTION.md` - When using Axios
 
 ### Common (always read)
 - `references/COMMON_CONVENTION.md` - Naming, error codes

@@ -33,10 +33,13 @@ Conventions are loaded dynamically based on the target files. Before starting, R
    - `references/FRONTEND_ARCHITECTURE_CONVENTION.md` - Component types
    - `references/NEXTJS_CONVENTION.md` - App Router patterns
    - `references/STATE_CONVENTION.md` - State management
-   - `references/STYLING_CONVENTION.md` - MUI theming
+   - `references/STYLING_CONVENTION.md` - Tailwind CSS v4, cn(), DS components
    - `references/FORM_CONVENTION.md` - Form patterns
-   - `references/TESTING_CONVENTION.md` - Test patterns
+   - `references/TESTING_CONVENTION.md` - Test patterns (Vitest, Storybook, RTL, Playwright)
    - `references/REACT_CONVENTION.md` - React 19 patterns, hooks, performance, anti-patterns
+   - `references/REACT_ROUTER_CONVENTION.md` - React Router 7 Framework Mode, route modules
+   - `references/API_CLIENT_CONVENTION.md` - API client common rules, token management
+   - `references/API_CLIENT_AXIOS_CONVENTION.md` - Axios implementation, interceptors
 
 ## Workflow
 
@@ -211,13 +214,14 @@ After:  'use client' only on leaf Feature components
 - Remove `'use client'` from `page.tsx` and layout files
 - Add `'use client'` to Feature components that use client-side hooks
 
-**Theme token application:**
+**Design token application:**
 ```
-Before: sx={{ color: '#1976d2', padding: '16px' }}
-After:  sx={{ color: 'primary.main', p: 2 }}
+Before: className="text-[#1976d2] p-[16px]"
+After:  className="text-primary-main p-4"
 ```
-- Replace hex colors with theme palette references
-- Replace px values with theme spacing units
+- Replace hardcoded hex colors with design token references
+- Replace arbitrary values with Tailwind utility classes
+- Use `cn()` for conditional className merging
 
 **Query pattern alignment:**
 ```

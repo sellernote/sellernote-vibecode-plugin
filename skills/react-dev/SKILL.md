@@ -11,7 +11,13 @@ React 19 컴포넌트, 훅, 성능 최적화 개발을 Sellernote React 컨벤�
 
 작업 시작 전 반드시 다음 참조 파일을 읽습니다:
 
-- `references/REACT_CONVENTION.md` - React 컴포넌트 패턴, Hooks, React 19 기능, 성능 최적화, Error Boundary, Context API, TypeScript 연동, 안티패턴
+1. **항상 먼저 읽기** (핵심 규칙):
+   - `references/REACT_CONVENTION.md` - React 컴포넌트 패턴, Hooks, React 19 기능, 성능 최적화, Error Boundary, Context API, TypeScript 연동, 안티패턴
+
+2. **필요 시 읽기**:
+   - `references/FRONTEND_CONVENTION.md` - 프론트엔드 공통 규칙, 기술 스택
+   - `references/TYPESCRIPT_CONVENTION.md` - TypeScript 코딩 규칙, 타입 시스템
+   - `references/COMMON_CONVENTION.md` - 네이밍 규칙, 에러 처리
 
 ## Workflow
 

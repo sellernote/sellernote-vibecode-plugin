@@ -1,533 +1,760 @@
 # Frontend Architecture Convention
 
-> This document defines the directory structure, layer hierarchy, and dependency direction of frontend projects.
-> It follows a 5-layer architecture that adapts Feature-Sliced Design (FSD) to the Next.js App Router.
+> This document defines the directory structure, component classification system, and dependency direction of frontend projects.
 > Parent rules: FRONTEND_CONVENTION.md
 
-## FSD Overview
+---
 
-Feature-Sliced Design (FSD) is an architecture methodology that **coheres frontend projects by domain units** and **controls dependencies between layers unidirectionally**. For compatibility with the Next.js App Router, **app/pages/processes are unified into `app/`**, operating with the following 5 layers.
+## 1. Directory Layout
 
-| Layer | Role |
-|--------|------|
-| `app/` | Next.js App Router. Routing, layouts, page composition |
-| `widgets/` | Independent UI blocks. Self-contained units combining multiple features/entities |
-| `features/` | Business feature units. User action handling |
-| `entities/` | Domain entities. Core data models and basic UI representation |
-| `shared/` | Domain-agnostic shared code. Utilities, common UI, configuration |
+The project follows a directory structure based on React Router 7 Framework Mode.
 
-## Directory Layout
+### React Router 7 Framework Mode Project
 
-- **Rule**: [MUST] Projects must follow the FSD 5-layer directory structure below.
+- **Rule**: [MUST] React Router 7 projects follow the directory structure below. Domain-specific code is co-located under `features/`.
 
-```
-src/
-├── app/                          # Next.js App Router (FSD app + pages role)
-│   ├── (auth)/                   # Route Group: authentication related
-│   ├── (dashboard)/              # Route Group: dashboard
-│   ├── globals.css               # Tailwind CSS + CSS Variables (design tokens)
-│   ├── layout.tsx                # Root layout
-│   ├── page.tsx                  # Home page
-│   ├── error.tsx                 # Global error boundary
-│   ├── not-found.tsx             # 404 page
-│   └── api/                      # Route Handlers
+```text
+app/
+├── routes.ts               # Route definitions (code-based)
+├── root.tsx                # HTML shell + global error boundary
+├── globals.css             # Tailwind CSS + CSS Variables
 │
-├── widgets/                      # Independent UI blocks (layouts, dashboard sections)
-│   ├── header/
-│   │   ├── ui/Header.tsx
-│   │   └── index.ts              # Public API
-│   └── ...
+├── routes/                 # Route module files (Feature component composition only)
+│   ├── home.tsx            # "/" index route
+│   ├── not-found.tsx       # "*" catch-all
+│   ├── auth/
+│   │   ├── layout.tsx      # Auth page shared layout
+│   │   ├── login.tsx       # "/login"
+│   │   └── signup.tsx      # "/signup"
+│   └── dashboard/
+│       ├── layout.tsx      # Dashboard shared layout
+│       ├── home.tsx        # "/dashboard"
+│       ├── orders.tsx      # "/dashboard/orders"
+│       └── order-detail.tsx # "/dashboard/orders/:id"
 │
-├── features/                     # Business feature units
+├── features/               # Domain-specific co-location (center of business code)
 │   ├── order/
-│   │   ├── components/           # UI components specific to this feature
-│   │   ├── hooks/                # Custom hooks specific to this feature
-│   │   ├── queries/              # TanStack Query hooks + query keys
-│   │   ├── store/                # Zustand slices
-│   │   ├── actions/              # Server Actions
-│   │   ├── schemas/              # Zod validation schemas
-│   │   └── index.ts              # Public API
-│   └── ...
+│   │   ├── components/     # Feature components (OrderList, OrderFilter, etc.)
+│   │   ├── api/            # TanStack Query hooks + fetch functions + query keys
+│   │   ├── store/          # Feature-specific Zustand store (optional)
+│   │   ├── schemas/        # Feature-specific Zod schemas (optional)
+│   │   └── types/          # Feature-specific types (optional)
+│   ├── auth/
+│   │   ├── components/
+│   │   ├── api/
+│   │   └── store/
+│   └── user/
+│       ├── components/
+│       ├── api/
+│       └── types/
 │
-├── entities/                     # Domain entities (pure data models + basic UI)
-│   ├── order/
-│   │   ├── model/                # Types, schemas
-│   │   ├── ui/                   # Basic UI (props-only)
-│   │   ├── lib/                  # Domain utilities
-│   │   └── index.ts              # Public API
-│   └── ...
+├── components/             # Shared components (domain-agnostic)
+│   ├── ui/                 # Basic UI components (project-specific UI, Storybook targets)
+│   └── layout/             # Layout components (Header, Sidebar, Footer)
 │
-└── shared/                       # Shared code (domain-agnostic)
-    ├── ui/                       # Common UI (project-specific UI not in DS)
-    ├── hooks/                    # Common custom hooks
-    ├── lib/                      # Utilities (cn(), API client, etc.)
-    ├── store/                    # Global UI store
-    ├── types/                    # Common types
-    ├── constants/                # Constants
-    └── config/                   # Environment configuration
+├── hooks/                  # Shared custom hooks (useDebounce, useMediaQuery, etc.)
+├── lib/                    # Shared utilities (cn(), API client, etc.)
+├── types/                  # Shared type definitions (including domain types referenced by multiple Features)
+├── schemas/                # Shared Zod schemas
+└── constants/              # Shared constant definitions
 ```
 
-## Layer Hierarchy and Dependency Rules
+- **Rule**: [MUST] Only route module files are placed in the `routes/` directory. Business logic is placed under `features/`.
+- **Good example**:
+  ```text
+  app/
+  ├── routes/dashboard/
+  │   └── orders.tsx                       # Feature component composition only
+  ├── features/order/
+  │   ├── components/order-list/
+  │   │   └── OrderList.tsx                # Business logic + data fetching
+  │   └── api/
+  │       └── use-orders-query.ts          # TanStack Query hook
+  ```
+> **Note**: The default app directory for React Router 7 Framework Mode is `app/`. `features/`, `components/`, `hooks/`, etc. are located under `app/`.
 
-### Hierarchy Diagram
+## 2. Feature Directory Structure
 
-```
-┌─────────────────────────────────────────────┐
-│  app/           ← Top level (can import all layers) │
-├─────────────────────────────────────────────┤
-│  widgets/       ← features, entities, shared      │
-├─────────────────────────────────────────────┤
-│  features/      ← entities, shared                │
-├─────────────────────────────────────────────┤
-│  entities/      ← shared                          │
-├─────────────────────────────────────────────┤
-│  shared/        ← External libraries only          │
-└─────────────────────────────────────────────┘
-```
+This section defines the operating rules for the `features/` directory.
 
-### Upward Import Prohibition
+### Feature Internal Structure
 
-- **Rule**: [MUST NOT] Lower layers must not import from upper layers.
+- **Rule**: [MUST] Each Feature directory follows the structure below. `components/`, `api/`, `transforms/` are required; the rest are created when needed.
 
-```tsx
-// entities/order/lib/formatOrder.ts — uses shared only
-import { formatCurrency } from '@/shared/lib/format';
-
-export function formatOrder(order: Order) {
-  return { ...order, totalFormatted: formatCurrency(order.total) };
-}
-```
-
-### Cross-import Prohibition
-
-- **Rule**: [MUST NOT] Slices within the same layer must not directly import from other slices in that layer.
-
-```tsx
-// features/order/components/OrderList.tsx — imports from a lower layer (entities)
-import { UserAvatar } from '@/entities/user';
-```
-
-### Cross-import Resolution Patterns
-
-When two slices in the same layer need to share data, resolve it using one of these two patterns.
-
-1. **Extract common data to a lower layer**: Move shared data down to `entities/` or `shared/`.
-2. **Compose in an upper layer**: Combine multiple features in `widgets/` or `app/`.
-
-```tsx
-// widgets/order-dashboard/ui/OrderDashboard.tsx — composing multiple features in an upper layer
-import { OrderList } from '@/features/order';
-import { UserFilter } from '@/features/user';
-
-export function OrderDashboard() {
-  return (
-    <section>
-      <UserFilter />
-      <OrderList />
-    </section>
-  );
-}
+```text
+features/{domain}/
+├── components/              # [Required] Feature components (Consume layer)
+│   ├── order-list/
+│   │   ├── OrderList.tsx
+│   │   ├── OrderList.test.tsx
+│   │   ├── OrderList.stories.tsx
+│   │   └── OrderListItem.tsx     # Sub-component (specific to this Feature)
+│   └── order-filter/
+│       └── OrderFilter.tsx
+├── api/                     # [Required] fetch functions + TanStack Query hooks + query keys (Fetching layer)
+│   ├── query-keys.ts
+│   ├── use-orders-query.ts
+│   ├── use-order-query.ts
+│   └── use-update-order-mutation.ts
+├── transforms/              # [Required] Data transformations (Transform layer)
+│   ├── to-order-list-item.ts          # Pure transform function
+│   └── to-order-dashboard.ts         # Multi-source composition transform function
+├── hooks/                   # [Optional] Feature-specific utility hooks
+│   └── use-adapted-order-dashboard.ts # Multi-source composition hook
+├── store/                   # [Optional] Feature-specific Zustand store (Fetching layer)
+│   └── order-filter-store.ts
+├── hooks/                   # [Optional] Feature-specific utility hooks (layer-agnostic)
+│   └── use-order-permission.ts
+├── schemas/                 # [Optional] Feature-specific Zod schemas
+│   └── order-create-schema.ts
+└── types/                   # [Optional] Feature-specific types (used only within this Feature)
+    └── order-form.types.ts
 ```
 
-### Public API Access Only
+#### Hook Location Rules
 
-- **Rule**: [MUST] External access to each slice is only allowed through its `index.ts`. Direct import of internal files is prohibited.
+| Hook Naming Pattern | Location | Determination |
+|---------------|------|------|
+| `use-xxx-query.ts`, `use-xxx-mutation.ts` | `api/` | Mechanical |
+| `use-adapted-xxx.ts` | `hooks/` | Mechanical |
+| Others (`use-xxx-permission.ts`, etc.) | `hooks/` | Mechanical |
 
-### shared/ Segment Structure
+Since the folder is determined just by looking at the naming, there is no need for the judgment "Where should I put this hook?"
 
-- **Rule**: [MUST] `shared/` is organized by technical segments (`ui/`, `hooks/`, `lib/`, `store/`, `types/`, `constants/`, `config/`), not by slices.
+### API File Structure
 
-## app/ Layer
+- **Rule**: [MUST] Within the `api/` directory, fetch functions and queryOptions factories are defined together in `query-keys.ts`, and custom hooks are separated into files by purpose (`use-xxx-query.ts`, `use-xxx-mutation.ts`).
+- **Good example**:
+  ```typescript
+  // features/order/api/query-keys.ts
+  import { queryOptions } from '@tanstack/react-query';
+  import { apiClient } from '@/lib/api-client';
+  import type { Order, PaginatedResponse } from '@/types/order.types';
 
-- **Rule**: [MUST] The `app/` directory follows Next.js App Router conventions and only contains route-related files.
-- **Rule**: [MUST] `page.tsx` must not contain business logic directly. Compose screens by combining `widgets/` and `features/`.
+  const fetchOrders = (filters: OrderFilters): Promise<PaginatedResponse<Order>> =>
+    apiClient.get('/orders', { params: filters });
 
-```tsx
-// app/(dashboard)/orders/page.tsx — composition of widgets/features only
-import { Suspense } from 'react';
-import { PageLayout } from '@/widgets/page-layout';
-import { OrderList, OrderFilter } from '@/features/order';
-import { OrderListSkeleton } from '@/entities/order';
+  export const orderKeys = {
+    all: ['orders'] as const,
+    list: (filters: OrderFilters) => queryOptions({
+      queryKey: [...orderKeys.all, 'list', filters] as const,
+      queryFn: () => fetchOrders(filters),
+    }),
+  };
 
-export default function OrdersPage() {
-  return (
-    <PageLayout title="주문 관리">
-      <OrderFilter />
-      <Suspense fallback={<OrderListSkeleton />}>
-        <OrderList />
-      </Suspense>
-    </PageLayout>
-  );
-}
+  // features/order/api/use-orders-query.ts
+  import { useQuery } from '@tanstack/react-query';
+  import { orderKeys } from './query-keys';
+
+  export function useOrdersQuery(filters: OrderFilters) {
+    return useQuery(orderKeys.list(filters));
+  }
+  ```
+
+### Shared vs Feature-Specific Criteria
+
+- **Rule**: [SHOULD] Determine the placement of code based on the following criteria.
+
+| Question | `features/*/` (Feature-specific) | Shared directory (`types/`, `hooks/`, etc.) |
+|------|:---:|:---:|
+| Is the code related only to a specific domain (orders, auth, etc.)? | O | |
+| Is it used by 2 or more Features? | | O |
+| Can it be used universally without domain logic? | | O |
+| Should it be deleted together when the Feature is deleted? | O | |
+| Is it an API response type referenced by multiple Features? | | O |
+
+### Cross-Feature Dependency Rules
+
+- **Rule**: [MUST] Cross-Feature imports use direct import with specific file paths. Do not go through `index.ts` barrel files.
+- **Good example**:
+  ```typescript
+  // Cross-Feature cross-import -- direct import with specific file path
+  import { useCurrentUser } from '@/features/auth/api/use-current-user';
+  import type { OrderStatus } from '@/types/order.types';  // Shared types from types/
+  ```
+
+### Feature Dependency Direction
+
+```text
+Feature A  --> Shared (components/ui/, lib/, hooks/, types/)     Always allowed
+Feature A  --> Specific files of Feature B                       Allowed (no index.ts barrel)
+Shared     --> Feature                                           Reverse direction prohibited
 ```
 
-### Route Groups
+## 3. Route Groups / Layout Routes
 
-- **Rule**: [SHOULD] Group related routes using Route Groups (`(folder)`) to share layouts and middleware.
+A pattern for logically grouping related routes to share layouts.
 
-```tsx
-// app/(dashboard)/layout.tsx — shared layout for pages requiring authentication
-import { Header } from '@/widgets/header';
-import { Sidebar } from '@/widgets/sidebar';
+### Layout Routes
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="dashboard-container">
-      <Sidebar />
-      <main><Header />{children}</main>
-    </div>
-  );
-}
-```
+- **Rule**: [SHOULD] Group related routes using the `layout()` function to share layouts.
+- **Good example**:
+  ```typescript
+  // app/routes.ts
+  import { type RouteConfig, route, index, layout } from "@react-router/dev/routes";
 
-## widgets/ Layer
+  export default [
+    layout("./routes/auth/layout.tsx", [
+      route("login", "./routes/auth/login.tsx"),     // /login
+      route("signup", "./routes/auth/signup.tsx"),    // /signup
+    ]),
 
-- **Rule**: [MUST] `widgets/` contains independent, self-contained UI blocks. They form a single independent unit by combining multiple `features/` and `entities/`.
-- **Rule**: [MUST] Each widget is exposed externally through its `index.ts` (Public API).
+    layout("./routes/dashboard/layout.tsx", [
+      route("orders", "./routes/dashboard/orders.tsx"),     // /orders
+      route("settings", "./routes/dashboard/settings.tsx"), // /settings
+    ]),
+  ] satisfies RouteConfig;
+  ```
+  ```tsx
+  // app/routes/auth/layout.tsx -- Shared layout for login/signup
+  import { Outlet } from "react-router";
 
-### Distinction from entities
+  export default function AuthLayout() {
+    return <div className="auth-container"><Logo /><Outlet /></div>;
+  }
 
-| Criteria | widgets/ | entities/ |
-|------|----------|-----------|
-| Composition | Independent blocks combining multiple domains | Basic units of a single domain |
-| Examples | Header, Sidebar, OrderDashboard | OrderCard, OrderBadge, UserAvatar |
-| Dependencies | features, entities, shared | shared only |
+  // app/routes/dashboard/layout.tsx -- Shared layout for dashboard
+  import { Outlet } from "react-router";
 
-```tsx
-// widgets/header/ui/Header.tsx
-'use client';
-
-import { UserMenu } from '@/features/user';
-import { NotificationBell } from '@/features/notification';
-import { Logo } from '@/shared/ui/logo';
-
-export function Header() {
-  return (
-    <header className="flex items-center justify-between px-6 py-4">
-      <Logo />
-      <div className="flex items-center gap-4">
-        <NotificationBell />
-        <UserMenu />
+  export default function DashboardLayout() {
+    return (
+      <div className="dashboard-container">
+        <Sidebar />
+        <main><Header /><Outlet /></main>
       </div>
-    </header>
-  );
-}
-```
-```ts
-// widgets/header/index.ts — Public API
-export { Header } from './ui/Header';
-```
+    );
+  }
+  ```
 
-## features/ Layer
+## 4. Component Classification System
 
-- **Rule**: [MUST] `features/` contains business feature units that deliver value to users. Each feature slice may include domain-specific `components/`, `hooks/`, `queries/`, `store/`, `actions/`, `schemas/`, and exposes a Public API through `index.ts`.
+Frontend components are classified into 4 categories based on their role and dependencies.
 
-### features/ Internal Structure
+| Category | Location | Characteristics | Allowed Dependencies | Examples |
+|------|------|------|----------------|------|
+| UI Component | `components/ui/` | Operates with props only, no business logic, Storybook target. Place project-specific UI components here. | React built-in hooks, other UI components | StatusBadge, DataTable, FileUpload |
+| Feature Component | `features/*/components/` | Contains business logic, uses hooks/store/queries. Composes UI components to build screens. | UI components, shared hooks/utils, api/store/hooks from the same Feature | OrderList, UserProfile, PaymentForm |
+| Layout Component | `components/layout/` | Page structure, navigation. Does not contain business logic for a specific domain. | UI components, shared hooks/utils | Header, Sidebar, Footer, PageLayout |
+| Page Component | `routes/**/*.tsx` | Only responsible for composing Feature/UI components, no business logic | Feature components, UI components, Layout components | DashboardPage, OrderDetailPage |
 
-```
-features/order/
-├── components/           # UI components specific to this feature
-│   ├── OrderList.tsx
-│   ├── OrderFilter.tsx
-│   └── OrderListItem.tsx
-├── hooks/                # Custom hooks specific to this feature
-│   └── useOrderExport.ts
-├── queries/              # TanStack Query hooks + query keys
-│   ├── useOrdersQuery.ts
-│   └── orderKeys.ts
-├── store/                # Zustand slices
-│   └── orderStore.ts
-├── actions/              # Server Actions
-│   └── createOrder.ts
-├── schemas/              # Zod validation schemas
-│   └── orderFormSchema.ts
-└── index.ts              # Public API
-```
+### UI Components
 
-### Distinction from entities: "What does it do" vs "What is it"
+- **Rule**: [MUST] UI components operate with props only and do not directly depend on external state (store, queries, context).
+- **Good example**:
+  ```tsx
+  // components/ui/data-table/DataTable.tsx -- Operates with props only
+  interface DataTableProps<T> {
+    columns: Column<T>[];
+    data: T[];
+    isLoading?: boolean;
+    onRowClick?: (row: T) => void;
+  }
 
-| Criteria | features/ | entities/ |
-|------|-----------|-----------|
-| Question | "**What do you do** with an order" | "**What is** an order" |
-| Examples | OrderList, OrderFilter, useOrdersQuery, createOrder | Order type, OrderCard, OrderBadge, formatOrderDate |
-| Dependencies | entities, shared | shared only |
-| State | Can use store, queries | props-only (store/queries prohibited) |
+  export function DataTable<T>({ columns, data, isLoading, onRowClick }: DataTableProps<T>) {
+    if (isLoading) return <TableSkeleton columns={columns.length} />;
+    return <Table><TableHead columns={columns} /><TableBody data={data} columns={columns} /></Table>;
+  }
+  ```
 
-```tsx
-// features/order/components/OrderList.tsx — business feature
-'use client';
+### Feature Components
 
-import { OrderCard } from '@/entities/order';
-import { DataTable } from '@/shared/ui/data-table';
-import { useOrdersQuery } from '../queries/useOrdersQuery';
-import { useOrderStore } from '../store/orderStore';
+- **Rule**: [MUST] Feature components contain business logic and manage data using hooks, store, and queries. They compose UI components to build screens.
+- **Good example**:
+  ```tsx
+  // features/order/components/order-list/OrderList.tsx
+  import { DataTable } from '@/components/ui/data-table';
+  import { useOrdersQuery } from '@/features/order/api/use-orders-query';
+  import { useOrderFilterStore } from '@/features/order/store/order-filter-store';
 
-export function OrderList() {
-  const { filter } = useOrderStore();
-  const { data, isLoading } = useOrdersQuery(filter);
+  export function OrderList() {
+    const { filter, setFilter } = useOrderFilterStore();
+    const { data, isLoading } = useOrdersQuery(filter);
 
-  if (isLoading) return <DataTable columns={ORDER_COLUMNS} data={[]} isLoading />;
+    return (
+      <DataTable
+        columns={ORDER_COLUMNS}
+        data={data?.orders ?? []}
+        isLoading={isLoading}
+      />
+    );
+  }
+  ```
 
-  return (
-    <ul>
-      {data?.orders.map((order) => (
-        <OrderCard key={order.id} order={order} />
-      ))}
-    </ul>
-  );
-}
-```
-```ts
-// features/order/index.ts — Public API (expose only what is needed)
-export { OrderList } from './components/OrderList';
-export { OrderFilter } from './components/OrderFilter';
-export { useOrdersQuery } from './queries/useOrdersQuery';
-export type { OrderFilter as OrderFilterType } from './store/orderStore';
-```
+### Layout Components
 
-## entities/ Layer
+- **Rule**: [MUST] Layout components are responsible for page structure and navigation. They do not contain business logic for a specific domain.
 
-- **Rule**: [MUST] `entities/` contains core data models, basic UI representations, and domain utilities for the business domain.
-- **Rule**: [MUST] UI components in `entities/` operate with props only and must not depend on store or queries.
+### Page Components
 
-### entities/ Internal Segments
+- **Rule**: [MUST] Page components are only responsible for composing Feature/UI components. They do not directly contain business logic.
+- **Good example**:
+  ```tsx
+  // app/routes/dashboard/orders.tsx -- Route module
+  import { OrderList } from '@/features/order/components/order-list';
+  import { OrderFilter } from '@/features/order/components/order-filter';
+  import { PageLayout } from '@/components/layout/page-layout';
 
-| Segment | Role | Examples |
-|----------|------|------|
-| `model/` | Type definitions, Zod schemas | `types.ts`, `schemas.ts` |
-| `ui/` | Basic UI components (props-only) | `OrderCard.tsx`, `OrderBadge.tsx` |
-| `lib/` | Domain utility functions | `formatOrder.ts`, `calculateTotal.ts` |
+  export function meta() {
+    return [{ title: "주문 관리" }];
+  }
 
-```
-entities/order/
-├── model/
-│   ├── types.ts              # Order type definitions
-│   └── schemas.ts            # Zod schemas (for entity validation)
-├── ui/
-│   ├── OrderCard.tsx          # props-only UI
-│   ├── OrderBadge.tsx
-│   └── OrderListSkeleton.tsx
-├── lib/
-│   └── formatOrder.ts         # Domain utilities
-└── index.ts                   # Public API
-```
+  export default function OrdersPage() {
+    return (
+      <PageLayout title="주문 관리">
+        <OrderFilter />
+        <OrderList />
+      </PageLayout>
+    );
+  }
+  ```
 
-```tsx
-// entities/order/ui/OrderCard.tsx — operates with props only
-import { Badge } from '@sellernote/design-system';
-import { formatOrderDate } from '../lib/formatOrder';
-import type { Order } from '../model/types';
+## 5. Dependency Direction
 
-interface OrderCardProps {
-  order: Order;
-  onClick?: (order: Order) => void;
-}
+- **Rule**: [MUST] Dependencies between components flow in one direction only.
 
-export function OrderCard({ order, onClick }: OrderCardProps) {
-  return (
-    <div className="rounded-lg border p-4" onClick={() => onClick?.(order)}>
-      <h3>{order.orderNumber}</h3>
-      <Badge variant={order.status === 'completed' ? 'success' : 'default'}>
-        {order.status}
-      </Badge>
-      <p>{formatOrderDate(order.createdAt)}</p>
-    </div>
-  );
-}
-```
-```ts
-// entities/order/index.ts — Public API
-export { OrderCard } from './ui/OrderCard';
-export { OrderBadge } from './ui/OrderBadge';
-export { OrderListSkeleton } from './ui/OrderListSkeleton';
-export { formatOrderDate, formatOrderTotal } from './lib/formatOrder';
-export type { Order, OrderStatus } from './model/types';
-export { orderSchema } from './model/schemas';
+```text
+┌──────────────┐
+│     Page     │  <-- Route entry point (Feature/UI component composition)
+│  routes/     │
+├──────────────┤
+│   Feature    │  <-- Business logic, uses hooks/store/queries
+│  features/*/ │
+├──────────────┤
+│  Shared/UI   │  <-- Operates with props only, no external dependencies
+│  components/ │      hooks/, lib/, types/
+│  ui, layout  │
+└──────────────┘
+
+Arrow direction: Page --> Feature --> Shared/UI (upper imports lower)
+Reverse prohibited: Shared/UI -x-> Feature -x-> Page
 ```
 
-## shared/ Layer
+### Dependency Permission Matrix
 
-- **Rule**: [MUST] `shared/` contains domain-agnostic shared code. It is organized by technical segments, not by slices.
+| Referencing side \ Referenced side | Page (routes/) | Feature (features/) | Shared (components/, hooks/, lib/, types/) |
+|:---:|:---:|:---:|:---:|
+| **Page** | - | O | O |
+| **Feature** | X | O (specific file paths only) | O |
+| **Shared** | X | X | O |
 
-### shared/ Segments
+### UI Component Dependency Restrictions
 
-| Segment | Role | Examples |
-|----------|------|------|
-| `ui/` | Project-specific UI components not in DS | `DataTable`, `FileUpload`, `StatusBadge` |
-| `hooks/` | Common custom hooks | `useDebounce`, `useMediaQuery`, `useLocalStorage` |
-| `lib/` | Utility functions | `cn()`, `formatCurrency`, API client |
-| `store/` | Global UI store (theme, sidebar state, etc.) | `uiStore.ts` |
-| `types/` | Common type definitions | `ApiResponse<T>`, `Pagination` |
-| `constants/` | Constants | `ROUTES`, `QUERY_KEYS_BASE` |
-| `config/` | Environment configuration | `env.ts`, `apiConfig.ts` |
+- **Rule**: [MUST] UI components must not directly import `store`, `queries`, or `hooks` (business custom hooks). Only React built-in hooks (`useState`, `useRef`, etc.) and other UI components may be used.
 
-### Relationship with @sellernote/design-system
+### Reverse Dependency Prohibition
 
-- **Rule**: [MUST] `@sellernote/design-system` is an external library and can be directly imported from any layer. `shared/ui/` should only contain project-specific UI not available in DS. Do not wrap DS components in `shared/ui/`.
+- **Rule**: [MUST NOT] Reverse dependencies (UI -> Feature, Feature -> Page) are prohibited.
+- **Bad example**:
+  ```tsx
+  // components/ui/modal/Modal.tsx -- UI importing Feature (prohibited)
+  import { OrderDetail } from '@/features/order/components/order-detail';
 
-```tsx
-// shared/ui/data-table/DataTable.tsx — project-specific UI not in DS
-import { Table, TableHead, TableBody } from '@sellernote/design-system';
+  export function Modal() {
+    return (
+      <div className="modal">
+        <OrderDetail />  {/* UI depends on Feature */}
+      </div>
+    );
+  }
+  ```
+- **Good example**:
+  ```tsx
+  // components/ui/modal/Modal.tsx -- Receives content via children
+  interface ModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    children: React.ReactNode;
+  }
 
-interface DataTableProps<T> {
-  columns: Column<T>[];
-  data: T[];
-  isLoading?: boolean;
-}
+  export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+    if (!isOpen) return null;
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content">
+          <h2>{title}</h2>
+          {children}
+        </div>
+      </div>
+    );
+  }
+  ```
 
-export function DataTable<T>({ columns, data, isLoading }: DataTableProps<T>) {
-  if (isLoading) return <TableSkeleton columns={columns.length} />;
-  return <Table><TableHead columns={columns} /><TableBody data={data} columns={columns} /></Table>;
-}
+## 6. Data Flow Architecture
+
+Data flows unidirectionally in the **Fetching -> Transform -> Consume** direction.
+
+```text
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+│   Fetching    │ --> │   Transform   │ --> │    Consume    │
+│   (Caller)    │     │  (Converter)  │     │  (Consumer)   │
+│               │     │               │     │               │
+│ features/     │     │ features/     │     │ Feature/UI    │
+│  */api/       │     │  */transforms/│     │ components    │
+│  */store/     │     │               │     │ (JSX render)  │
+└───────────────┘     └───────────────┘     └───────────────┘
 ```
 
-## Public API Rules
+- **Rule**: [MUST] Data flows only in the Fetching -> Transform -> Consume direction. Reverse data flow (direct fetch from the Consume layer, copying server data to client store, etc.) is prohibited.
 
-- **Rule**: [MUST] Each slice (`features/`, `entities/`, `widgets/`) must explicitly export only the items to be exposed externally through `index.ts`. External access is only allowed through `index.ts`.
+### Responsibilities of Each Layer
 
-```tsx
-// Accessing through Public API from outside
-import { OrderList, OrderFilter } from '@/features/order';
-import { OrderCard, formatOrderDate } from '@/entities/order';
-import { Header } from '@/widgets/header';
-import type { Order } from '@/entities/order';
+| Layer | Location | Responsibility | What It Does Not Include |
+|--------|------|------|-----------------|
+| Fetching (Caller) | `features/*/api/` — query-keys, queryFn, custom hooks | API calls, cache management | Data transformation, UI rendering |
+| Fetching (State) | `features/*/store/` — Zustand store | Client UI state storage | Server data copying |
+| Transform (Converter) | `features/*/transforms/` — pure functions (`to-xxx.ts`) | Data transformation, derived state calculation | API calls, JSX rendering |
+| Consume (Consumer) | Feature/UI/Page components | JSX rendering, event handling | Direct fetch, data transformation |
+
+### Transform Strategy
+
+Data transformation is **always performed through the `transforms/` directory.** Rather than branching based on complexity, all transformations are placed in the same location to ensure consistency for AI code generation and developer judgment.
+
+#### Principle: Do Not Put Transform Logic in the Caller (api/)
+
+- **Rule**: [MUST] `queryFn` in `queryOptions` handles only pure API calls. Do not write `select` options or data transformation logic in `api/` files.
+- **Rule**: [MUST] All data transformations are placed in the `transforms/` directory. Hooks that combine multiple sources are placed in `hooks/` with the `use-adapted-xxx.ts` naming convention.
+
+#### Pure Transform Functions — Single Source Transformation
+
+- **Rule**: [MUST] Data transformations for a single query are written as pure functions and placed in `transforms/`. Pass this function to the `select` option in the custom hook.
+- **Good example**:
+  ```typescript
+  // features/order/transforms/to-order-list-item.ts — Pure transform function
+  export const toOrderListItem = (data: OrdersResponse): OrderListItem[] =>
+    data.orders.map((order) => ({
+      id: order.id,
+      displayTotal: formatCurrency(order.total),
+      statusLabel: ORDER_STATUS_LABELS[order.status],
+      isShippable: order.status === 'confirmed' && !order.isShipped,
+    }));
+
+  // features/order/api/use-orders-query.ts — Pass transform function via select in the hook
+  import { toOrderListItem } from '@/features/order/transforms/to-order-list-item';
+
+  export function useOrdersQuery(filters: OrderFilters) {
+    return useQuery({
+      ...orderKeys.list(filters),
+      select: toOrderListItem,
+    });
+  }
+  ```
+
+#### Multi-Source Composition Hooks — Multiple Data Source Transformation
+
+- **Rule**: [MUST] When combining 2 or more data sources, place pure transform functions in `transforms/` and composition hooks in `hooks/` with the `use-adapted-xxx.ts` naming convention.
+- **Good example**:
+  ```typescript
+  // features/order/transforms/to-order-dashboard.ts — Pure transform function
+  export function toOrderDashboard(
+    orders: Order[],
+    stats: OrderStats,
+    userRole: string
+  ) {
+    return {
+      canExport: userRole === 'admin' && orders.length > 0,
+      totalRevenue: formatCurrency(stats.totalRevenue),
+      pendingCount: orders.filter((o) => o.status === 'pending').length,
+    };
+  }
+
+  // features/order/hooks/use-adapted-order-dashboard.ts — Orchestration hook
+  import { toOrderDashboard } from '@/features/order/transforms/to-order-dashboard';
+
+  export function useAdaptedOrderDashboard() {
+    const filters = useOrderFilterStore((s) => s.filters);
+    const { data: orders, isLoading } = useOrdersQuery(filters);
+    const { data: stats } = useOrderStats();
+    const { data: user } = useCurrentUser();
+
+    const dashboard = useMemo(
+      () => orders && stats && user
+        ? toOrderDashboard(orders, stats, user.role)
+        : null,
+      [orders, stats, user],
+    );
+
+    return { orders: orders ?? [], isLoading, dashboard };
+  }
+  ```
+  ```tsx
+  // features/order/components/order-dashboard/OrderDashboard.tsx — Consumer
+  import { useAdaptedOrderDashboard } from '@/features/order/hooks/use-adapted-order-dashboard';
+
+  export function OrderDashboard() {
+    const { orders, isLoading, dashboard } = useAdaptedOrderDashboard();
+
+    if (isLoading) return <DashboardSkeleton />;
+    return (
+      <div>
+        <SummaryCards data={dashboard} />
+        <DataTable columns={ORDER_COLUMNS} data={orders} />
+        {dashboard?.canExport && <ExportButton />}
+      </div>
+    );
+  }
+  ```
+
+#### File Pattern Summary
+
+| File Pattern | Location | Role | Testing |
+|-----------|------|------|--------|
+| `to-xxx.ts` | `transforms/` | Pure transform function (single/multi source) | Unit test without React |
+| `use-adapted-xxx.ts` | `hooks/` | Orchestration hook (multi-source composition) | Integration test with renderHook |
+
+## 7. Code Co-location
+
+- **Rule**: [SHOULD] Related files (component, test, story, type) are placed in the same folder.
+
+```text
+components/ui/button/
+├── Button.tsx              # Component implementation (named export)
+├── Button.stories.tsx      # Storybook stories
+└── Button.test.tsx         # Unit tests
 ```
 
-### index.ts Writing Guide
+```text
+features/order/components/order-list/
+├── OrderList.tsx           # Feature component (named export)
+├── OrderList.test.tsx      # Tests
+├── OrderList.stories.tsx   # Storybook stories
+└── OrderListItem.tsx       # Sub-component (specific to this Feature)
 
-- **Rule**: [SHOULD] `index.ts` should only expose items that are actually needed externally. Do not over-expose internal implementations.
-
-```ts
-// features/order/index.ts — expose only what is needed externally
-export { OrderList } from './components/OrderList';
-export { OrderFilter } from './components/OrderFilter';
-export type { OrderFilter as OrderFilterType } from './store/orderStore';
+features/order/transforms/          # Transform layer (pure transform functions)
+features/order/hooks/               # Orchestration hooks
+└── use-adapted-order-dashboard.ts
 ```
 
-## Import Path Rules
+## 8. Import Path Rules
 
-### Use Absolute Paths
+### Absolute Path Usage
 
-- **Rule**: [MUST] Import paths must be written as absolute paths using the `@/` prefix. Use relative paths between files within the same slice.
+- **Rule**: [MUST] Import paths use the `@/` absolute path by default. Relative paths (`./`, `../`) are allowed for files in the same folder or sub-folders.
+- **Good example**:
+  ```tsx
+  import { Button } from '@/components/ui/button/Button';
+  import { OrderList } from '@/features/order/components/order-list/OrderList';
+  import { useOrdersQuery } from '@/features/order/api/use-orders-query';
+  import { useAdaptedOrderDashboard } from '@/features/order/hooks/use-adapted-order-dashboard';
+  import { formatCurrency } from '@/lib/format';
+  ```
 
-`tsconfig.json` configuration:
+Configure paths in `tsconfig.json` as follows.
 
 ```json
 {
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./app/*"]
     }
   }
 }
 ```
 
-```tsx
-// features/order/components/OrderList.tsx
+> **Note**: React Router 7 automatically recognizes tsconfig paths in Vite through the `vite-tsconfig-paths` plugin.
 
-// External slices use absolute paths + Public API
-import { OrderCard } from '@/entities/order';
-import { DataTable } from '@/shared/ui/data-table';
+### Barrel File Prohibition
 
-// Within the same slice use relative paths
-import { useOrdersQuery } from '../queries/useOrdersQuery';
-import { useOrderStore } from '../store/orderStore';
-```
+- **Rule**: [MUST NOT] Do not use `index.ts` barrel files. Components use direct named exports from their files, and imports use specific file paths.
+- **Bad example**:
+  ```ts
+  // features/order/index.ts -- Feature-level barrel (prohibited)
+  export * from './components/order-list';
+  export * from './api/use-orders-query';
 
-### Import Order
+  // components/ui/button/index.ts -- Component folder-level barrel also prohibited
+  export { Button } from './Button';
+  ```
 
-- **Rule**: [MUST] Import statements must be written in the following 8-category order, with blank lines between categories.
-
-```tsx
-// 1) React/external libraries
-import { Suspense } from 'react';
-import { useQuery } from '@tanstack/react-query';
-
-// 2) Design system
-import { Button, Card } from '@sellernote/design-system';
-
-// 3) widgets
-import { PageLayout } from '@/widgets/page-layout';
-
-// 4) features
-import { OrderFilter } from '@/features/order';
-
-// 5) entities
-import { OrderCard } from '@/entities/order';
-
-// 6) shared
-import { formatCurrency } from '@/shared/lib/format';
-
-// 7) Relative paths (within the same slice)
-import { useOrderStore } from '../store/orderStore';
-
-// 8) Types (type imports)
-import type { Order } from '@/entities/order';
-import type { OrderFilter as OrderFilterType } from '../store/orderStore';
-```
-
-## Code Colocation
-
-- **Rule**: [SHOULD] Related files (components, tests, stories) should be placed in the same folder within each slice.
-
-```
-features/order/components/
-├── OrderList.tsx              # Feature component
-├── OrderList.test.tsx         # Unit test
-├── OrderList.stories.tsx      # Storybook story
-└── OrderListItem.tsx          # Sub-component (specific to this feature)
-```
-
-## Anti-patterns
-
-### Cross-import
-
-- **Rule**: [MUST NOT] Do not directly import from other slices within the same layer. Compose in an upper layer (widgets/app).
-
-### Upward Dependency
-
-- **Rule**: [MUST NOT] Do not import from upper layers in lower layers.
-
-### Public API Bypass
-
-- **Rule**: [MUST NOT] Do not directly import internal files of a slice without going through `index.ts`.
-
-### Slice Leakage
-
-- **Rule**: [MUST NOT] Do not over-expose internal implementations (internal-only components, internal stores, query keys, etc.) in `index.ts`.
-
-### Bloated shared/
-
-- **Rule**: [MUST NOT] Do not place domain logic in `shared/`. Domain logic belongs in `entities/`.
-
-### Business Logic in entities
-
-- **Rule**: [MUST NOT] Do not place `useQuery` or `store`-dependent code in `entities/`. UI in entities must operate with props only.
-
-### Bloated Feature Slices
-
-- **Rule**: [SHOULD NOT] If a single feature slice has 10 or more components, consider splitting it.
-
-```
-features/order-management/     # Order inquiry/management features
-features/order-form/           # Order creation/editing features
-features/order-fulfillment/    # Order processing (shipping, refund) features
-```
+## 9. Anti-Patterns
 
 ### Circular Dependencies
 
-- **Rule**: [MUST NOT] Do not create circular dependencies between modules (A -> B -> A). Resolve by extracting common logic to a lower layer (`entities/` or `shared/`).
+- **Rule**: [MUST NOT] Do not create circular dependencies between modules (A -> B -> A).
+- **Bad example**:
+  ```tsx
+  // Circular dependency through barrel files between Features -- prohibited
+  // features/order/components/order-card/OrderCard.tsx
+  import { UserAvatar } from '@/features/user';        // via user/index.ts -> circular
 
-### Anti-pattern Summary
+  // features/user/components/user-orders/UserOrders.tsx
+  import { OrderSummary } from '@/features/order';     // via order/index.ts -> circular
+  ```
+- **Good example**:
+  ```tsx
+  // Direct import with specific file path -- prevents circular dependency
+  // features/order/components/order-card/OrderCard.tsx
+  import { UserAvatar } from '@/features/user/components/user-avatar';
 
-| Anti-pattern | Description | Marker |
-|---------|------|------|
-| Cross-import | Direct import of `features/user` from `features/order` | [MUST NOT] |
-| Upward dependency | Import of `features/` from `entities/` | [MUST NOT] |
-| Public API bypass | Direct import of `@/features/order/components/OrderList` | [MUST NOT] |
-| Slice leakage | Over-exposing internal implementations in `index.ts` | [MUST NOT] |
-| Bloated shared/ | Placing domain logic in `shared/` | [MUST NOT] |
-| Business logic in entities | Placing useQuery or store-dependent code in entities | [MUST NOT] |
-| Bloated feature slices | A single feature having 10+ components | [SHOULD NOT] |
-| Circular dependencies | A -> B -> A cycles between modules | [MUST NOT] |
+  // Shared types placed in types/ -- prevents circular dependency
+  import type { User } from '@/types/user.types';
+  import type { Order } from '@/types/order.types';
+  ```
+
+### Excessive Directory Nesting
+
+- **Rule**: [SHOULD NOT] Do not create more than 3 levels of directory nesting within a Feature.
+- **Good example**:
+  ```text
+  features/order/components/order-status-filter/OrderStatusFilter.tsx
+  ```
+
+### Writing Business Logic Directly in Page Components
+
+- **Rule**: [MUST NOT] Do not write business logic directly in Page components (route modules). Delegate to Feature components.
+
+### Flat Component Listing
+
+- **Rule**: [MUST NOT] Do not list files flat at the top level of `components/`. Always classify under `ui/` or `layout/` subdirectories. Feature components are placed under `features/`.
+- **Bad example**:
+  ```text
+  components/
+  ├── Button.tsx
+  ├── OrderList.tsx
+  ├── Header.tsx
+  └── UserProfile.tsx
+  ```
+- **Good example**:
+  ```text
+  components/              # Shared components only
+  ├── ui/
+  │   └── Button/
+  └── layout/
+      └── Header/
+
+  features/                # Domain-specific Feature components
+  ├── order/components/
+  │   └── OrderList/
+  └── user/components/
+      └── UserProfile/
+  ```
+
+### Writing Transform Logic Directly in Components
+
+- **Rule**: [MUST NOT] Do not write data transformation logic directly inside Feature components. All transformations are placed in the `transforms/` directory.
+
+### Writing Transform Logic in api/ Files
+
+- **Rule**: [MUST NOT] Do not define transform functions directly in queryOptions or custom hook files in the `api/` directory. Define transform functions in `transforms/` and import them in `api/` files to pass to `select`.
+
+### Using Barrel Files
+
+- **Rule**: [MUST NOT] Do not use any form of `index.ts` barrel files. They cause circular dependencies and degrade tree-shaking/HMR performance.
+
+### Copying Server Data to Client Store
+
+- **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query to a Zustand store.
+
+## 10. AI Agent Decision Trees
+
+Three decision trees are provided so that AI agents can make quick decisions when generating code.
+
+### 1. File Location Decision Tree
+
+"Where should I place the new file?"
+
+```text
+New file creation
+|
++-- Is it specific to a particular domain (orders, auth, users, etc.)?
+|  +-- YES -> Under features/{domain}/
+|     |
+|     +-- API call / TanStack Query hook?
+|     |  +-- features/{domain}/api/
+|     |     (query-keys.ts, use-xxx-query.ts, use-xxx-mutation.ts)
+|     |
+|     +-- Component with business logic?
+|     |  +-- features/{domain}/components/xxx-component/
+|     |
+|     +-- Multi-source composition hook (useAdaptedXxx)?
+|     |  +-- features/{domain}/hooks/ (use-adapted-xxx.ts)
+|     |
+|     +-- Feature-specific Zustand store?
+|     |  +-- features/{domain}/store/
+|     |
+|     +-- Feature-specific Zod schema?
+|     |  +-- features/{domain}/schemas/
+|     |
+|     +-- Feature-specific type?
+|        +-- features/{domain}/types/
+|
++-- Is it general-purpose (domain-agnostic)?
+   |
+   +-- UI component that operates with props only?
+   |  +-- components/ui/
+   |
+   +-- Page structure component (Header, Sidebar, etc.)?
+   |  +-- components/layout/
+   |
+   +-- General-purpose custom hook (useDebounce, useMediaQuery, etc.)?
+   |  +-- hooks/
+   |
+   +-- Utility function (cn(), formatCurrency, etc.)?
+   |  +-- lib/
+   |
+   +-- Type referenced by multiple Features (Order, User, etc.)?
+   |  +-- types/
+   |
+   +-- Shared Zod schema?
+   |  +-- schemas/
+   |
+   +-- Constant?
+      +-- constants/
+```
+
+### 2. State Management Tool Selection Tree
+
+"Which tool should I use?"
+
+```text
+State is needed
+|
++-- Is the data from a server? (API response, DB data)
+|  +-- YES -> TanStack Query (useQuery / useMutation)
+|     * Do not copy to Zustand
+|
++-- Should it be reflected in the URL? (filters, sorting, pagination)
+|  +-- YES -> nuqs
+|     * Preserves state for link sharing, bookmarks, back/forward navigation
+|
++-- Is it used in a single component only?
+|  +-- YES -> useState / useReducer
+|     * Do not put in a global store
+|
++-- Is it UI state shared across multiple components?
+   +-- YES -> Zustand
+      * Sidebar open/close, theme, notification settings, etc.
+```
+
+### 3. Component Classification Decision Tree
+
+"What type of component is this?"
+
+```text
+New component creation
+|
++-- Operates with props only + no business logic?
+|  +-- YES -> UI Component
+|     Location: components/ui/
+|     Characteristics: store/queries usage prohibited, Storybook target
+|     Examples: StatusBadge, DataTable, FileUpload
+|
++-- Uses API/store + contains business logic?
+|  +-- YES -> Feature Component
+|     Location: features/{domain}/components/
+|     Characteristics: Uses useQuery, useStore, composes UI components
+|     Examples: OrderList, UserProfile, PaymentForm
+|
++-- Page structure (Sidebar, Header, Footer)?
+|  +-- YES -> Layout Component
+|     Location: components/layout/
+|     Characteristics: No domain business logic, shared across multiple pages
+|     Examples: Header, Sidebar, Footer, PageLayout
+|
++-- routes/ route module?
+   +-- YES -> Page Component
+      Location: routes/
+      Characteristics: Feature component composition only, no business logic
+      Examples: OrdersPage, DashboardPage
+```
