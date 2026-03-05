@@ -5,71 +5,94 @@
 
 ## Skills 목록
 
-| Skill | 설명 | 트리거 예시 |
-|-------|------|------------|
-| `nestjs-api-dev` | NestJS 3-layer API 개발 (Controller/Service/Repository, DTO, Swagger) | "API 엔드포인트 추가해줘", "CRUD 만들어줘" |
-| `typeorm-dev` | TypeORM Entity, Migration, Relations, Repository 패턴 | "Entity 만들어줘", "마이그레이션 생성해줘" |
-| `prisma-dev` | Prisma Schema, Migration, Client 패턴, NestJS 통합 | "Prisma 모델 만들어줘", "스키마 수정해줘" |
-| `nextjs-data-provider` | TanStack Query, Server Actions, Zustand 상태 관리 | "데이터 fetching 구현해줘", "쿼리 훅 만들어줘" |
-| `nextjs-ui-dev` | MUI v6 컴포넌트, React Hook Form + Zod, Storybook, 테스트 | "컴포넌트 만들어줘", "폼 구현해줘" |
-| `nextjs-dev-orchestration` | data-provider + ui-dev 스킬을 조합한 전체 기능 개발 오케스트레이션 | "새 페이지 만들어줘", "기능 개발해줘" |
-| `convention-code-review` | git diff 기반 컨벤션 위반 자동 체크 (read-only) | "코드 리뷰해줘", "컨벤션 체크해줘" |
-| `convention-refactor` | 기존 코드를 컨벤션에 맞게 리팩토링 | "컨벤션에 맞게 리팩토링해줘", "패턴 적용해줘" |
-| `react-dev` | React 19 컴포넌트, 훅, 성능 최적화 개발 (순수 React 패턴) | "React 컴포넌트 만들어줘", "훅 만들어줘", "성능 최적화해줘" |
-| `nestjs-testing` | NestJS 백엔드 테스트 작성 (unit/integration/e2e) | "테스트 작성해줘", "서비스 테스트 만들어줘" |
-| `project-scaffold` | 새 모듈/페이지 컨벤션 준수 구조 자동 생성 | "새 모듈 만들어줘", "scaffold해줘" |
-| `github-pr` | base 브랜치 대비 diff 분석 후 GitHub PR 자동 생성 (Jira 티켓 자동 연동) | "PR 만들어줘", "PR 등록해줘" |
+| Skill                      | 설명                                                                                | 트리거 예시                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `nestjs-api-dev`           | NestJS 3-layer API 개발 (Controller/Service/Repository, DTO, Swagger)               | "API 엔드포인트 추가해줘", "CRUD 만들어줘"                  |
+| `typeorm-dev`              | TypeORM Entity, Migration, Relations, Repository 패턴                               | "Entity 만들어줘", "마이그레이션 생성해줘"                  |
+| `prisma-dev`               | Prisma Schema, Migration, Client 패턴, NestJS 통합                                  | "Prisma 모델 만들어줘", "스키마 수정해줘"                   |
+| `nextjs-data-provider`     | TanStack Query, Server Actions, Zustand 상태 관리                                   | "데이터 fetching 구현해줘", "쿼리 훅 만들어줘"              |
+| `nextjs-ui-dev`            | MUI v6 컴포넌트, React Hook Form + Zod, Storybook, 테스트                           | "컴포넌트 만들어줘", "폼 구현해줘"                          |
+| `nextjs-dev-orchestration` | data-provider + ui-dev 스킬을 조합한 전체 기능 개발 오케스트레이션                  | "새 페이지 만들어줘", "기능 개발해줘"                       |
+| `convention-code-review`   | git diff 기반 컨벤션 위반 자동 체크 (read-only)                                     | "코드 리뷰해줘", "컨벤션 체크해줘"                          |
+| `convention-refactor`      | 기존 코드를 컨벤션에 맞게 리팩토링                                                  | "컨벤션에 맞게 리팩토링해줘", "패턴 적용해줘"               |
+| `react-dev`                | React 19 컴포넌트, 훅, 성능 최적화 개발 (순수 React 패턴)                           | "React 컴포넌트 만들어줘", "훅 만들어줘", "성능 최적화해줘" |
+| `react-data-provider`      | React SPA 데이터 페칭 및 상태 관리 (TanStack Query, Zustand, API 클라이언트)        | "쿼리 훅 만들어줘", "스토어 만들어줘", "API 연동해줘"       |
+| `react-ui-dev`             | React SPA UI 개발 (DS + Tailwind CSS v4, React Hook Form + Zod, Storybook + Vitest) | "컴포넌트 만들어줘", "스타일링 해줘", "Storybook 추가해줘"  |
+| `react-dev-orchestration`  | React SPA 전체 기능 개발 오케스트레이션 (data-provider + ui-dev 조합)               | "새 페이지 만들어줘", "기능 개발해줘"                       |
+| `nestjs-testing`           | NestJS 백엔드 테스트 작성 (unit/integration/e2e)                                    | "테스트 작성해줘", "서비스 테스트 만들어줘"                 |
+| `project-scaffold`         | 새 모듈/페이지 컨벤션 준수 구조 자동 생성                                           | "새 모듈 만들어줘", "scaffold해줘"                          |
+| `github-pr`                | base 브랜치 대비 diff 분석 후 GitHub PR 자동 생성 (Jira 티켓 자동 연동)             | "PR 만들어줘", "PR 등록해줘"                                |
 
 ## 설치
 
 ### 사전 요구사항
 
-#### Windows
+- **Node.js** (v18+)
+- **Git**
 
-1. **Node.js** (v18+): [nodejs.org](https://nodejs.org/) 에서 다운로드 또는:
-   ```powershell
-   winget install OpenJS.NodeJS.LTS
-   ```
+### 방법 A: Cursor / 범용 에이전트 (`npx skills`)
 
-2. **Git**: [git-scm.com](https://git-scm.com/download/win) 에서 다운로드 또는:
-   ```powershell
-   winget install Git.Git
-   ```
+[skills](https://www.npmjs.com/package/skills) CLI를 사용하면 Cursor, Claude Code, Codex, OpenCode 등 40개 이상의 에이전트에 스킬을 설치할 수 있습니다.
 
-3. **GitHub CLI**: [cli.github.com](https://cli.github.com/) 에서 다운로드 또는:
-   ```powershell
-   winget install GitHub.cli
-   ```
+#### 전체 스킬 설치
 
-4. **GitHub 인증** (private repo 접근에 필요):
-   ```powershell
-   gh auth login
-   ```
+```bash
+npx skills add sellernote/sellernote-vibecode-plugin
+```
 
-5. **Claude Code**:
-   ```powershell
-   npm install -g @anthropic-ai/claude-code
-   ```
+#### 특정 스킬만 선택 설치
 
-#### macOS
+```bash
+npx skills add sellernote/sellernote-vibecode-plugin --skill nestjs-api-dev --skill react-dev
+```
 
-1. **Node.js** (v18+):
-   ```bash
-   brew install node
-   ```
+#### 설치 가능한 스킬 목록 확인
 
-2. **GitHub CLI**:
-   ```bash
-   brew install gh
-   gh auth login
-   ```
+```bash
+npx skills add sellernote/sellernote-vibecode-plugin --list
+```
 
-3. **Claude Code**:
-   ```bash
-   npm install -g @anthropic-ai/claude-code
-   ```
+#### 글로벌 설치 (모든 프로젝트에서 사용)
 
-### 1. 마켓플레이스 추가 (최초 1회)
+```bash
+npx skills add sellernote/sellernote-vibecode-plugin -g
+```
+
+#### 특정 에이전트만 지정
+
+```bash
+npx skills add sellernote/sellernote-vibecode-plugin -a cursor
+npx skills add sellernote/sellernote-vibecode-plugin -a claude-code
+```
+
+> **스킬 설치 경로**:
+>
+> - **프로젝트 레벨** (기본): `.agents/skills/` (Cursor), `.claude/skills/` (Claude Code)
+> - **글로벌** (`-g`): `~/.cursor/skills/` (Cursor), `~/.claude/skills/` (Claude Code)
+
+#### 스킬 업데이트
+
+```bash
+npx skills update
+```
+
+#### 설치된 스킬 확인
+
+```bash
+npx skills list
+```
+
+#### 스킬 삭제
+
+```bash
+npx skills remove
+```
+
+### 방법 B: Claude Code 플러그인
+
+Claude Code 전용 플러그인 시스템을 사용하는 방법입니다.
+
+#### 1. 마켓플레이스 추가 (최초 1회)
 
 Claude Code에서 다음 명령어를 실행합니다:
 
@@ -77,15 +100,13 @@ Claude Code에서 다음 명령어를 실행합니다:
 /plugin marketplace add sellernote/sellernote-vibecode-plugin
 ```
 
-### 2. 플러그인 설치
+#### 2. 플러그인 설치
 
 ```
 /plugin install sellernote-vibecode@sellernote-vibecode-plugin
 ```
 
-### 3. 플러그인 업데이트
-
-Claude Code에서 다음 명령어를 실행합니다:
+#### 3. 플러그인 업데이트
 
 ```
 /plugin update sellernote-vibecode@sellernote-vibecode-plugin
@@ -138,7 +159,21 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 "커스텀 훅 설계해줘"
 "Error Boundary 추가해줘"
 
-# 전체 기능 개발 (nextjs-dev-orchestration 자동 트리거)
+# React SPA 데이터 레이어 (react-data-provider 자동 트리거)
+"쿼리 훅 만들어줘"
+"Zustand 스토어 만들어줘"
+"API 연동해줘"
+
+# React SPA UI 개발 (react-ui-dev 자동 트리거)
+"DS 컴포넌트로 테이블 만들어줘"
+"Tailwind으로 스타일링 해줘"
+"Storybook 스토리 추가해줘"
+
+# React SPA 전체 기능 개발 (react-dev-orchestration 자동 트리거)
+"React 페이지 만들어줘"
+"React 기능 개발해줘"
+
+# Next.js 전체 기능 개발 (nextjs-dev-orchestration 자동 트리거)
 "주문 관리 페이지를 만들어줘"
 "새 기능 개발해줘"
 ```
@@ -183,6 +218,9 @@ claude --plugin-dir C:\path\to\sellernote-vibecode-plugin
 /sellernote-vibecode:nextjs-data-provider
 /sellernote-vibecode:nextjs-ui-dev
 /sellernote-vibecode:react-dev
+/sellernote-vibecode:react-data-provider
+/sellernote-vibecode:react-ui-dev
+/sellernote-vibecode:react-dev-orchestration
 /sellernote-vibecode:nextjs-dev-orchestration
 /sellernote-vibecode:convention-code-review
 /sellernote-vibecode:convention-refactor
@@ -231,6 +269,33 @@ skills/nextjs-ui-dev/references/
 
 skills/react-dev/references/
   └── REACT_CONVENTION.md           # React 19 컴포넌트, Hooks, 성능, Error Boundary, Context
+
+skills/react-data-provider/references/
+  ├── COMMON_CONVENTION.md          # 공통 규칙 (네이밍, Git, 에러 처리)
+  ├── TYPESCRIPT_CONVENTION.md      # TypeScript 코딩 규칙
+  ├── FRONTEND_CONVENTION.md        # 프론트엔드 공통 규칙
+  ├── STATE_CONVENTION.md           # Zustand, TanStack Query, 상태 분류
+  ├── API_CLIENT_CONVENTION.md      # API 클라이언트 공통 규칙, 토큰 관리, 에러 처리
+  ├── API_CLIENT_AXIOS_CONVENTION.md # Axios 인터셉터, 리프레시 토큰 플로우
+  ├── REACT_CONVENTION.md           # React 19 패턴, Hooks, 성능 최적화
+  └── REACT_ROUTER_CONVENTION.md    # React Router 7 Framework Mode, route modules
+
+skills/react-ui-dev/references/
+  ├── COMMON_CONVENTION.md          # 공통 규칙 (네이밍, Git, 에러 처리)
+  ├── TYPESCRIPT_CONVENTION.md      # TypeScript 코딩 규칙
+  ├── FRONTEND_CONVENTION.md        # 컴포넌트 설계, props, imports, 접근성
+  ├── FRONTEND_ARCHITECTURE_CONVENTION.md  # 4 컴포넌트 분류, 의존성 방향
+  ├── STYLING_CONVENTION.md         # @sellernote/design-system + Tailwind CSS v4
+  ├── FORM_CONVENTION.md            # React Hook Form + Zod
+  ├── TESTING_CONVENTION.md         # Storybook, Vitest, RTL, Playwright
+  ├── REACT_CONVENTION.md           # React 19 패턴, Hooks, 성능 최적화
+  └── REACT_ROUTER_CONVENTION.md    # React Router 7 Framework Mode, route modules
+
+skills/react-dev-orchestration/references/
+  ├── FRONTEND_CONVENTION.md        # 프론트엔드 공통 규칙
+  ├── FRONTEND_ARCHITECTURE_CONVENTION.md  # 컴포넌트 트리 설계
+  ├── REACT_CONVENTION.md           # React 19 패턴, Hooks
+  └── REACT_ROUTER_CONVENTION.md    # React Router 라우팅, 중첩 라우트
 
 skills/nextjs-dev-orchestration/references/
   ├── FRONTEND_ARCHITECTURE_CONVENTION.md  # 컴포넌트 트리 설계
@@ -296,7 +361,7 @@ Tier 3 (도구별)   -> NESTJS_CONVENTION, TYPEORM_CONVENTION, PRISMA_CONVENTION
 - **3-layer 아키텍처**: Controller(HTTP) -> Service(비즈니스) -> Repository(데이터) 단방향
 - **DTO**: `@sellernote/sellernote-nestjs-api-property` 라이브러리 필수
 - **금액 처리**: DTO에서 `string` 타입 + `@SellernoteApiDecimal`, Service에서 `big.js` 연산
-- **Entity**: 커스텀 `BaseEntity` 상속 (id/UUID, _no/BIGINT, createdAt, updatedAt, deletedAt)
+- **Entity**: 커스텀 `BaseEntity` 상속 (id/UUID, \_no/BIGINT, createdAt, updatedAt, deletedAt)
 - **트랜잭션**: `typeorm-transactional`의 `@Transactional()` (QueryRunner 사용 금지)
 - **응답 포맷**: `{ success, data, error }`
 
@@ -325,7 +390,10 @@ sellernote-vibecode-plugin/
 │   ├── nextjs-data-provider/    # Next.js 데이터 레이어 skill
 │   ├── nextjs-ui-dev/           # Next.js UI 개발 skill
 │   ├── react-dev/               # React 19 컴포넌트/훅/성능 개발 skill
-│   ├── nextjs-dev-orchestration/ # 전체 기능 개발 오케스트레이션 skill
+│   ├── react-data-provider/     # React SPA 데이터 페칭/상태 관리 skill
+│   ├── react-ui-dev/            # React SPA UI 개발 skill
+│   ├── react-dev-orchestration/ # React SPA 전체 기능 오케스트레이션 skill
+│   ├── nextjs-dev-orchestration/ # Next.js 전체 기능 개발 오케스트레이션 skill
 │   ├── convention-code-review/  # 컨벤션 기반 코드 리뷰 skill
 │   ├── convention-refactor/     # 컨벤션 맞춤 리팩토링 skill
 │   ├── nestjs-testing/          # NestJS 테스트 작성 skill
