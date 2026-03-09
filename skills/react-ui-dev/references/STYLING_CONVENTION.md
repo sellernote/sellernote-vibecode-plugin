@@ -17,7 +17,7 @@
 pnpm add clsx tailwind-merge
 ```
 
-**Creating the utility function:**
+**Create utility function:**
 
 ```typescript
 // app/lib/cn.ts
@@ -64,7 +64,7 @@ Follow the decision flow below when applying styles.
 | Is it a reusable custom component? | Yes | Manage variants with `cva()` + `cn()` |
 | Is it one-off styling? | Yes | Tailwind utility classes |
 
-### 1st Priority: Managing Variants with cva() + cn()
+### 1st Priority: Manage Variants with cva() + cn()
 
 - **Rule**: [SHOULD] Manage variants of reusable custom components with `class-variance-authority(cva)`
 - **Good example**:
@@ -119,7 +119,7 @@ function PageHeader({ title }: { title: string }) {
 
 ## 3. Responsive Design
 
-### Using the Tailwind Breakpoints System
+### Using Tailwind Breakpoints System
 
 - **Rule**: [MUST] Use Tailwind's breakpoint prefixes for responsive layouts
 
@@ -136,7 +136,7 @@ function PageHeader({ title }: { title: string }) {
 
 ### Mobile-first Approach
 
-- **Rule**: [MUST] Write styles mobile-first. Apply mobile styles in the base classes and add larger screen styles using breakpoint prefixes such as `sm:`, `md:`, `lg:`.
+- **Rule**: [MUST] Write styles mobile-first. Apply mobile styles in base classes and add larger screen styles with breakpoint prefixes such as `sm:`, `md:`, `lg:`.
 - **Good example**:
 
 ```typescript
@@ -168,7 +168,7 @@ function ProductGrid({ products }: { products: Product[] }) {
 }
 ```
 
-### Do Not Write Media Queries Directly
+### No Direct Media Queries
 
 - **Rule**: [MUST NOT] Do not write CSS media queries directly. Use Tailwind breakpoint prefixes.
 - **Good example**:
@@ -181,7 +181,7 @@ function ProductGrid({ products }: { products: Product[] }) {
 - **Bad example**:
 
 ```css
-/* Hardcoding media queries with magic numbers */
+/* Hardcoded media query with magic numbers */
 @media (min-width: 768px) {
   .desktop-only { display: block; }
 }
@@ -262,7 +262,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 **3. FOUC prevention inline script (root.tsx):**
 
 ```typescript
-// Add to <head> inside the Layout function in app/root.tsx
+// Add to <head> inside the Layout function of app/root.tsx
 <script dangerouslySetInnerHTML={{ __html: `
   (function() {
     var theme = localStorage.getItem('theme') || 'system';
@@ -296,9 +296,9 @@ When styles vary based on conditions or runtime values, follow the decision flow
 
 | Situation | Method | Example |
 |-----------|--------|---------|
-| Classes vary based on boolean/enum | `cn()` | `cn("p-4", isActive && "bg-gray-100")` |
+| Classes change based on boolean/enum | `cn()` | `cn("p-4", isActive && "bg-gray-100")` |
 | Component has 2 or more variants | `cva()` + `cn()` | `statusBadgeVariants({ status })` |
-| **Runtime dynamic values** (server response, user input, etc.) | Inline `style` | `style={{ width: `${percent}%` }}` |
+| **Runtime dynamic values** (server responses, user input, etc.) | Inline `style` | `style={{ width: `${percent}%` }}` |
 | Passing dynamic values via CSS variables | `style` + Tailwind | `style={{ '--progress': percent }}` + `w-[var(--progress)]` |
 
 **Applying conditional classes with cn():**
@@ -315,7 +315,7 @@ import { cn } from "@/lib/cn";
 
 **Inline style allowed for runtime dynamic values:**
 
-- **Rule**: [MAY] Inline `style` may be used only for **dynamic values determined at runtime** such as server responses or user input
+- **Rule**: [MAY] Inline `style` may be used only for **dynamic values determined at runtime** such as server responses and user input
 
 ```typescript
 // Runtime dynamic value — inline style allowed
@@ -351,19 +351,19 @@ import { cn } from "@/lib/cn";
 - **Bad example**:
 
 ```typescript
-// Writing static values as inline style — should use Tailwind classes
+// Static values written as inline style — should use Tailwind classes
 <div style={{ display: "flex", gap: "16px", padding: "24px", backgroundColor: "#ffffff" }}>
   <span style={{ fontSize: "20px", fontWeight: 600, color: "#212121" }}>Title</span>
 </div>
 ```
 
-### No !important Usage
+### No !important
 
 - **Rule**: [MUST NOT] Do not use `!important`. Manage class priority with `cn()`.
 
 ### No Manual className String Concatenation
 
-- **Rule**: [MUST NOT] Do not concatenate className using template literals or string concatenation. Use `cn()`.
+- **Rule**: [MUST NOT] Do not combine className using template literals or string concatenation. Use `cn()`.
 - **Good example**:
 
 ```typescript
@@ -399,20 +399,20 @@ pnpm add -D prettier-plugin-tailwindcss
 
 ## 6. Tailwind CSS v4 Considerations
 
-This project uses Tailwind CSS v4 from the start. Since AI code generation is likely to use v3 syntax, be familiar with the following v4-specific behaviors.
+This project uses Tailwind CSS v4 from the start. Since AI code generation is likely to produce v3 syntax, be aware of the following v4-specific behaviors.
 
-### Key v4 Behaviors
+### v4 Key Behaviors
 
 | Item | Behavior |
 |------|----------|
 | `content` configuration | Automatic content detection (`content` array not needed; use CSS `@source` directive for external sources) |
-| `border` default color | `currentColor` — **always specify a color class** (e.g., `border border-gray-200`) |
-| Opacity | `bg-opacity-*` removed → use `bg-black/50` slash syntax |
-| `hover:` | Applied only within `@media (hover: hover)` (touch device support) |
-| `@apply` | Can be used in the main CSS; requires `@reference` in separate files. Use `@utility` blocks for custom utilities |
+| `border` default color | `currentColor` — **you must explicitly specify a color class** (e.g., `border border-gray-200`) |
+| Opacity | `bg-opacity-*` removed → use slash syntax `bg-black/50` |
+| `hover:` | Only applies inside `@media (hover: hover)` (touch device support) |
+| `@apply` | Available in main CSS; requires `@reference` in separate files. Use `@utility` block for custom utilities |
 | `outline-none` | Only applies `outline-style: none`. Use `outline-hidden` for the previous behavior |
 | `ring` | Default width is 1px. Use `ring-3` for the previous 3px behavior |
 
-> **`border` default color caution**: Using `border` alone will render a border matching the text color. **Always specify a color class.** The same applies to the `divide` utility.
+> **`border` default color caution**: Using `border` alone will render a border matching the text color. **You must always specify a color class.** The same applies to the `divide` utility.
 
-> **AI-generated code caution**: AI may generate v3 classes (`shadow-sm`, `rounded-md`, `bg-opacity-50`, etc.). Always verify that code uses v4 syntax during code review.
+> **AI-generated code caution**: AI may generate v3 classes (`shadow-sm`, `rounded-md`, `bg-opacity-50`, etc.). Always verify during code review that v4 syntax is used.

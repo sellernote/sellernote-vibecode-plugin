@@ -26,7 +26,7 @@
 
 ### Tag Strategy
 
-- [MUST] All AWS resources must have the following required tags.
+- [MUST] Assign the following required tags to all AWS resources.
 
 | Tag Key | Description | Example Value |
 |---------|-------------|---------------|
@@ -53,7 +53,7 @@
 - [MUST] People (developers) access by assuming Roles through IAM Identity Center (SSO) instead of IAM Users.
 - [MUST] Services/applications access AWS resources using IAM Roles. (EC2 Instance Profile, ECS Task Role, etc.)
 
-### Policy Authoring
+### Policy Writing
 
 - [MUST] IAM policies follow the principle of least privilege. Only explicitly allow the necessary services, actions, and resources.
 - **Good example**:
@@ -67,7 +67,7 @@
     }]
   }
   ```
-  **Note**: Wildcard policies such as `"Action": "s3:*", "Resource": "*"` are prohibited.
+  **Caution**: Wildcard policies such as `"Action": "s3:*", "Resource": "*"` are prohibited.
 
 ### IAM Policy Management Principles
 
@@ -78,7 +78,7 @@
 
 ### VPC Design
 
-- [MUST] Do not use the default VPC; create custom VPCs suited to the purpose.
+- [MUST] Do not use the default VPC; create a custom VPC suited to the purpose.
 - [MUST] Plan VPC CIDRs to avoid conflicts with on-premises networks and other VPCs.
 
 ### Subnet Configuration
@@ -87,15 +87,15 @@
 
 | Subnet Type | Purpose | Internet Access |
 |-------------|---------|-----------------|
-| Public | Load Balancers (ALB), NAT Gateway, Bastion Host | Direct access through Internet Gateway |
+| Public | Load balancers (ALB), NAT Gateway, Bastion Host | Direct access through Internet Gateway |
 | Private (App) | Application servers (ECS, EC2) | Outbound only through NAT Gateway |
-| Private (Data) | Databases (RDS), Caches (ElastiCache) | No internet access, accessible only from app subnets |
+| Private (Data) | Databases (RDS), caches (ElastiCache) | No internet access, accessible only from app subnets |
 
-- [MUST] Subnets must be distributed across at least 2 or more Availability Zones (AZs).
+- [MUST] Subnets are distributed across at least 2 or more Availability Zones (AZs).
 
 ### Security Groups
 
-- [MUST] Security groups must explicitly allow only the necessary ports and sources. Minimize `0.0.0.0/0` inbound rules.
+- [MUST] Security groups explicitly allow only the necessary ports and sources. Minimize `0.0.0.0/0` inbound rules.
 - [SHOULD] Use Security Group References to control communication between services.
 - **Good example**:
   ```hcl
@@ -121,26 +121,26 @@
 | Compute-intensive | c6i, c7g |
 | Memory-intensive | r6i, r7g |
 
-### Reserved / Savings Plans / Spot Utilization
+### Reserved / Savings Plans / Spot Usage
 
-- [SHOULD] Apply Savings Plans or Reserved Instances to stable production workloads.
-- [MAY] Use Spot Instances for interruptible workloads such as batch jobs and development environments.
+- [SHOULD] Apply Savings Plans or Reserved Instances to stably running production workloads.
+- [MAY] Use Spot Instances for interruption-tolerant workloads such as batch jobs and development environments.
 
 | Purchase Option | Discount Rate | Suitable Workloads |
-|-----------------|---------------|--------------------|
-| On-Demand | Base price | Short-term tests, unpredictable workloads |
+|-----------------|---------------|-------------------|
+| On-Demand | Base price | Short-term testing, unpredictable workloads |
 | Savings Plans | ~72% | Stable production workloads |
 | Spot | ~90% | Batch processing, dev/test, fault-tolerant workloads |
 
 ### Cost Tags
 
-- [MUST] Apply `Service`, `Environment`, `Team` tags to all resources for cost tracking.
+- [MUST] Assign `Service`, `Environment`, `Team` tags to all resources for cost tracking.
 - [SHOULD] Monitor monthly costs using AWS Cost Explorer or AWS Budgets.
 
 ## Anti-Patterns
 
-- [MUST NOT] Do not use the AWS root account for routine operations. Enable MFA on the root account and use it only in emergencies.
+- [MUST NOT] Do not use the AWS root account for routine operations. Set up MFA on the root account and use it only in emergencies.
 - [MUST NOT] Do not use wildcard policies such as `Action: "*"`, `Resource: "*"`.
 - [MUST NOT] Do not create resources without specifying a region.
-- [MUST NOT] Do not add `0.0.0.0/0` inbound rules to security groups of backend resources such as databases and caches.
-- [MUST NOT] Do not deploy core services in the production environment to only a single Availability Zone.
+- [MUST NOT] Do not add `0.0.0.0/0` inbound rules to security groups for backend resources such as databases and caches.
+- [MUST NOT] Do not deploy core services in a production environment to only a single Availability Zone.

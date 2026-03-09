@@ -16,7 +16,7 @@
 ### interface vs type
 
 - **Rule**: [SHOULD] Use `interface` when defining the shape of an object.
-- **Rule**: [SHOULD] Use `type` for union types, intersection types, utility type compositions, etc.
+- **Rule**: [SHOULD] Use `type` for union types, intersection types, utility type combinations, etc.
 - **Good Example**:
   ```typescript
   // Object shape definition → interface
@@ -29,7 +29,7 @@
   // Union type → type
   type PaymentStatus = 'pending' | 'completed' | 'failed';
 
-  // Utility type composition → type
+  // Utility type combination → type
   type CreateUserRequest = Omit<User, 'id'>;
   ```
 
@@ -86,12 +86,12 @@
 
 ### Variable Declaration — const / let
 
-- **Rule**: [MUST] Use `const` by default, and only use `let` when reassignment is necessary.
+- **Rule**: [MUST] Use `const` by default, and only use `let` when reassignment is needed.
 - **Rule**: [MUST NOT] Do not use `var`.
 - **Good Example**:
   ```typescript
   const userName = 'John';
-  const items = [1, 2, 3]; // Array contents can still be modified, so const is fine
+  const items = [1, 2, 3]; // Array content can still be modified, so use const
 
   let count = 0;
   count += 1; // Reassignment needed → let
@@ -100,7 +100,7 @@
 ### Writing Functions
 
 - **Rule**: [MUST] Explicitly declare return types for public API (exported functions).
-- **Rule**: [MAY] Return types for internal functions can be delegated to TypeScript inference.
+- **Rule**: [MAY] Return types of internal functions may be delegated to TypeScript inference.
 - **Good Example**:
   ```typescript
   // Public API — explicit return type
@@ -131,7 +131,7 @@
 
 ### Asynchronous Handling — async/await
 
-- **Rule**: [MUST] Use `async/await` when working with Promises. Avoid `.then()` chaining.
+- **Rule**: [MUST] Use `async/await` when working with Promises. Avoid `.then()` chains.
 - **Good Example**:
   ```typescript
   async function fetchUser(id: string): Promise<User> {
@@ -179,7 +179,7 @@
 
 ## Enum vs Union
 
-### Avoid Using Enum
+### Avoiding Enum Usage
 
 - **Rule**: [SHOULD] Use union types or `as const` objects instead of `enum`.
 
@@ -227,7 +227,7 @@
     Processing: 'processing',
     Shipped: 'shipped',
     Delivered: 'delivered',
-  } as const;  // When value is a single word, it is the same as snake_case
+  } as const;  // Identical to snake_case when value is a single word
 
   type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
@@ -237,9 +237,9 @@
   }
   ```
 
-### When Enum Is Allowed
+### Cases Where Enum Is Allowed
 
-- **Rule**: [MAY] `enum` may be used only when numeric mapping is needed or iteration over values is required.
+- **Rule**: [MAY] `enum` may be used only when numeric mapping is needed or when iteration over values is required.
 - **Good Example**:
   ```typescript
   enum HttpStatus {
@@ -292,7 +292,7 @@ import { styles } from './styles';
 ### Barrel Export
 
 - **Rule**: [SHOULD] Expose the public API of packages or modules through barrel exports via `index.ts`.
-- **Rule**: [MUST NOT] Do not import directly from deep paths. Use barrel-exported paths.
+- **Rule**: [MUST NOT] Do not import directly from deep paths. Use barrel-exported paths instead.
 - **Good Example**:
   ```typescript
   // packages/utils/src/index.ts
@@ -334,7 +334,7 @@ import { styles } from './styles';
 
 - **Rule**: [MUST] Running ESLint is mandatory for all code changes.
 
-- **Rule**: [MUST] Include ESLint checks as a mandatory step in the CI/CD pipeline, and block merges when errors occur.
+- **Rule**: [MUST] Include ESLint checks as a required step in the CI/CD pipeline, and block merges when errors occur.
 - **Good Example**:
   ```yaml
   # .github/workflows/ci.yml
@@ -363,9 +363,9 @@ import { styles } from './styles';
 
 ### Prettier
 
-- **Rule**: [MUST] Use Prettier as the code formatter, and use `eslint-config-prettier` to prevent conflicts with ESLint.
+- **Rule**: [MUST] Use Prettier as the code formatter, and prevent conflicts with ESLint using `eslint-config-prettier`.
 
-- **Rule**: [SHOULD] Use the following Prettier settings as defaults. (Can be adjusted based on team agreement)
+- **Rule**: [SHOULD] Use the following Prettier settings as defaults. (May be adjusted based on team agreement)
 
 ```json
 {
@@ -386,8 +386,8 @@ import { styles } from './styles';
 
 ### Overuse of as Casting
 
-- **Rule**: [MUST NOT] Do not use type assertions (`as`) to circumvent type errors.
-  - Note: Do not use patterns like `response.data as User`, `someValue as unknown as number` (double assertion).
+- **Rule**: [MUST NOT] Do not use type assertions (`as`) to bypass type errors.
+  - Note: Do not use patterns like `response.data as User` or `someValue as unknown as number` (double assertion).
 - **Good Example**:
   ```typescript
   import { z } from 'zod';
@@ -403,25 +403,25 @@ import { styles } from './styles';
 
 ### Using any
 
-- **Rule**: [MUST NOT] Do not use `any`. Replace with `unknown` and narrow the type using type guards.
+- **Rule**: [MUST NOT] Do not use `any`. Replace with `unknown` and narrow down using type guards.
 
 ### Overuse of Non-null Assertion (!)
 
-- **Rule**: [MUST NOT] Do not habitually use non-null assertions (`!`).
-  - Note: Do not use patterns like `users.find(...)!`, `document.getElementById('app')!`.
+- **Rule**: [MUST NOT] Do not habitually use non-null assertion (`!`).
+  - Note: Do not use patterns like `users.find(...)!` or `document.getElementById('app')!`.
 - **Good Example**:
   ```typescript
   const user = users.find((u) => u.id === id);
   if (!user) {
     throw new Error(`User not found: ${id}`);
   }
-  // At this point, user is narrowed to non-null
+  // At this point, user is narrowed to non-null type
   ```
 
 ### Overuse of @ts-ignore / @ts-expect-error
 
 - **Rule**: [MUST NOT] Do not use `@ts-ignore`.
-- **Rule**: [SHOULD] Use `@ts-expect-error` only when unavoidable, and always include a comment explaining the reason.
+- **Rule**: [SHOULD] Use `@ts-expect-error` when unavoidable, and always leave a comment explaining the reason.
 - **Good Example**:
   ```typescript
   // @ts-expect-error: Library type definitions have not been updated yet (issue: #123)

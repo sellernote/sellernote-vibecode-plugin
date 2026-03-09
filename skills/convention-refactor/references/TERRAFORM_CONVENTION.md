@@ -46,7 +46,7 @@ terraform/
 | `providers.tf` | Provider configuration (environment directories only) |
 | `data.tf` | Data source definitions (as needed) |
 
-- [SHOULD] When the number of resources grows, split them into separate files by logical group. (e.g., `network.tf`, `ecs.tf`, `rds.tf`)
+- [SHOULD] When resources grow in number, split files by logical groups. (e.g., `network.tf`, `ecs.tf`, `rds.tf`)
 
 ## Naming
 
@@ -58,7 +58,7 @@ terraform/
   ```hcl
   resource "aws_instance" "api" {}          # aws_instance.api
   resource "aws_security_group" "api" {}    # aws_security_group.api
-  resource "aws_db_instance" "main" {}      # Use main or this if it is the only resource
+  resource "aws_db_instance" "main" {}      # Use main or this if it's the only resource
   ```
 
 ### Variable Naming
@@ -129,8 +129,8 @@ terraform/
 
 ### Module Design Principles
 
-- [MUST NOT] Do not configure providers directly inside modules. Providers must be configured in the calling root module.
-- [SHOULD] Avoid direct module-to-module calls (deep nesting) and compose modules at the root module level.
+- [MUST NOT] Do not configure providers directly inside a module. Providers should be configured in the calling root module.
+- [SHOULD] Avoid direct module-to-module calls (deep nesting) and compose them in the root module instead.
 
 ### Module Versioning
 
@@ -168,7 +168,7 @@ terraform/
 ### State Separation
 
 - [MUST] Separate State files by environment (dev/staging/production).
-- [SHOULD] Consider separating State for logically independent infrastructure components as well. (Minimizing Blast Radius)
+- [SHOULD] Consider separating State for logically independent infrastructure components as well. (Minimize Blast Radius)
 
 ### State Security
 
@@ -192,19 +192,19 @@ terraform/
 
 ## Workspaces
 
-- [SHOULD] For environment separation, prefer directory-based separation over Terraform Workspaces. (Workspaces share the same backend, making complete isolation difficult)
-- [MAY] Workspaces may be used for minor variations of the same configuration (e.g., per-region deployments).
+- [SHOULD] Prefer directory-based separation over Terraform Workspaces for environment isolation. (Workspaces share the same backend, making complete isolation difficult)
+- [MAY] Workspaces may be used for minor variations of the same configuration (e.g., region-specific deployments).
 
 ## Code Quality
 
 ### Formatting and Validation
 
 - [MUST] Run `terraform fmt` and `terraform validate` before committing.
-- [SHOULD] Automatically run `terraform fmt -check` and `terraform validate` in CI/CD pipelines.
+- [SHOULD] Automatically run `terraform fmt -check` and `terraform validate` in the CI/CD pipeline.
 
 ### Security Scanning
 
-- [SHOULD] Include Terraform security scanning tools (tfsec, Checkov, etc.) in CI/CD pipelines.
+- [SHOULD] Include Terraform security scanning tools (tfsec, Checkov, etc.) in the CI/CD pipeline.
 
 ### Sensitive Variable Handling
 
@@ -221,7 +221,7 @@ terraform/
 ## Anti-Patterns
 
 - [MUST NOT] Do not use local State (`terraform.tfstate`) in team projects.
-- [MUST NOT] Do not hardcode values that vary by environment. Extract them as variables.
+- [MUST NOT] Do not hardcode values that differ by environment. Extract them as variables.
   **Good examples**:
   ```hcl
   resource "aws_instance" "api" {
@@ -232,5 +232,5 @@ terraform/
   ```
 - [MUST NOT] Do not manage all infrastructure in a single module or a single State.
 - [MUST NOT] Do not manually transfer State files via Slack, email, shared drives, etc.
-- [MUST NOT] Do not run `terraform apply` directly on the production environment without reviewing `terraform plan`.
-- [SHOULD] Run production `terraform apply` through CI/CD pipelines and include an approval process for plan results.
+- [MUST NOT] Do not run `terraform apply` directly in the production environment without reviewing `terraform plan`.
+- [SHOULD] Run production `terraform apply` through a CI/CD pipeline and include an approval process for plan results.

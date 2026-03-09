@@ -7,7 +7,7 @@
 
 ## 1. Minimize Global State Principle
 
-- **Rule**: [MUST] Global state (Zustand) is a **last resort**. Before adding new state, always verify "Does this state really need to be global?"
+- **Rule**: [MUST] Global state (Zustand) is a **last resort**. Before adding a new state, always verify "Does this state really need to be global?"
 
 ```text
 새로운 상태가 필요하다
@@ -38,9 +38,9 @@
 
 ## 2. State Classification Criteria
 
-- **Rule**: [MUST] All state must be classified into one of the following 4 types, and use the appropriate tool for each type.
+- **Rule**: [MUST] All state must be classified into one of the following 4 types, and the appropriate tool must be used for each type.
 
-| State Type | Description | Tool | Example |
+| State Type | Description | Tool | Examples |
 |----------|------|------|------|
 | Server State | Data fetched from API | TanStack Query | Product list, user profile, order history |
 | URL State | Route parameters, search | nuqs | Pagination, filter, sort |
@@ -57,7 +57,7 @@
 
 ### Feature-Scoped Store
 
-- **Rule**: [MUST] Create independent Zustand stores for each feature domain. Place them in the `features/{domain}/store/` directory.
+- **Rule**: [MUST] Create an independent Zustand store for each feature domain. Place them in the `features/{domain}/store/` directory.
 - **Good Example**:
   ```typescript
   // features/ui/store/ui-store.ts
@@ -126,7 +126,7 @@
     {
       name: 'ui-store',
       partialize: (state) => ({
-        isSidebarOpen: state.isSidebarOpen, // Needs to be persisted
+        isSidebarOpen: state.isSidebarOpen, // needs to be persisted
         // notifications excluded - transient data
       }),
     },
@@ -137,11 +137,11 @@
 
 ### TanStack Query Basic Structure
 
-File placement and layer responsibilities follow `ARCHITECTURE_CONVENTION.md`, and this document only covers TanStack Query usage rules.
+File placement and layer responsibilities follow `ARCHITECTURE_CONVENTION.md` as the standard; this document only covers TanStack Query usage rules.
 
-- **Rule**: [MUST] Query factories are placed in `features/{domain}/api/query-options.ts`.
-- **Rule**: [MUST] File naming and placement of custom query/mutation hooks per endpoint follow the API file structure defined in `ARCHITECTURE_CONVENTION.md`.
-- **Rule**: [MUST] `queryFn` in `query-options.ts` is responsible only for pure API calls.
+- **Rule**: [MUST] Query factories must be placed in `features/{domain}/api/query-options.ts`.
+- **Rule**: [MUST] File naming and placement of per-endpoint query/mutation custom hooks must follow the API file structure defined in `ARCHITECTURE_CONVENTION.md`.
+- **Rule**: [MUST] `queryFn` in `query-options.ts` must only handle pure API calls.
 - **Rule**: [MUST NOT] Do not write `select` or view-specific transformation logic in `query-options.ts`.
 - **Rule**: [SHOULD] Endpoint-specific transforms/helpers/types should be co-located as private within the endpoint hook file as defined in `ARCHITECTURE_CONVENTION.md`.
 - **Rule**: [MUST] API request/response types must use the shared auto-generated types as-is.
@@ -209,14 +209,14 @@ File placement and layer responsibilities follow `ARCHITECTURE_CONVENTION.md`, a
 
 ### Cache Strategy
 
-- **Rule**: [SHOULD] Configure `staleTime` and `gcTime` based on how frequently data changes.
+- **Rule**: [SHOULD] Set `staleTime` and `gcTime` according to how frequently the data changes.
 
-| Data Type | staleTime | gcTime | Example |
+| Data Type | staleTime | gcTime | Examples |
 |------------|-----------|--------|------|
 | Frequently changing | 30s ~ 1min | 5min | Real-time inventory, notification count |
 | Normal | 5min (default) | 10min | Product list, order history |
 | Rarely changing | 30min ~ 1hr | 2hr | Category list, announcements |
-| Never changing | Infinity | 24hr | Country codes, exchange rate reference date |
+| Never changing | Infinity | 24hr | Country codes, exchange rate base date |
 
 - **Good Example**:
   ```typescript
@@ -244,13 +244,13 @@ File placement and layer responsibilities follow `ARCHITECTURE_CONVENTION.md`, a
       onMutate: async (updatedOrder) => {
         const queryKey = orderQueryOptions.detail({ id: updatedOrder.id }).queryKey;
 
-        // 1. Cancel in-progress refetches — prevent overwriting the optimistic update
+        // 1. Cancel in-flight refetches — prevent overwriting the optimistic update
         await queryClient.cancelQueries({ queryKey });
 
-        // 2. Save snapshot of current data — used for rollback on error
+        // 2. Save current data snapshot — used for rollback on error
         const previousOrder = queryClient.getQueryData(queryKey);
 
-        // 3. Optimistic update — reflect in UI immediately before server response
+        // 3. Optimistic update — immediately reflect in UI before server response
         queryClient.setQueryData(queryKey, (old: Order) => ({ ...old, ...updatedOrder }));
 
         return { previousOrder };
@@ -338,7 +338,7 @@ export const queryClient = new QueryClient({
 
 ### Mutation Feedback Pattern
 
-- **Rule**: [SHOULD] Provide feedback to the user via toast on mutation success/error. When using the global handler, set `meta.successMessage`.
+- **Rule**: [SHOULD] Provide toast feedback to users on mutation success/error. When leveraging the global handler, set `meta.successMessage`.
 
 ```typescript
 // features/order/api/use-update-order-mutation.ts
@@ -382,7 +382,7 @@ export default function App() {
 
 ### Basic Principles
 
-- **Rule**: [MUST] Manage filters, sorting, and pagination as URL state using nuqs (`useQueryStates`). Do not manage them with Zustand or useState.
+- **Rule**: [MUST] Manage filter, sort, and pagination as URL state using nuqs (`useQueryStates`). Do not manage them with Zustand or useState.
 
 ### Search Input Pattern
 
@@ -415,11 +415,11 @@ const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 </form>;
 ```
 
-- **Effect**: When the URL changes due to browser back navigation, the input automatically resets via the `key` prop, and unnecessary re-renders during typing are also reduced.
+- **Effect**: When the URL changes via browser back navigation, the input automatically resets via `key`, and unnecessary re-renders during typing are also reduced.
 
 ### searchParams Parser Definition
 
-- **Rule**: [MUST] Use nuqs built-in parsers such as `parseAsInteger`, `parseAsStringLiteral` to define searchParams in a type-safe manner.
+- **Rule**: [MUST] Define searchParams in a type-safe manner using nuqs built-in parsers such as `parseAsInteger`, `parseAsStringLiteral`, etc.
 
 ```typescript
 import { parseAsInteger, parseAsStringLiteral, useQueryStates } from 'nuqs';
@@ -445,10 +445,10 @@ const searchParamsParsers = {
 };
 
 function OrderList() {
-  // 1. Parse URL parameters in a type-safe way with nuqs
+  // 1. Parse URL parameters in a type-safe manner with nuqs
   const [{ page, size, status }, setParams] = useQueryStates(searchParamsParsers);
 
-  // 2. Include parsed values in queryKey → auto refetch on URL change
+  // 2. Include parsed values in queryKey → automatic refetch on URL change
   const { data, isPending } = useOrdersQuery({ page, size, status });
 
   const handlePageChange = (nextPage: number) => {
@@ -472,10 +472,10 @@ function OrderList() {
 
 ## 7. Dependent Query Pattern
 
-- **Rule**: [SHOULD] Use the `enabled` option when the next query requires the result of a previous query to execute.
+- **Rule**: [SHOULD] Use the `enabled` option when the next query can only execute after the previous query result is available.
 
 ```typescript
-// Pattern for fetching user info first, then fetching that user's order list
+// Pattern: fetch user info first, then fetch that user's order list
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
@@ -498,7 +498,7 @@ function UserOrders() {
 ```
 
 ```typescript
-// Category selection → query product list for that category
+// Category selection → fetch product list for that category
 function CategoryProducts() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
@@ -529,7 +529,7 @@ function CategoryProducts() {
     const { data: user } = useUser();
     const setUser = useAuthStore((state) => state.setUser);
     useEffect(() => {
-      if (user) setUser(user); // Synchronization issue between TanStack Query cache and Zustand!
+      if (user) setUser(user); // Sync issue between TanStack Query cache and Zustand!
     }, [user, setUser]);
     const storedUser = useAuthStore((state) => state.user);
     return <div>{storedUser?.name}</div>;
@@ -537,13 +537,13 @@ function CategoryProducts() {
   ```
 - **Good Example**:
   ```typescript
-  // Use TanStack Query hooks directly - ensures single source of truth
+  // Use the TanStack Query hook directly — ensures a single source of truth
   function UserProfile() {
     const { data: user, isLoading } = useUser();
     if (isLoading) return <Skeleton />;
     return <div>{user?.name}</div>;
   }
-  // Even when multiple components call the same hook, cache is shared so no duplicate requests
+  // Even when calling the same hook from multiple components, the cache is shared so there are no duplicate requests
   function UserAvatar() {
     const { data: user } = useUser();
     return <Avatar src={user?.avatarUrl} />;
@@ -557,7 +557,7 @@ function CategoryProducts() {
 - **Rule**: [MUST NOT] Do not store data in Zustand when local state is sufficient.
 - **Bad Example**:
   ```typescript
-  // Putting local state into Zustand store
+  // Putting local state into a Zustand store
   interface StoreState {
     isDeleteModalOpen: boolean;
     searchInputValue: string;
@@ -599,13 +599,13 @@ function CategoryProducts() {
   }
   ```
 
-### 3. Putting All State in a Single Store
+### 3. Dumping All State into a Single Store
 
 - **Rule**: [SHOULD NOT] Do not put state with different concerns into a single store. Separate into feature-scoped stores by domain.
 
-### 4. Subscribing to Entire Store Without Selectors
+### 4. Subscribing to the Entire Store Without Selectors
 
-- **Rule**: [MUST NOT] Do not subscribe to the entire store without using selectors.
+- **Rule**: [MUST NOT] Do not subscribe to the entire store without selectors.
 - **Bad Example**:
   ```typescript
   const { isSidebarOpen, notifications, toggleSidebar } = useUIStore();
@@ -617,8 +617,8 @@ function CategoryProducts() {
 
 ### 5. Defining Transformation Logic Directly in queryOptions
 
-- **Rule**: [MUST NOT] Do not define transformation functions directly in `query-options.ts`. Endpoint-specific transformations should follow the endpoint hook file rules in `ARCHITECTURE_CONVENTION.md`.
+- **Rule**: [MUST NOT] Do not define transformation functions directly in `query-options.ts`. Follow the endpoint hook file rules from `ARCHITECTURE_CONVENTION.md` for endpoint-specific transformations.
 
-### 6. Duplicating Server State in Zustand
+### 6. Duplicating Server State into Zustand
 
-- **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query into a Zustand store using useEffect.
+- **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query into a Zustand store via useEffect.

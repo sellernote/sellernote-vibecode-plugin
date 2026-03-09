@@ -1,6 +1,6 @@
 # Backend Convention
 
-> This document defines common rules that apply across the entire backend.
+> This document defines common rules that apply to the entire backend.
 > For rules specific to a particular framework, refer to the documents in the subdirectories.
 >
 > - [API Spec Convention](api-spec/API_SPEC_CONVENTION.md)
@@ -33,17 +33,17 @@ Architecture rules follow the [Architecture Convention](architecture/ARCHITECTUR
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Create request | `Create[Domain]Dto` | `CreateOrderDto` |
-| Update request | `Update[Domain]Dto` | `UpdateOrderDto` |
-| Query response | `[Domain]ResponseDto` | `OrderResponseDto` |
-| List query parameters | `Get[Domain]ListQueryDto` | `GetOrderListQueryDto` |
+| Create Request | `Create[Domain]Dto` | `CreateOrderDto` |
+| Update Request | `Update[Domain]Dto` | `UpdateOrderDto` |
+| Query Response | `[Domain]ResponseDto` | `OrderResponseDto` |
+| List Query Parameters | `Get[Domain]ListQueryDto` | `GetOrderListQueryDto` |
 
 > For extended DTO patterns (pagination responses, error responses, Bulk requests, etc.), refer to the [API Spec Convention](api-spec/API_SPEC_CONVENTION.md).
 
 ### DTO Field Naming
 
 - **Rule**: [MUST] DTO field names (property names) use camelCase.
-- **Good example**:
+- **Good Example**:
   ```typescript
   export class CreateOrderDto {
     orderNumber: string;
@@ -56,7 +56,7 @@ Architecture rules follow the [Architecture Convention](architecture/ARCHITECTUR
 ### Entity Field Naming
 
 - **Rule**: [MUST] Entity field names reflect domain language and do not use abbreviations.
-- **Good example**:
+- **Good Example**:
   ```typescript
   class Order {
     orderId: number;
@@ -76,12 +76,12 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 
 ### Test Pyramid
 
-- **Rule**: [MUST] Tests are prioritized in the following order: Unit Tests > Integration Tests > E2E Tests.
+- **Rule**: [MUST] Tests are prioritized in the order: Unit Tests > Integration Tests > E2E Tests.
 
 ```
         /  E2E  \          ← Few in number, core scenarios
        / Integration \     ← Service + Repository integration
-      /  Unit Tests   \    ← Most numerous, focused on Service logic
+      /  Unit Tests   \    ← Largest in number, focused on Service logic
      ──────────────────
 ```
 
@@ -101,7 +101,7 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 ### Test Naming
 
 - **Rule**: [SHOULD] Test names follow the `[TestTarget]_[Scenario]_[ExpectedResult]` pattern.
-- **Good example**:
+- **Good Example**:
   ```typescript
   describe('OrderService.createOrder', () => {
     it('재고가_충분하면_주문을_생성한다', () => { ... });
@@ -113,20 +113,20 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 
 ### God Service
 
-- **Rule**: [MUST NOT] A single Service class must not take on too many responsibilities.
-- **Good example**: Separate each concern into its own Service (OrderService, PaymentService, ShipmentService, NotificationService).
+- **Rule**: [MUST NOT] A single Service class should not bear too many responsibilities.
+- **Good Example**: Separate each concern into its own Service (OrderService, PaymentService, ShipmentService, NotificationService).
 
 ### Skipping Layers
 
-- **Rule**: [MUST NOT] Do not call Repository directly from Controller.
+- **Rule**: [MUST NOT] Do not call the Repository directly from the Controller.
 
 ### Business Logic Leakage
 
-- **Rule**: [MUST NOT] Do not write business logic in Controller or Repository.
+- **Rule**: [MUST NOT] Do not write business logic in the Controller or Repository.
 
 ### Excessive Branching Within an Endpoint
 
-- **Rule**: [SHOULD NOT] A single API endpoint should not perform completely different logic based on query parameters.
+- **Rule**: [SHOULD NOT] A single API endpoint should not perform completely different logic depending on query parameters.
 
 ### Swallowing Errors
 

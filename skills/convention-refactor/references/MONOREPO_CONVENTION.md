@@ -1,7 +1,7 @@
 # Monorepo Convention
 
 > Defines rules applied to monorepo configuration and management.
-> Parent rule: INFRASTRUCTURE_CONVENTION.md
+> Parent rules: INFRASTRUCTURE_CONVENTION.md
 
 ## Workspace Structure
 
@@ -31,12 +31,12 @@ monorepo-root/
 
 ### Workspace Classification Criteria
 
-- [MUST] Place only independently deployable applications in `apps/`, and only shared libraries in `packages/`.
+- [MUST] Place only independently deployable applications in `apps/` and only shared libraries in `packages/`.
 
 ### Package Naming
 
 - [MUST] Use an organization scope for internal packages. (e.g., `@sellernote/ui`, `@sellernote/utils`)
-- **Good example**:
+- **Good Example**:
   ```json
   {
     "name": "@sellernote/ui",
@@ -50,7 +50,7 @@ monorepo-root/
 ### Internal Package References
 
 - [MUST] Use the workspace protocol to reference internal packages.
-- **Good example**:
+- **Good Example**:
   ```json
   {
     "dependencies": {
@@ -74,7 +74,7 @@ monorepo-root/
 ### Task Pipeline Configuration
 
 - [MUST] Explicitly define task dependency relationships in the build tool (Turborepo/Nx).
-- **Good example** (Turborepo):
+- **Good Example** (Turborepo):
   ```json
   {
     "tasks": {
@@ -96,14 +96,14 @@ monorepo-root/
 
 ### Cache Strategy
 
-- [SHOULD] Actively utilize build caching to optimize CI/CD speed.
+- [SHOULD] Actively leverage build cache to optimize CI/CD speed.
 
 ## Shared Configuration Management
 
 ### TypeScript Configuration
 
 - [SHOULD] Place a base `tsconfig.json` at the root and extend it in each workspace.
-- **Good example**:
+- **Good Example**:
   ```json
   // packages/typescript/base.json
   {
@@ -134,7 +134,7 @@ monorepo-root/
 
 ### CI/CD Pipeline
 
-- [SHOULD] Only build/test/deploy workspaces that have changed.
+- [SHOULD] Build/test/deploy only the workspaces that have changed.
 
 ## Tool-Specific Patterns
 
@@ -143,7 +143,7 @@ monorepo-root/
 1. Create a directory under `apps/` or `packages/`.
 2. Define the scoped name and required scripts in `package.json`.
 3. Add the path to the workspace configuration file (e.g., `pnpm-workspace.yaml`).
-4. Add required internal packages as dependencies using `workspace:*`.
+4. Add required internal packages as dependencies with `workspace:*`.
 5. Verify that the build tool's pipeline configuration applies to the new workspace.
 
 ### Shared Package Design Principles
@@ -152,6 +152,6 @@ monorepo-root/
 
 ## Anti-Patterns
 
-- [MUST NOT] Create circular dependencies between workspaces. Extract common logic into a separate package to maintain unidirectional dependency flow.
-- [MUST NOT] Install packages used only in a specific workspace in the root `package.json`.
+- [MUST NOT] Create circular dependencies between workspaces. Extract common logic into a separate package to keep the dependency direction unidirectional.
+- [MUST NOT] Install packages used only by a specific workspace in the root `package.json`.
 - [MUST NOT] Use undeclared packages by relying on hoisting.

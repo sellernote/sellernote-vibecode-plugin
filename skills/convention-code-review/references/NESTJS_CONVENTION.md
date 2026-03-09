@@ -3,7 +3,7 @@
 > This document defines the rules applied to NestJS projects.
 > Parent rules: BACKEND_CONVENTION.md
 
-## Tech Stack
+## Technology Stack
 
 | Item              | Version/Setting    |
 | ----------------- | ------------------ |
@@ -63,28 +63,28 @@ src/
 
 - **Rule**: [MUST] File names follow the `[name].[type].ts` pattern.
 
-| Type                  | Pattern                          | Example                          |
-| --------------------- | -------------------------------- | -------------------------------- |
-| Module                | `[name].module.ts`               | `order.module.ts`                |
-| Controller            | `[name].controller.ts`           | `order.controller.ts`            |
-| Controller (split)    | `[feature]-[name].controller.ts` | `order-crud.controller.ts`       |
-| Service               | `[name].service.ts`              | `order.service.ts`               |
-| Service (split)       | `[feature]-[name].service.ts`    | `order-fulfillment.service.ts`   |
-| Repository            | `[name].repository.ts`           | `order.repository.ts`            |
-| Entity                | `[name].entity.ts`               | `order.entity.ts`                |
-| DTO                   | `[action]-[name].dto.ts`         | `create-order.dto.ts`            |
-| Guard                 | `[name].guard.ts`                | `jwt-auth.guard.ts`              |
-| Interceptor           | `[name].interceptor.ts`          | `logging.interceptor.ts`         |
-| Pipe                  | `[name].pipe.ts`                 | `parse-int.pipe.ts`              |
-| Filter                | `[name].filter.ts`               | `http-exception.filter.ts`       |
-| Test                  | `[name].[type].spec.ts`          | `order.service.spec.ts`          |
+| Type                   | Pattern                           | Example                        |
+| ---------------------- | --------------------------------- | ------------------------------ |
+| Module                 | `[name].module.ts`                | `order.module.ts`              |
+| Controller             | `[name].controller.ts`            | `order.controller.ts`          |
+| Controller (split)     | `[feature]-[name].controller.ts`  | `order-crud.controller.ts`     |
+| Service                | `[name].service.ts`               | `order.service.ts`             |
+| Service (split)        | `[feature]-[name].service.ts`     | `order-fulfillment.service.ts` |
+| Repository             | `[name].repository.ts`            | `order.repository.ts`          |
+| Entity                 | `[name].entity.ts`                | `order.entity.ts`              |
+| DTO                    | `[action]-[name].dto.ts`          | `create-order.dto.ts`          |
+| Guard                  | `[name].guard.ts`                 | `jwt-auth.guard.ts`            |
+| Interceptor            | `[name].interceptor.ts`           | `logging.interceptor.ts`       |
+| Pipe                   | `[name].pipe.ts`                  | `parse-int.pipe.ts`            |
+| Filter                 | `[name].filter.ts`                | `http-exception.filter.ts`     |
+| Test                   | `[name].[type].spec.ts`           | `order.service.spec.ts`        |
 
 ## Domain Model Interface
 
 ### Domain Model Interface Definition
 
-- **Rule**: [MUST] Define a Domain Model Interface for each domain model. Include only the model's own data fields and exclude relation fields.
-- **Good example**:
+- **Rule**: [MUST] Define a Domain Model Interface for each domain model. Include only the model's own data fields, excluding relation fields.
+- **Good Example**:
   ```typescript
   // modules/order/interfaces/order.model.interface.ts
   export interface IOrderModel {
@@ -103,7 +103,7 @@ src/
 ### Usage in DTO Mapper
 
 - **Rule**: [MUST] DTO Mapper performs DTO <-> domain data mapping based on the Domain Model Interface.
-- **Good example**:
+- **Good Example**:
 
   ```typescript
   import type { IOrderModel } from "../interfaces/order.model.interface";
@@ -133,7 +133,7 @@ src/
 ### Implementation in Entity
 
 - **Rule**: [MUST] Entity implements the Domain Model Interface using `implements`.
-- **Good example**:
+- **Good Example**:
 
   ```typescript
   import type { IOrderModel } from "../interfaces/order.model.interface";
@@ -161,7 +161,7 @@ src/
 
 ### Directory Structure
 
-- **Rule**: [MUST] Domain Model Interface files are placed in the `modules/{feature}/interfaces/` directory with the `{feature}.model.interface.ts` pattern.
+- **Rule**: [MUST] Domain Model Interface files are placed in the `modules/{feature}/interfaces/` directory with the `{feature}.model.interface.ts` naming pattern.
 
 ```
 modules/order/
@@ -182,7 +182,7 @@ modules/order/
 ### Monetary Amount DTO Field Type
 
 - **Rule**: [MUST] DTO fields representing monetary amounts are defined as `string` type.
-- **Good example**:
+- **Good Example**:
 
   ```typescript
   export class CreateOrderDto {
@@ -201,10 +201,10 @@ modules/order/
 - **Rule**: [MUST] Use the `@SellernoteApiDecimal` decorator for Swagger documentation of monetary amount DTO fields.
   > [MUST NOT] Do not use `@SellernoteApiNumber` for monetary amounts.
 
-### Monetary Amount Arithmetic Library
+### Monetary Amount Calculation Library
 
-- **Rule**: [MUST] Use the `big.js` library for monetary amount arithmetic.
-- **Good example**:
+- **Rule**: [MUST] Use the `big.js` library for monetary amount calculations.
+- **Good Example**:
 
   ```typescript
   import Big from "big.js";
@@ -233,8 +233,8 @@ modules/order/
 
 ### Controller Splitting
 
-- **Rule**: [SHOULD] When a Controller becomes too large, split it by functionality.
-- **Good example**:
+- **Rule**: [SHOULD] When a Controller becomes too large, split it into separate Controllers by functionality.
+- **Good Example**:
 
   ```
   controllers/
@@ -268,7 +268,7 @@ modules/order/
 ### Service Splitting
 
 - **Rule**: [SHOULD] When a Service becomes too large, split it into independent Services by business functionality.
-- **Good example**:
+- **Good Example**:
   ```
   services/
   ├── order-crud.service.ts
@@ -283,7 +283,7 @@ modules/order/
 ### Module Registration (When Splitting)
 
 - **Rule**: [MUST] All split Controllers, Services, and Repositories must be registered in the corresponding Feature Module's `@Module()` decorator.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Module({
     imports: [TypeOrmModule.forFeature([Order, OrderItem])],
@@ -305,7 +305,7 @@ modules/order/
 ### Feature Module
 
 - **Rule**: [MUST] Each business feature is organized as an independent Feature Module.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Module({
     imports: [TypeOrmModule.forFeature([Order])],
@@ -319,7 +319,7 @@ modules/order/
 ### Shared Module
 
 - **Rule**: [SHOULD] Providers commonly used across multiple modules are separated into a Shared Module.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Module({
     providers: [MailService, S3Service],
@@ -331,7 +331,7 @@ modules/order/
 ### Global Module
 
 - **Rule**: [MAY] Modules used across the entire app may use the `@Global()` decorator. However, do not overuse it.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Global()
   @Module({
@@ -349,12 +349,12 @@ modules/order/
 
 ### Provider Registration
 
-- **Rule**: [MUST] All service classes use the `@Injectable()` decorator and are registered in the module's `providers`.
+- **Rule**: [MUST] All service classes use the `@Injectable()` decorator and are registered in the corresponding module's `providers`.
 
 ### Constructor Injection
 
 - **Rule**: [MUST] Dependency injection uses the Constructor Injection approach.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Injectable()
   export class OrderService {
@@ -368,7 +368,7 @@ modules/order/
 ### Custom Provider
 
 - **Rule**: [MAY] Custom Providers (useClass, useFactory, useValue) may be used when interface-based injection is needed.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Module({
     providers: [
@@ -394,7 +394,7 @@ modules/order/
 ### Custom Decorator Usage Criteria
 
 - **Rule**: [SHOULD] Use Custom Decorators to extract repetitive logic.
-- **Good example**:
+- **Good Example**:
 
   ```typescript
   export const CurrentUser = createParamDecorator(
@@ -413,7 +413,7 @@ modules/order/
 ### Decorator Composition
 
 - **Rule**: [MAY] When multiple decorators are repeatedly used together, they may be combined into one using `applyDecorators()`.
-- **Good example**:
+- **Good Example**:
 
   ```typescript
   export function Auth(...roles: Role[]) {
@@ -427,20 +427,20 @@ modules/order/
 
 ## Guard / Interceptor / Pipe
 
-### Role Distinction
+### Role Separation
 
-- **Rule**: [MUST] Guard, Interceptor, and Pipe must be used according to their designated roles.
+- **Rule**: [MUST] Guard, Interceptor, and Pipe must each be used according to their designated roles.
 
-| Component       | Role                                        | When to Use                                                        |
-| --------------- | ------------------------------------------- | ------------------------------------------------------------------ |
-| **Guard**       | Authentication/authorization decisions      | Check access permissions before the request reaches the handler    |
-| **Interceptor** | Request/response transformation, logging, caching | Add logic before and after handler execution (AOP)           |
-| **Pipe**        | Input data transformation and validation    | When data is bound to handler parameters                           |
+| Component       | Role                                   | When to Use                                                    |
+| --------------- | -------------------------------------- | -------------------------------------------------------------- |
+| **Guard**       | Authentication/Authorization decisions | Checks access permissions before the request reaches the handler |
+| **Interceptor** | Request/Response transformation, logging, caching | Adds logic before and after handler execution (AOP)     |
+| **Pipe**        | Input data transformation and validation | When data is bound to handler parameters                      |
 
 ### Guard Usage
 
-- **Rule**: [MUST] Authentication/authorization logic is handled in Guards. Do not check directly inside Controller methods.
-- **Good example**:
+- **Rule**: [MUST] Authentication/authorization logic is handled in Guards. Do not perform checks directly inside Controller methods.
+- **Good Example**:
 
   ```typescript
   @Injectable()
@@ -456,7 +456,7 @@ modules/order/
 ### Interceptor Usage
 
 - **Rule**: [SHOULD] Cross-cutting concerns such as response transformation, logging, and timeouts are handled with Interceptors.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Injectable()
   export class TransformInterceptor<T> implements NestInterceptor<
@@ -476,8 +476,8 @@ modules/order/
 
 ### Pipe Usage
 
-- **Rule**: [MUST] Set up a global ValidationPipe to automatically validate DTOs for all requests.
-- **Good example**:
+- **Rule**: [MUST] Configure a global ValidationPipe to automatically validate DTOs for all requests.
+- **Good Example**:
   ```typescript
   app.useGlobalPipes(
     new ValidationPipe({
@@ -493,7 +493,7 @@ modules/order/
 ### class-validator Usage
 
 - **Rule**: [MUST] Use `class-validator` decorators for DTO validation.
-- **Good example**:
+- **Good Example**:
 
   ```typescript
   export class CreateOrderDto {
@@ -514,7 +514,7 @@ modules/order/
 ### class-transformer Usage
 
 - **Rule**: [SHOULD] Use `class-transformer` for type conversion of request data.
-- **Good example**:
+- **Good Example**:
 
   ```typescript
   export class GetOrderListQueryDto {
@@ -532,7 +532,7 @@ modules/order/
 
 ### DTO Immutability
 
-- **Rule**: [SHOULD] Declare DTO fields as `readonly` to ensure immutability.
+- **Rule**: [SHOULD] DTO fields should be declared as `readonly` to ensure immutability.
 
 ## Swagger Documentation
 
@@ -541,7 +541,7 @@ modules/order/
 - **Rule**: [MUST] Use the in-house library `@sellernote/sellernote-nestjs-api-property` for defining API Properties in DTOs.
 - **Rule**: [MUST NOT] Do not directly use `@ApiProperty()` from `@nestjs/swagger`. Do not directly use `class-validator`/`class-transformer` decorators either.
 - **Reference**: Refer to the [sellernote-nestjs-api-property README](https://github.com/sellernote/sellernote-nestjs-api-property) for usage.
-- **Good example**:
+- **Good Example**:
 
   ```typescript
   import {
@@ -576,7 +576,7 @@ modules/order/
 ### HttpException Usage
 
 - **Rule**: [MUST] Throw exceptions using NestJS's built-in HttpException or its subclasses.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Injectable()
   export class OrderService {
@@ -592,7 +592,7 @@ modules/order/
 ### Custom Business Exceptions
 
 - **Rule**: [SHOULD] Define domain-specific exceptions as custom Exception classes.
-- **Good example**:
+- **Good Example**:
   ```typescript
   export class InsufficientStockException extends BadRequestException {
     constructor(productId: number, requested: number, available: number) {
@@ -607,7 +607,7 @@ modules/order/
 ### Exception Filter
 
 - **Rule**: [MUST] Register a global Exception Filter to transform all exceptions into a consistent response format.
-- **Good example**:
+- **Good Example**:
   ```typescript
   @Catch()
   export class AllExceptionsFilter implements ExceptionFilter {
@@ -650,12 +650,12 @@ modules/order/
 
 ### Not Using DI (Direct Instance Creation)
 
-- **Rule**: [MUST NOT] Do not directly create service instances with the `new` keyword. Always inject through the DI container.
-- **Good example**:
+- **Rule**: [MUST NOT] Do not directly create service instances using the `new` keyword. Always inject them through the DI container.
+- **Good Example**:
   ```typescript
   @Injectable()
   export class OrderService {
-    constructor(private readonly mailService: MailService) {} // Injection via DI
+    constructor(private readonly mailService: MailService) {} // Injection through DI
   }
   ```
   > [MUST NOT] The `private readonly mailService = new MailService()` pattern is prohibited.

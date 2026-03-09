@@ -19,7 +19,7 @@ Frontend testing follows the pyramid structure below. Lower levels should be fas
 | Level | Tool | Target | Proportion |
 | --- | --- | --- | --- |
 | Unit | Vitest | Utility functions, custom hooks, pure logic | 50% |
-| Integration | React Testing Library | Combination of multiple components, form submission flows, screen-level verification | 35% |
+| Integration | React Testing Library | Combinations of multiple components, form submission flows, screen-level verification | 35% |
 | E2E | Playwright | Core user scenarios such as login, order creation | 15% |
 
 ---
@@ -29,7 +29,7 @@ Frontend testing follows the pyramid structure below. Lower levels should be fas
 ### 2-1. Component Testing
 
 - **Rule**: [MUST] Component tests follow the render -> interact -> assert pattern and prioritize using `screen.getByRole`
-- **Good example**:
+- **Good Example**:
 
 ```typescript
 import { render, screen } from "@testing-library/react";
@@ -64,7 +64,7 @@ describe("UserProfile", () => {
 ### 2-2. Hook Testing
 
 - **Rule**: [SHOULD] Custom hooks should be tested independently using `renderHook`
-- **Good example**:
+- **Good Example**:
 
 ```typescript
 import { renderHook, act } from "@testing-library/react";
@@ -101,8 +101,8 @@ describe("useCounter", () => {
 
 ### 2-3. useSuspenseQuery Testing
 
-- **Rule**: [SHOULD] Components using `useSuspenseQuery` should be tested with `Suspense` boundaries, and APIs should be mocked with MSW
-- **Good example**:
+- **Rule**: [SHOULD] Components using `useSuspenseQuery` should be tested with a `Suspense` boundary, and APIs should be mocked with MSW
+- **Good Example**:
 
 ```typescript
 import { Suspense } from "react";
@@ -141,8 +141,8 @@ describe("UserProfile", () => {
 
 ### 2-4. File Location
 
-- **Rule**: [MUST NOT] Do not create `.test.tsx` and `.stories.tsx` files per component as a default structure.
-- **Rule**: [SHOULD] When testing is needed, write separate test files on a feature basis.
+- **Rule**: [MUST NOT] Do not create `.test.tsx` or `.stories.tsx` files per component as a default structure.
+- **Rule**: [SHOULD] When tests are needed, write separate test files organized by feature.
 
 ```text
 app/features/order/
@@ -280,7 +280,7 @@ describe("AuthenticatedContent", () => {
 ## 3. E2E Testing
 
 - **Rule**: [SHOULD] Write E2E tests for core user scenarios using Playwright
-- **Good example**:
+- **Good Example**:
 
 ```typescript
 import { test, expect } from "@playwright/test";
@@ -293,7 +293,7 @@ test.describe("주문 생성 플로우", () => {
     await page.getByLabel("비밀번호").fill("password123");
     await page.getByRole("button", { name: "로그인" }).click();
 
-    // 대시보��� 도착 확인
+    // 대시���드 도착 확인
     await expect(page).toHaveURL("/dashboard");
     await expect(page.getByRole("heading", { name: "대시보드" })).toBeVisible();
 
@@ -319,14 +319,14 @@ E2E tests are costly, so focus on the following core scenarios:
 | Login/Logout | Authentication flow, session management |
 | Order CRUD | Full flow of create, read, update, delete |
 | Search/Filter | Search result accuracy, filter behavior |
-| Payment Flow | Payment information input, payment completion confirmation |
+| Payment Flow | Payment information entry, payment completion confirmation |
 
 ---
 
 ## 4. Test Naming
 
-- **Rule**: [SHOULD] Specify the test target with `describe`, and write the condition and expected result in `it`
-- **Good example**:
+- **Rule**: [SHOULD] Specify the test target with `describe`, and write conditions and expected results in `it`
+- **Good Example**:
 
 ```typescript
 describe("OrderTable", () => {
@@ -348,12 +348,12 @@ describe("OrderTable", () => {
 
 ---
 
-## 5. Anti-patterns
+## 5. Anti-Patterns
 
 ### Testing Implementation Details
 
-- **Rule**: [MUST NOT] Do not overuse `data-testid` or write tests that depend on internal implementation. Prioritize using `getByRole`, `getByText`, and `getByLabelText`.
-- **Good example**:
+- **Rule**: [MUST NOT] Do not overuse `data-testid` or write tests that depend on internal implementation. Prioritize `getByRole`, `getByText`, and `getByLabelText`.
+- **Good Example**:
 
 ```typescript
 // 사용자 관점에서 요소를 탐색
@@ -362,7 +362,7 @@ expect(screen.getByLabelText("이메일")).toHaveValue("hong@example.com");
 expect(screen.getByText("주문이 완료되었습니다.")).toBeInTheDocument();
 ```
 
-- **Bad example**:
+- **Bad Example**:
 
 ```typescript
 // data-testid에 의존하면 접근성 검증이 누락되고 리팩토링에 취약함
@@ -371,14 +371,14 @@ expect(screen.getByTestId("email-input")).toHaveValue("hong@example.com");
 expect(screen.getByTestId("success-msg")).toBeInTheDocument();
 ```
 
-### Overuse of Snapshot Tests
+### Overusing Snapshot Tests
 
-- **Rule**: [SHOULD NOT] Do not use snapshot tests for UI components that change frequently
+- **Rule**: [SHOULD NOT] Do not use snapshot tests on UI components that change frequently
 
 ### Sharing State Between Tests
 
 - **Rule**: [MUST NOT] Do not share state between tests. Each test must run independently.
-- **Good example**:
+- **Good Example**:
 
 ```typescript
 describe("CartStore", () => {
@@ -400,7 +400,7 @@ describe("CartStore", () => {
 });
 ```
 
-- **Bad example**:
+- **Bad Example**:
 
 ```typescript
 describe("CartStore", () => {
@@ -420,10 +420,10 @@ describe("CartStore", () => {
 });
 ```
 
-### Missing waitFor for Asynchronous Logic
+### Missing waitFor for Async Logic
 
 - **Rule**: [MUST NOT] Do not assert on asynchronously rendered elements without `waitFor`
-- **Good example**:
+- **Good Example**:
 
 ```typescript
 it("사용자 목록을 로딩 후 표시한다", async () => {
@@ -436,7 +436,7 @@ it("사용자 목록을 로딩 후 표시한다", async () => {
 });
 ```
 
-- **Bad example**:
+- **Bad Example**:
 
 ```typescript
 it("사용자 목록을 로딩 후 표시한다", () => {

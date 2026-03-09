@@ -3,7 +3,7 @@
 > This document defines the rules applied to Spring Boot projects.
 > Parent rules: BACKEND_CONVENTION.md
 
-## Tech Stack
+## Technology Stack
 
 | Item | Version/Setting |
 |------|----------|
@@ -85,7 +85,7 @@ com.sellernote.api/
 
 ### @Configuration Classes
 
-- **Rule**: [SHOULD] Use `@Configuration` + `@Bean` when Bean registration of third-party libraries or complex initialization logic is required.
+- **Rule**: [SHOULD] Use `@Configuration` + `@Bean` when registering Beans for third-party libraries or when complex initialization logic is needed.
 - **Good Example**:
   ```java
   @Configuration
@@ -102,7 +102,7 @@ com.sellernote.api/
 
 ### Conditional Bean Registration
 
-- **Rule**: [MAY] `@ConditionalOnProperty`, `@Profile`, etc. may be used when different Beans need to be registered depending on the environment or conditions.
+- **Rule**: [MAY] When different Beans need to be registered depending on the environment or conditions, `@ConditionalOnProperty`, `@Profile`, etc. may be used.
 - **Good Example**:
   ```java
   @Configuration
@@ -121,7 +121,7 @@ com.sellernote.api/
 
 ### @ControllerAdvice Global Exception Handling
 
-- **Rule**: [MUST] Implement a global exception handling handler using `@RestControllerAdvice`.
+- **Rule**: [MUST] Implement a global exception handler using `@RestControllerAdvice`.
 - **Good Example**:
   ```java
   @RestControllerAdvice
@@ -183,7 +183,7 @@ com.sellernote.api/
 
 ### @ExceptionHandler Scope
 
-- **Rule**: [SHOULD] Declare `@ExceptionHandler` in the specific Controller for exception handling that applies only to that Controller. Declare common exception handling in `@RestControllerAdvice`.
+- **Rule**: [SHOULD] Declare `@ExceptionHandler` on the specific Controller for exception handling that applies only to that Controller. Declare common exception handling in `@RestControllerAdvice`.
 
 ## Transaction Management
 
@@ -221,7 +221,7 @@ com.sellernote.api/
 |----------|------|
 | `REQUIRED` (default) | Joins existing transaction if present, creates new one if not |
 | `REQUIRES_NEW` | Always creates a new transaction (for cases requiring independent commits such as logging, auditing) |
-| `MANDATORY` | Requires an existing transaction (throws exception if none exists) |
+| `MANDATORY` | Existing transaction required (throws exception if none exists) |
 
 - **Good Example**:
   ```java
@@ -242,7 +242,7 @@ com.sellernote.api/
 
 ## AOP
 
-### Separation of Cross-Cutting Concerns
+### Cross-Cutting Concern Separation
 
 - **Rule**: [SHOULD] Separate cross-cutting concerns such as logging, performance measurement, and auditing using AOP.
 - **Good Example**:
@@ -296,7 +296,7 @@ src/main/resources/
 
 ### Profile Activation
 
-- **Rule**: [MUST] Configure `application-prod.yml` to be automatically activated in the production environment. Set the default local Profile to `local`.
+- **Rule**: [MUST] Configure `application-prod.yml` to be automatically activated in production environments. Set the local default Profile to `local`.
 - **Good Example**:
   ```yaml
   # application.yml (common)
@@ -314,13 +314,13 @@ src/main/resources/
 ### Missing Transactions
 
 - **Rule**: [MUST NOT] Do not perform multiple data modification operations without `@Transactional`.
-> A partial commit may occur when an intermediate exception is thrown, breaking data consistency.
+> A partial commit may occur if an intermediate exception is thrown, breaking data consistency.
 
 ### Self-Invocation (Proxy Bypass)
 
 - **Rule**: [MUST NOT] Do not directly call `@Transactional` methods within the same class.
 > Since Spring AOP is proxy-based, calls within the same class do not go through the proxy, causing `@Transactional` to be ignored.
-- **Solution**: Extract the logic that requires a transaction into a separate Service class.
+- **Solution**: Extract the logic requiring a transaction into a separate Service class.
 
 ### @Transactional on private Methods
 
@@ -333,7 +333,7 @@ src/main/resources/
 
 ### Long Transactions
 
-- **Rule**: [SHOULD NOT] Do not perform long-running operations such as external API calls or file uploads inside transactions.
+- **Rule**: [SHOULD NOT] Do not perform long-running operations such as external API calls or file uploads inside a transaction.
 - **Good Example**:
   ```java
   @Transactional

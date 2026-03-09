@@ -1,14 +1,14 @@
 # Common Conventions
 
 > Defines common rules that apply to all roles and tools.
-> For rules specific to a particular domain, refer to the documents in the subdirectories.
+> For rules specific to a particular domain, refer to the documents in subdirectories.
 >
 > - [TypeScript Convention](typescript/TYPESCRIPT_CONVENTION.md)
 
 ## Domain Glossary
 
 Defines the business/technical terms used in the project.
-AI consistently uses the terms defined here for variable names, class names, etc., during code generation.
+AI consistently uses the terms defined here for variable names, class names, etc. when generating code.
 
 | Term | English | Description |
 |------|---------|-------------|
@@ -19,7 +19,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### General Principles
 
-- **Rule**: [MUST] Use clear names that convey meaning on their own.
+- **Rule**: [MUST] Use clear names that convey meaning by themselves.
 
 - **Rule**: [MUST] Only use abbreviations that have been agreed upon by the team. Do not use abbreviations that are not registered in the domain glossary.
 
@@ -55,11 +55,11 @@ AI consistently uses the terms defined here for variable names, class names, etc
   const MAX_RETRY_COUNT = 3;
   const API_BASE_URL = 'https://api.example.com';
   ```
-- **Rule**: [SHOULD] Use camelCase for object properties or local constants. Use UPPER_SNAKE_CASE only for module-level global constants.
+- **Rule**: [SHOULD] Use camelCase for object properties and local constants. Use UPPER_SNAKE_CASE only for module-level global constants.
 
 ### File Names
 
-- **Rule**: [MUST] Follow the conventions of the respective framework/tool for file names. If no convention exists, use kebab-case as the default.
+- **Rule**: [MUST] Follow the conventions of the relevant framework/tool for file names. If no convention exists, use kebab-case as the default.
 - **Good Example**:
   ```
   user-service.ts
@@ -78,7 +78,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
   const shouldRefresh = Date.now() > expiresAt;
   ```
   - Note: Do not use names without prefixes like `active`, `permission` for booleans.
-- **Rule**: [MUST NOT] Do not use the `no` prefix to express negation. Instead, combine `is`, `has`, `can`, `should` prefixes with clearly meaningful adjectives.
+- **Rule**: [MUST NOT] Do not use the `no` prefix to express negation. Instead, combine `is`, `has`, `can`, `should` prefixes with clear adjectives.
 - **Bad Example**:
   ```typescript
   const noPermission = true;
@@ -114,11 +114,11 @@ AI consistently uses the terms defined here for variable names, class names, etc
 | `fix/<description>` | Bug fix | `fix/login-validation-error` |
 | `hotfix/<description>` | Production emergency fix | `hotfix/payment-crash` |
 | `refactor/<description>` | Refactoring | `refactor/order-service` |
-| `chore/<description>` | Build, configuration, and other maintenance | `chore/update-dependencies` |
+| `chore/<description>` | Build, configuration, and maintenance | `chore/update-dependencies` |
 
-- **Rule**: [MUST] Branch names must use only lowercase letters and hyphens (`-`), with a slash (`/`) separating the type and description.
+- **Rule**: [MUST] Branch names must use only lowercase letters and hyphens (`-`), with slashes (`/`) separating the type and description.
 
-- **Rule**: [SHOULD] Include the issue number in the branch name if a Jira issue exists.
+- **Rule**: [SHOULD] Include the issue number in the branch name when a Jira issue exists.
 - **Good Example**:
   ```
   feat/PROJ-123-user-authentication
@@ -143,17 +143,17 @@ AI consistently uses the terms defined here for variable names, class names, etc
 |------|-------------|---------|
 | `feat` | Add new feature | `feat(auth): add JWT refresh token` |
 | `fix` | Bug fix | `fix(order): resolve null pointer in validation` |
-| `docs` | Documentation changes | `docs: update API documentation` |
+| `docs` | Documentation change | `docs: update API documentation` |
 | `style` | Code formatting, missing semicolons, etc. | `style: apply prettier formatting` |
-| `refactor` | Code restructuring without changing functionality | `refactor(user): extract validation logic` |
+| `refactor` | Code restructuring without behavior change | `refactor(user): extract validation logic` |
 | `perf` | Performance improvement | `perf(query): add index for user lookup` |
 | `test` | Add/modify tests | `test(auth): add login failure test cases` |
-| `chore` | Build, configuration, and other maintenance | `chore: update dependencies` |
-| `ci` | CI/CD configuration changes | `ci: add staging deployment workflow` |
+| `chore` | Build, configuration, and maintenance | `chore: update dependencies` |
+| `ci` | CI/CD configuration change | `ci: add staging deployment workflow` |
 
 - **Rule**: [MUST] Write commit titles in imperative mood. Keep them within 50 characters.
-- **Rule**: [MUST] Each commit should contain only one concern.
-- **Rule**: [SHOULD] If there is a Breaking Change, append `!` after the type and specify `BREAKING CHANGE:` in the footer.
+- **Rule**: [MUST] Each commit must contain only one concern.
+- **Rule**: [SHOULD] When there is a Breaking Change, append `!` after the type and specify `BREAKING CHANGE:` in the footer.
 - **Good Example**:
   ```
   feat(auth)!: change token expiry to 1 hour
@@ -167,12 +167,12 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 - **Rule**: [MUST] PR titles must follow the Conventional Commits format. (When using squash merge, the PR title becomes the commit message)
 
-- **Rule**: [MUST] The PR body must include the following:
+- **Rule**: [MUST] PR body must include the following:
   - Summary of changes
-  - Related issue number (if applicable)
-  - Testing method or verification steps
+  - Related issue number (if any)
+  - Test method or verification items
 
-- **Rule**: [SHOULD] Create PRs in the smallest possible units. (10 or fewer changed files recommended)
+- **Rule**: [SHOULD] Create PRs in the smallest units possible. (10 or fewer changed files recommended)
 
 - **Rule**: [MUST NOT] Do not merge directly into main/develop branches without review approval.
 
@@ -188,14 +188,14 @@ AI consistently uses the terms defined here for variable names, class names, etc
 | Readability | Is the code clear and easy to understand? |
 | Maintainability | Is the structure flexible and extensible for changes? |
 | Performance | Are there unnecessary computations or inefficient patterns? |
-| Security | Are there any security vulnerabilities (input validation, authentication/authorization, etc.)? |
+| Security | Are there security vulnerabilities? (input validation, authentication/authorization, etc.) |
 | Testing | Are appropriate tests included? |
-| Conventions | Does it comply with team conventions? |
+| Convention | Does it comply with team conventions? |
 
 ### Approval Criteria
 
-- **Rule**: [MUST] At least 1 reviewer must approve before merging.
-- **Rule**: [SHOULD] For core logic changes, approval from 2 or more reviewers is recommended.
+- **Rule**: [MUST] At least 1 reviewer approval is required before merging.
+- **Rule**: [SHOULD] For core logic changes, 2 or more approvals are recommended.
 - **Rule**: [MUST] All CI pipeline checks (build, test, lint) must pass before merging.
 
 ### Writing Review Comments
@@ -205,7 +205,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 | Prefix | Meaning | Example |
 |--------|---------|---------|
 | `[MUST]` | Must be fixed (merge blocker) | `[MUST] There is a SQL injection risk.` |
-| `[SHOULD]` | Fix recommended | `[SHOULD] This can be improved with an early return.` |
+| `[SHOULD]` | Recommended to fix | `[SHOULD] This can be improved with an early return.` |
 | `[NIT]` | Minor improvement suggestion | `[NIT] The variable name could be more descriptive.` |
 | `[Q]` | Question | `[Q] What is the intent of this logic?` |
 
@@ -225,7 +225,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### Error Response Format (HTTP API)
 
-- **Rule**: [MUST] API error responses must follow the standard format below.
+- **Rule**: [MUST] API error responses must follow this standard format.
 
 ```json
 {
@@ -238,7 +238,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 }
 ```
 
-- **Rule**: [SHOULD] For validation errors, include field-level error information in the `details` field.
+- **Rule**: [SHOULD] Validation errors should include field-level error information in the `details` field.
 
 ```json
 {
@@ -247,7 +247,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
     "code": "VALIDATION_FAILED",
     "message": "The input values are invalid.",
     "details": [
-      { "field": "email", "message": "Not a valid email format." },
+      { "field": "email", "message": "Invalid email format." },
       { "field": "password", "message": "Must be at least 8 characters." }
     ]
   }
@@ -262,7 +262,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 |-------------|-------|
 | 400 | Bad request (validation failure) |
 | 401 | Authentication failure (missing or expired token) |
-| 403 | Forbidden (authenticated but access denied) |
+| 403 | Forbidden (authenticated but no access) |
 | 404 | Resource not found |
 | 409 | Resource conflict (duplicate creation, etc.) |
 | 422 | Unprocessable entity |
@@ -275,21 +275,21 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 - **Rule**: [MUST NOT] Do not expose sensitive implementation details such as stack traces, DB queries, or internal paths in error responses.
 
-- **Rule**: [MUST NOT] Do not use messages that reveal whether an account exists in authentication errors. (To prevent account enumeration attacks)
+- **Rule**: [MUST NOT] Do not use messages that reveal account existence in authentication errors. (Prevent account enumeration attacks)
 - **Good Example**: `"The authentication credentials are incorrect."`
-  - Note: Do not use specific messages like `"No user found with that email address."`
+  - Note: Do not use specific messages like `"No user exists with that email address."`.
 
 ## Logging
 
 ### Log Levels
 
-- **Rule**: [MUST] Follow the log level standards below.
+- **Rule**: [MUST] Follow these log level guidelines.
 
 | Level | Usage | Example |
 |-------|-------|---------|
-| `ERROR` | Errors requiring immediate attention | DB connection failure, external API failure, payment failure |
+| `ERROR` | Errors requiring immediate attention | DB connection failure, external API outage, payment failure |
 | `WARN` | Potential issues, expected exceptions | Retry occurred, config fallback, slow query |
-| `INFO` | Key business events, state changes | User registration, order creation, deployment start |
+| `INFO` | Key business events, state changes | User signup, order creation, deployment start |
 | `DEBUG` | Detailed information for development/debugging | Function parameters, query results, intermediate calculations |
 
 - **Rule**: [MUST NOT] Do not enable DEBUG level in production environments.
@@ -329,7 +329,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 | Token/API key | Show first 4 characters only | `eyJh****` |
 | National ID number | Full masking | `******-*******` |
 
-- **Rule**: [MUST NOT] Do not log entire request/response bodies. Select and record only the necessary fields.
+- **Rule**: [MUST NOT] Do not log entire request/response bodies. Log only the necessary fields selectively.
 
 - **Rule**: [SHOULD] Automate sensitive information masking in logging middleware or utilities.
 
@@ -338,7 +338,7 @@ AI consistently uses the terms defined here for variable names, class names, etc
 ### Magic Numbers/Strings
 
 - **Rule**: [MUST NOT] Do not use numbers or strings with unclear meaning directly in code.
-  - Note: Avoid direct literal usage like `if (status === 3)`, `setTimeout(handler, 86400000)`.
+  - Note: Do not directly use literals like `if (status === 3)`, `setTimeout(handler, 86400000)`.
 - **Good Example**:
   ```typescript
   const ORDER_STATUS_COMPLETED = 3;
@@ -354,10 +354,10 @@ AI consistently uses the terms defined here for variable names, class names, etc
 
 ### Empty Catch
 
-> Applies to all try-catch / try-except / rescue blocks regardless of language.
+> Applies to all try-catch / try-except / rescue patterns regardless of language.
 
-- **Rule**: [MUST NOT] Do not leave catch blocks empty or ignore errors.
-- **Rule**: [MUST] At minimum, log at the appropriate level for the exception in the catch block. (Refer to the `## Logging > Log Levels` section of this document for log level standards)
+- **Rule**: [MUST NOT] Do not leave catch blocks empty or silently ignore errors.
+- **Rule**: [MUST] At minimum, log at the appropriate level for the exception in the catch block. (Refer to `## Logging > Log Levels` in this document for log level guidelines)
 
 | Situation | Log Level |
 |-----------|-----------|
@@ -382,12 +382,12 @@ AI consistently uses the terms defined here for variable names, class names, etc
   }
   ```
 
-- **Rule**: [MUST] If intentionally ignoring an error, document the reason with a comment.
+- **Rule**: [MUST] When intentionally ignoring an error, document the reason with a comment.
 - **Good Example**:
   ```typescript
   try {
     await cacheClient.delete(key);
   } catch {
-    // Cache deletion failure is safe to ignore as it will be automatically cleaned up on the next TTL expiration
+    // Cache deletion failure is safe to ignore as it will be auto-cleaned on next TTL expiry
   }
   ```

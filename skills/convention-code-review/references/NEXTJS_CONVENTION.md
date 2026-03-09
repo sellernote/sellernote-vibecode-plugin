@@ -1,13 +1,13 @@
 # Next.js Convention
 
-> This document defines the rules applied to Next.js 15 App Router projects.
+> This document defines rules applied to Next.js 15 App Router projects.
 > Parent rules: FRONTEND_CONVENTION.md
 
 ---
 
 ## 1. Tech Stack
 
-| Item | Version/Setting |
+| Item | Version/Config |
 | --- | --- |
 | Next.js | 15 |
 | React | 19 |
@@ -24,7 +24,7 @@
 
 | File | Role |
 | --- | --- |
-| `page.tsx` | Unique UI for a route. The page component matched to the corresponding URL |
+| `page.tsx` | Unique UI for a route. The page component that matches the corresponding URL |
 | `layout.tsx` | Layout shared with child routes. Persists without re-rendering during navigation |
 | `loading.tsx` | Automatic Suspense boundary. Loading UI during route transitions |
 | `error.tsx` | Error boundary. `'use client'` required |
@@ -56,7 +56,7 @@ app/
 
 ## 3. Server Components vs Client Components
 
-- **Rule**: [MUST] The default is Server Component. All components are rendered on the server unless otherwise specified with a directive.
+- **Rule**: [MUST] The default is Server Component. All components render on the server unless a directive is specified.
 - **Rule**: [MUST] Declare `'use client'` at the top of the file only when client-side functionality is needed.
 
 ### Decision Criteria
@@ -64,7 +64,7 @@ app/
 | Required Functionality | Server Component | Client Component |
 | --- | --- | --- |
 | Data fetching | Use async/await directly | Use TanStack Query |
-| Backend resource access | Direct access possible | Requires API proxy |
+| Backend resource access | Direct access possible | Requires API route |
 | Sensitive information (tokens, keys) | Process on server only | Risk of exposure |
 | useState, useEffect | Not available | Available |
 | Event handlers (onClick) | Not available | Available |
@@ -72,7 +72,7 @@ app/
 
 ### Composition Pattern
 
-- **Rule**: [SHOULD] Pass Server Components as children of Client Components to maintain server rendering benefits. Directly importing a Server Component from a Client Component causes it to be included in the bundle.
+- **Rule**: [SHOULD] Pass Server Components as children of Client Components to maintain server rendering benefits. Directly importing a Server Component from a Client Component includes it in the bundle.
 
 ```typescript
 // page.tsx (Server Component)
@@ -87,7 +87,7 @@ export default function Page() {
 
 ### 'use client' Boundary Placement
 
-- **Rule**: [MUST] Place the `'use client'` boundary at the lowest level of the tree (leaf nodes) to minimize the client bundle.
+- **Rule**: [MUST] Place `'use client'` boundaries at the lowest level of the tree (leaf nodes) to minimize the client bundle.
 
 ```typescript
 // page.tsx (Server Component)
@@ -108,7 +108,7 @@ export default async function ProductPage() {
 
 ### Server Components fetch
 
-- **Rule**: [SHOULD] Fetch initial page load data directly using async/await in Server Components.
+- **Rule**: [SHOULD] Fetch initial page load data directly with async/await in Server Components.
 
 ```typescript
 // app/products/page.tsx
@@ -123,7 +123,7 @@ export default async function ProductsPage() {
 
 ### Server Actions
 
-- **Rule**: [MUST] Use Server Actions for mutations such as data creation/update/deletion. Immediately invalidate the cache using `revalidatePath`/`revalidateTag`.
+- **Rule**: [MUST] Use Server Actions for mutations such as data creation/update/deletion. Invalidate cache immediately with `revalidatePath`/`revalidateTag`.
 
 ```typescript
 // app/actions/post.ts
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-### TanStack Query (Client-side Data Fetching)
+### TanStack Query (Client Data Fetching)
 
 - **Rule**: [SHOULD] Use TanStack Query when data refresh after client interaction or real-time data is needed. Refer to STATE_CONVENTION.md for detailed patterns.
 
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
 
 ### ISR (Incremental Static Regeneration)
 
-- **Rule**: [SHOULD] Set the `revalidate` option for pages that require periodic revalidation.
+- **Rule**: [SHOULD] Set the `revalidate` option for pages that need periodic revalidation.
 
 ```typescript
 export const revalidate = 3600; // Revalidate every 1 hour
@@ -186,7 +186,7 @@ export default async function ProductsPage() {
 
 ### On-demand Revalidation
 
-- **Rule**: [SHOULD] Use `revalidatePath()` or `revalidateTag()` when the cache needs to be immediately invalidated at the point of data change.
+- **Rule**: [SHOULD] Use `revalidatePath()` or `revalidateTag()` to invalidate cache immediately when data changes.
 
 ```typescript
 'use server';
@@ -201,7 +201,7 @@ export async function updateProduct(id: string, data: ProductData) {
 
 ### Explicit fetch Options
 
-- **Rule**: [MUST] Explicitly set the cache behavior when fetching in Server Components. Omitting options may result in unintended caching behavior.
+- **Rule**: [MUST] Explicitly set cache behavior when fetching in Server Components. Omitting options may result in unintended caching behavior.
 
 | Option | Behavior |
 | --- | --- |
@@ -223,8 +223,8 @@ const realtimeData = await fetch('https://api.example.com/stock', {
 
 ## 6. Middleware
 
-- **Rule**: [SHOULD] Place `middleware.ts` at the project root (`src/`) or top level. Use it for authentication checks, redirects, request logging, etc.
-- **Rule**: [MUST] Limit the middleware scope using `matcher` config. Omitting the matcher causes static files to be processed, degrading performance.
+- **Rule**: [SHOULD] Place `middleware.ts` at the project root (`src/`) or the top level. Use it for authentication checks, redirects, request logging, etc.
+- **Rule**: [MUST] Restrict middleware scope with `matcher` config. Omitting matcher causes middleware to process even static files, degrading performance.
 
 ```typescript
 // src/middleware.ts
@@ -247,7 +247,7 @@ export const config = {
 
 ## 7. Error Handling
 
-- **Rule**: [MUST] `error.tsx` serves as a per-route error boundary and requires `'use client'`. Utilize the `error` and `reset` props.
+- **Rule**: [MUST] `error.tsx` serves as a per-route error boundary. `'use client'` is required. Utilize `error` and `reset` props.
 
 ```typescript
 // app/products/error.tsx
@@ -267,7 +267,7 @@ export default function ErrorPage({ error, reset }: {
 }
 ```
 
-- **Rule**: [MUST] `global-error.tsx` handles errors in the root layout and must include `<html>` and `<body>` tags. `'use client'` required.
+- **Rule**: [MUST] `global-error.tsx` handles errors in the root layout and must include `<html>` and `<body>` tags. `'use client'` is required.
 
 - **Rule**: [SHOULD] Use `not-found.tsx` to provide a custom 404 page that matches the project design.
 
@@ -275,7 +275,7 @@ export default function ErrorPage({ error, reset }: {
 
 ## 8. Loading States
 
-- **Rule**: [SHOULD] Set up automatic per-route Suspense boundaries with `loading.tsx` and provide skeleton UIs.
+- **Rule**: [SHOULD] Set up automatic per-route Suspense boundaries with `loading.tsx` and provide skeleton UI.
 - **Rule**: [SHOULD] Wrap independent data sections with individual Suspense boundaries to implement Streaming.
 
 ```typescript
@@ -300,7 +300,7 @@ export default function DashboardPage() {
 
 ## 9. Image/Font Optimization
 
-- **Rule**: [MUST] Use the `next/image` component for rendering images. Direct use of the HTML `<img>` tag is prohibited.
+- **Rule**: [MUST] Use the `next/image` component for rendering images. Direct use of HTML `<img>` tags is prohibited.
 - **Rule**: [MUST] Set the `priority` attribute on LCP images.
 - **Rule**: [SHOULD] Provide responsive image size hints with the `sizes` attribute.
 
@@ -327,7 +327,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ## 10. Environment Variable Management
 
 - **Rule**: [MUST] Use the `NEXT_PUBLIC_` prefix only for variables that should be exposed to the client.
-- **Rule**: [MUST NOT] Do not use `NEXT_PUBLIC_` for sensitive information such as API keys, secrets, or DB URLs. `NEXT_PUBLIC_` variables are literally embedded in client-side JavaScript.
+- **Rule**: [MUST NOT] Do not use `NEXT_PUBLIC_` for sensitive information such as API keys, secrets, or DB URLs. `NEXT_PUBLIC_` variables are inserted as literals into client-side JavaScript.
 
 | Variable | Prefix | Correct Usage |
 | --- | --- | --- |
@@ -342,10 +342,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 - **Rule**: [MUST NOT] Do not declare `'use client'` on components that can sufficiently function as Server Components.
 - **Rule**: [MUST NOT] Do not use client Hooks such as `useState` or `useEffect` in Server Components. If Hooks are needed, extract them into a Client Component.
-- **Rule**: [MUST NOT] Do not expose sensitive information via `NEXT_PUBLIC_`. (See 10. Environment Variable Management)
-- **Rule**: [SHOULD NOT] Do not omit cache options in fetch. (See 5. Caching & Revalidation)
+- **Rule**: [MUST NOT] Do not expose sensitive information with `NEXT_PUBLIC_`. (See section 10. Environment Variable Management)
+- **Rule**: [SHOULD NOT] Do not omit cache options in fetch. (See section 5. Caching & Revalidation)
 - **Rule**: [SHOULD NOT] Do not pass data fetched in `layout.tsx` as props to children. Layouts do not re-render during navigation.
-- **Rule**: [MUST NOT] Do not omit `generateStaticParams` for dynamic routes intended for static builds.
+- **Rule**: [MUST NOT] Do not omit `generateStaticParams` for dynamic routes that should be statically built.
 
 ```typescript
 // app/products/[id]/page.tsx

@@ -1,9 +1,9 @@
 # Frontend Template Collection
 
 > A collection of standard boilerplates that AI agents copy and use when creating new features.
-> All templates follow the rules in ARCHITECTURE_CONVENTION.md and STATE_CONVENTION.md.
+> All templates follow the rules of ARCHITECTURE_CONVENTION.md and STATE_CONVENTION.md.
 >
-> **Usage**: After copying a template, replace the placeholders `{domain}` (kebab-case), `{Domain}`/`{Entity}`/`{Component}` (PascalCase), `{entity}`/`{component}` (kebab-case) with actual names.
+> **Usage**: Copy a template and replace the placeholders `{domain}` (kebab-case), `{Domain}`/`{Entity}`/`{Component}` (PascalCase), `{entity}`/`{component}` (kebab-case) with actual names.
 
 ---
 
@@ -29,7 +29,7 @@ app/features/{domain}/
 └── utils/                   # [Optional] Feature-specific pure utils/helpers (create when needed)
 ```
 
-### Feature Common Modules (`features/_common/{domain}`)
+### Feature Common Module (`features/_common/{domain}`)
 
 Domain-contextual code reused across two or more Features is placed in `features/_common/{domain}/`.
 
@@ -47,11 +47,11 @@ app/features/_common/
     └── utils/               # [Optional] Pure utils/helpers shared across Features
 ```
 
-- Only code with domain context belongs in `features/_common/{domain}/`. (e.g., PO picker, settlement table)
+- Only place code with domain context in `features/_common/{domain}/`. (e.g., PO picker, settlement table)
 - Domain-specific pure functions/helpers shared across multiple Features go in `features/_common/{domain}/utils/`.
 - Domain-specific query hooks/options shared across multiple Features go in `features/_common/{domain}/api/`.
 - Domain-agnostic general-purpose code goes in `components/`, `hooks/`, `lib/`, `types/`.
-- `features/_common/{domain}/` must not import from `features/{domain}/`.
+- `features/_common/{domain}/` does not import from `features/{domain}/`.
 
 ---
 
@@ -139,9 +139,9 @@ export function use{Entity}Query(params: Get{Entity}Request) {
 
 ---
 
-## 3. Endpoint-Specific Helper Co-location
+## 3. Endpoint-Specific Helper Colocation
 
-If `transform`, `helper`, or screen-specific derived types are used by only one endpoint, keep them private within that endpoint's hook file. Promote to `types/`, `constants/`, `lib/` only when reused in two or more places.
+If `transform`, `helper`, or screen-specific derived types are used by only one endpoint, keep them private within that endpoint hook file. Promote to `types/`, `constants/`, `lib/` only when reused in two or more places.
 
 ```typescript
 // features/{domain}/api/use-{entity}s-query.ts
@@ -242,7 +242,7 @@ export function useDelete{Entity}Mutation() {
 ### Modifying routes.ts
 
 ```typescript
-// app/routes.ts — Add to existing array
+// app/routes.ts — Add to the existing array
 route("{domain}s", "./routes/dashboard/{domain}s.tsx"),
 route("{domain}s/:id", "./routes/dashboard/{domain}-detail.tsx"),
 ```
@@ -355,11 +355,11 @@ export function {Entity}CreateForm() {
         control={control}
         render={({ field }) => (
           <div className="flex flex-col gap-1">
-            <label htmlFor="name" className="text-sm font-medium text-gray-700">이름 <span aria-hidden="true">*</span></label>
+            <label htmlFor="name" className="text-sm font-medium text-gray-700">Name <span aria-hidden="true">*</span></label>
             <input
               id="name"
               className="rounded border border-gray-300 px-3 py-2 text-sm"
-              placeholder="이름을 입력하세요"
+              placeholder="Enter a name"
               {...field}
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? "name-error" : undefined}
@@ -374,11 +374,11 @@ export function {Entity}CreateForm() {
         control={control}
         render={({ field }) => (
           <div className="flex flex-col gap-1">
-            <label htmlFor="description" className="text-sm font-medium text-gray-700">설명</label>
+            <label htmlFor="description" className="text-sm font-medium text-gray-700">Description</label>
             <input
               id="description"
               className="rounded border border-gray-300 px-3 py-2 text-sm"
-              placeholder="설명을 입력하세요 (선택)"
+              placeholder="Enter a description (optional)"
               {...field}
               aria-invalid={!!errors.description}
               aria-describedby={errors.description ? "description-error" : undefined}
@@ -393,16 +393,16 @@ export function {Entity}CreateForm() {
         control={control}
         render={({ field }) => (
           <div className="flex flex-col gap-1">
-            <label htmlFor="status" className="text-sm font-medium text-gray-700">상태</label>
+            <label htmlFor="status" className="text-sm font-medium text-gray-700">Status</label>
             <select
               id="status"
               className="rounded border border-gray-300 px-3 py-2 text-sm"
               {...field}
               aria-invalid={!!errors.status}
             >
-              <option value="draft">초안</option>
-              <option value="active">활성</option>
-              <option value="inactive">비활성</option>
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </select>
             {errors.status && <p className="text-xs text-red-600">{errors.status.message}</p>}
           </div>
@@ -414,7 +414,7 @@ export function {Entity}CreateForm() {
         className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         disabled={createMutation.isPending || isSubmitting}
       >
-        생성
+        Create
       </button>
     </form>
   );
@@ -494,4 +494,4 @@ const sizeStyles = {
 } as const;
 ```
 
-> **Note**: UI components currently do not generate Storybook files (`.stories.tsx`) or per-component test files (`.test.tsx`) in the default structure. These can be added after separate agreement if needed.
+> **Note**: UI components currently do not generate Storybook files (`.stories.tsx`) or per-component test files (`.test.tsx`) in the base structure. These can be added after separate agreement if needed.

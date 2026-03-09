@@ -7,7 +7,7 @@
 
 ## 1. Tech Stack
 
-| Item | Version/Config |
+| Item | Version/Setting |
 | --- | --- |
 | React Router | 7 (Framework Mode) |
 | React | 19.2+ (React Compiler) |
@@ -22,12 +22,12 @@
 React Router 7's Framework Mode provides file-based routing, type-safe route modules, and build-time pre-rendering through the Vite plugin (`@react-router/dev`).
 
 - `ssr: false` -- Only disables runtime server rendering. In **SPA mode (without `prerender` configured)**, only the **root route** is server-rendered at build time to generate `index.html`. Therefore, the root route must be SSR-safe, and other routes are **not rendered at build time unless they are pre-render targets**.
-- `prerender` -- Pre-renders specific paths as HTML at build time. Since most pages are behind authentication, it is kept **disabled by default**, and only public pages like login/landing are selectively pre-rendered.
-- `prerender` can be configured as a path array, async function, or `{ paths, unstable_concurrency }` form.
+- `prerender` -- Pre-renders specific paths to HTML at build time. Since most pages are behind authentication, it is **disabled by default**, and only public pages like login/landing are selectively pre-rendered.
+- `prerender` can be configured as a path array, an async function, or in the `{ paths, unstable_concurrency }` format.
 - Since there is no runtime server, `action` and `headers` exports cannot be used.
 - `ssr: false` + **pre-rendering disabled** (default): `loader` is only called in the **root** route. (SPA mode)
 - `ssr: false` + **pre-rendering enabled**: `loader` is only called at build time **for pre-render target paths**.
-- Runtime data fetching uses TanStack Query as the single solution. `clientLoader` is only allowed for `ensureQueryData()` calls when route-level prefetching is needed. `clientAction` is only used after ADR approval in exceptional situations.
+- TanStack Query is used as the single solution for runtime data fetching. `clientLoader` is only allowed for calling `ensureQueryData()` when route-level prefetching is needed. `clientAction` is only used after ADR approval in exceptional cases.
 
 ---
 
@@ -35,7 +35,7 @@ React Router 7's Framework Mode provides file-based routing, type-safe route mod
 
 ### react-router.config.ts
 
-- **Rule**: [MUST] Create `react-router.config.ts` at the project root and specify `ssr: false`. Keep pre-rendering disabled by default and selectively configure only public pages.
+- **Rule**: [MUST] Create `react-router.config.ts` at the project root and specify `ssr: false`. Pre-rendering is disabled by default, and only public pages are selectively configured.
 - **Good example**:
 
 ```typescript
@@ -49,7 +49,7 @@ export default {
 } satisfies Config;
 ```
 
-### Dynamic Generation of Pre-render Paths
+### Dynamic Pre-render Path Generation
 
 - **Rule**: [MAY] If pre-render paths need to be dynamically calculated at build time, declare `prerender` as an async function.
 - **Good example**:
@@ -73,7 +73,7 @@ export default {
 
 ### Pre-render Parallel Processing
 
-- **Rule**: [MAY] To speed up builds when there are many pre-render target paths, use the `{ paths, unstable_concurrency }` form.
+- **Rule**: [MAY] Use the `{ paths, unstable_concurrency }` format to speed up builds when there are many pre-render target paths.
 
 > **Note**: `unstable_concurrency` is an experimental (unstable) API and may change in minor/patch versions.
 
@@ -93,7 +93,7 @@ export default {
 
 ### SPA Fallback (Hosting Configuration)
 
-- **Rule**: [MUST] When using `ssr: false` + pre-rendering only some paths, configure the hosting settings to route **non-pre-rendered paths** to a SPA Fallback HTML.
+- **Rule**: [MUST] When using `ssr: false` with only some paths pre-rendered, configure hosting settings to route **non-pre-rendered paths** to the SPA Fallback HTML.
 - **Additional rules**:
   - If `/` is **not pre-rendered**: Use `build/client/index.html` as the SPA Fallback.
   - If `/` is **pre-rendered**: Use `build/client/__spa-fallback.html` as the SPA Fallback.
@@ -128,19 +128,19 @@ export default defineConfig({
 
 ### Build-Time Rendering Environment
 
-- **Rule**: [MUST] Always be aware that components are executed in a Node.js environment at build time even with `ssr: false`.
+- **Rule**: [MUST] Be aware that even with `ssr: false`, components are executed in a Node.js environment at build time.
 
 > **Exact behavior (facts)**
-> - In SPA mode (`ssr: false` + `prerender` not configured), only the **root route** is server-rendered at build time.
-> - When `prerender` is configured, the **entire route tree matching the target paths** is rendered at build time.
+> - In SPA mode (`ssr: false` + no `prerender` configured), only the **root route** is server-rendered at build time.
+> - When `prerender` is configured, the **entire route tree matching those paths** is rendered at build time.
 > - `loader` is called only in the **root route** in SPA mode, and only in **pre-render target routes** in prerender mode.
 >
 > **Operational recommendation (policy)**
-> - Since pre-render target paths may change, **write all route components as SSR-safe**.
+> - Since pre-render target paths can change, **all route components should be written as SSR-safe**.
 
 ### Browser API Access Rules
 
-- **Rule**: [MUST] Access browser APIs (`window`, `document`, `localStorage`, `navigator`, etc.) only inside `useEffect` or event handlers.
+- **Rule**: [MUST] Browser APIs (`window`, `document`, `localStorage`, `navigator`, etc.) must only be accessed inside `useEffect` or event handlers.
 - **Rule**: [MUST NOT] Do not directly access browser APIs in the component function body (render path).
 
 - **Good example**:
@@ -186,7 +186,7 @@ function BadComponent() {
 
 ### typeof Guard Pattern
 
-- **Rule**: [MAY] When it is unavoidable to check browser APIs in the component body, use a `typeof window !== 'undefined'` guard.
+- **Rule**: [MAY] When it is unavoidable to check browser APIs in the component body, use the `typeof window !== 'undefined'` guard.
 - **Good example**:
 ```typescript
 function ViewportInfo() {
@@ -205,12 +205,12 @@ function ViewportInfo() {
 
 ### Browser-Only Libraries
 
-- **Rule**: [SHOULD] Dynamically import browser-only libraries (charts, editors, maps, etc.) using `lazy(() => import(...))`.
+- **Rule**: [SHOULD] Browser-only libraries (charts, editors, maps, etc.) should be dynamically imported using `lazy(() => import(...))`.
 - **Good example**:
 ```typescript
 import { lazy, Suspense } from 'react';
 
-// Separate browser-only library with lazy
+// Separate browser-only libraries with lazy
 const MapView = lazy(() => import('@/components/ui/map-view'));
 
 export default function LocationPage() {
@@ -228,7 +228,7 @@ export default function LocationPage() {
 
 ### Code-Based Route Definition
 
-- **Rule**: [MUST] Define routes using helper functions from `@react-router/dev/routes` in the `app/routes.ts` file.
+- **Rule**: [MUST] Define routes in the `app/routes.ts` file using helper functions from `@react-router/dev/routes`.
 - **Good example**:
 
 ```typescript
@@ -248,7 +248,7 @@ export default [
   // Basic route
   route("about", "./routes/about.tsx"),
 
-  // Layout route -- shared layout wrapping child routes without affecting URL
+  // Layout route -- shared layout that wraps child routes without affecting URL
   layout("./routes/auth/layout.tsx", [
     route("login", "./routes/auth/login.tsx"),
     route("signup", "./routes/auth/signup.tsx"),
@@ -282,11 +282,11 @@ export default [
 
 ### Layout Route vs Route Groups
 
-- **Rule**: [SHOULD] Use the `layout()` function to group related routes with a shared layout.
+- **Rule**: [SHOULD] The pattern of grouping related routes with a shared layout should be implemented using the `layout()` function.
 - **Good example**:
 
 ```typescript
-// routes.ts -- Apply different layouts to auth pages and dashboard pages
+// routes.ts -- Applying different layouts to auth pages and dashboard pages
 export default [
   layout("./routes/auth/layout.tsx", [
     route("login", "./routes/auth/login.tsx"),     // /login
@@ -302,7 +302,7 @@ export default [
 
 ---
 
-## 5. Route Module File Convention
+## 5. Route Module File Conventions
 
 ### Route Module Exports
 
@@ -312,11 +312,11 @@ export default [
 | --- | --- | --- |
 | `default` | Route UI component | Required |
 | `ErrorBoundary` | Route error boundary UI | Optional |
-| `meta` | Defines `<title>`, `<meta>` tags | Optional |
-| `links` | Defines `<link>` tags | Optional |
+| `meta` | `<title>`, `<meta>` tag definitions | Optional |
+| `links` | `<link>` tag definitions | Optional |
 | `handle` | Route match data (breadcrumb, etc.) | Optional |
 
-> **Note**: React Router also provides route data APIs such as `clientLoader`, `clientAction`, and `HydrateFallback`. This organization standardizes runtime data fetching with TanStack Query, and `clientLoader` is only allowed for route-level prefetching (`ensureQueryData`). `clientAction` is only used in ADR-approved exceptional cases. For data fetching, refer to [7. Data Fetching Strategy](#7-data-fetching-strategy).
+> **Note**: React Router also provides route data APIs such as `clientLoader`, `clientAction`, and `HydrateFallback`. This organization unifies runtime data fetching with TanStack Query, and `clientLoader` is only allowed for route-level prefetching (`ensureQueryData`). `clientAction` is only used in ADR-approved exceptional cases. For data fetching, refer to [7. Data Fetching Strategy](#7-data-fetching-strategy).
 
 ### handle Export (Breadcrumb, etc.)
 
@@ -391,7 +391,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-// Route UI component -- responsible only for composing Feature components
+// Route UI component -- only responsible for composing Feature components
 export default function OrdersPage() {
   return (
     <PageLayout title="주문 관리">
@@ -415,7 +415,7 @@ export function ErrorBoundary() {
 
 ### Type-Safe Route Modules (+types)
 
-- **Rule**: [MUST] In route modules, import the `Route` type from the auto-generated `./+types/` directory.
+- **Rule**: [MUST] In route modules, the `Route` type must be imported from the auto-generated `./+types/` directory.
 - **Good example**:
 
 ```typescript
@@ -440,7 +440,7 @@ export default function OrderDetailPage() {
 
 ### Layout Function
 
-- **Rule**: [MUST] Export a `Layout` function from `app/root.tsx` to define the HTML document shell.
+- **Rule**: [MUST] Export a `Layout` function in `app/root.tsx` to define the HTML document shell.
 - **Good example**:
 
 ```typescript
@@ -487,7 +487,7 @@ export function ErrorBoundary() {
 
 ### HydrateFallback (SPA Initial Loading UI)
 
-- **Rule**: [SHOULD] Export `HydrateFallback` from the root route to provide a SPA initial loading UI.
+- **Rule**: [SHOULD] Export `HydrateFallback` in the root route to provide a SPA initial loading UI.
 - **Good example**:
 
 ```typescript
@@ -506,7 +506,7 @@ export function HydrateFallback() {
 
 ### Global Style Connection
 
-- **Rule**: [MUST] Connect global CSS through the `links` export in `root.tsx`.
+- **Rule**: [MUST] Global CSS must be connected through the `links` export in `root.tsx`.
 - **Good example**:
 
 ```typescript
@@ -525,33 +525,33 @@ export const links: LinksFunction = () => [
 
 ### Basic Principles
 
-In an `ssr: false` environment, since there is no runtime server:
+In an `ssr: false` environment, there is no runtime server, so:
 - `action` and `headers` exports cannot be used.
-- `loader` is only allowed for build-time data generation in prerender paths.
-- **[MUST] Use TanStack Query as the single solution for all runtime data fetching.**
+- `loader` is only allowed for build-time data generation on prerender paths.
+- **[MUST] All runtime data fetching uses TanStack Query as the single solution.**
 - **[MAY] When route-level prefetching is needed, `ensureQueryData()` can be called in `clientLoader`.**
-- `clientAction` is not used by default. Exceptional usage is controlled through ADR approval.
+- `clientAction` is not used by default. Exceptional use is controlled through ADR approval.
 
-> **Note**: React Router provides `clientLoader`/`clientAction` APIs. Their roles overlap with TanStack Query, and TanStack Query is more powerful in terms of caching, background refreshing, and duplicate request prevention. Runtime fetching layer is standardized with TanStack Query, while `clientLoader` can be utilized as a prefetch trigger to prevent data waterfalls during route transitions.
+> **Note**: React Router provides `clientLoader`/`clientAction` APIs. Their roles overlap with TanStack Query, and TanStack Query is more powerful in terms of caching, background refresh, and duplicate request prevention. The runtime fetching layer is unified with TanStack Query, while `clientLoader` can be used as a prefetch trigger to prevent data waterfalls during route transitions.
 
 ### Methods by Data Fetching Scenario
 
 | Scenario | Method |
 | --- | --- |
-| Initial data on route entry | TanStack Query `useQuery` / `useSuspenseQuery` *(static public pages allow prerender + optional loader)* |
+| Initial data on route entry | TanStack Query `useQuery` / `useSuspenseQuery` *(static public pages may use prerender + optional loader)* |
 | List data (filter, sort, pagination) | TanStack Query `useQuery` |
 | Infinite scroll | TanStack Query `useInfiniteQuery` |
 | Real-time data (polling) | TanStack Query `useQuery` + `refetchInterval` |
 | Data mutation (create/update/delete) | TanStack Query `useMutation` + `invalidateQueries` |
 | Form submission | React Hook Form + TanStack Query `useMutation` |
 | Cache invalidation | TanStack Query `invalidateQueries` |
-| Route-level prefetch | `clientLoader` + `queryClient.ensureQueryData()` |
+| Route-level prefetching | `clientLoader` + `queryClient.ensureQueryData()` |
 
 ### Prefetching with clientLoader (Optional)
 
-- **Rule**: [MAY] To prevent waterfalls of initial data on route entry, `ensureQueryData` from TanStack Query can be used in `clientLoader`.
+- **Rule**: [MAY] To prevent waterfall of initial data on route entry, `ensureQueryData` from TanStack Query can be used in `clientLoader`.
 
-> **Note**: This pattern is optional. In most cases, `useQuery`/`useSuspenseQuery` inside Feature components is sufficient. Only apply this when waterfalls of multiple queries on route entry become a problem.
+> **Note**: This pattern is optional. In most cases, `useQuery`/`useSuspenseQuery` inside Feature components is sufficient. Apply this only when waterfall of multiple queries on route entry becomes an issue.
 
 - **Good example**:
 
@@ -581,11 +581,11 @@ export default function OrdersPage() {
 
 ### Data Fetching in Feature Components
 
-- **Rule**: [MUST] Data fetching is performed inside Feature components through TanStack Query custom hooks. Do not fetch data in route modules (Page components).
+- **Rule**: [MUST] Data fetching must be performed inside Feature components through TanStack Query custom hooks. Do not fetch data in route modules (Page components).
 - **Good example**:
 
 ```typescript
-// app/routes/dashboard/orders.tsx -- Route module (responsible only for composition)
+// app/routes/dashboard/orders.tsx -- Route module (responsible for composition only)
 import { OrderList } from "@/features/order/components/order-list";
 import { PageLayout } from "@/components/layout/page-layout";
 
@@ -620,7 +620,7 @@ export function OrderList() {
 
 ### Data Mutation
 
-- **Rule**: [MUST] Use TanStack Query's `useMutation` for data mutations (create, update, delete). Invalidate related caches with `invalidateQueries` on success.
+- **Rule**: [MUST] Data mutations (create, update, delete) must use TanStack Query's `useMutation`. On success, invalidate related caches with `invalidateQueries`.
 - **Good example**:
 
 ```typescript
@@ -668,7 +668,7 @@ import { Link, NavLink } from "react-router";
 
 ### Outlet
 
-- **Rule**: [MUST] Use `<Outlet />` at the position where nested route child components are rendered.
+- **Rule**: [MUST] Use `<Outlet />` at the position where child components of nested routes should be rendered.
 - **Good example**:
 
 ```typescript
@@ -691,7 +691,7 @@ export default function DashboardLayout() {
 ### useNavigate()
 
 - **Rule**: [MUST] Use `useNavigate()` for programmatic page navigation.
-- **Rule**: [MUST NOT] Do not call `navigate()` unconditionally inside `useEffect`. There is a risk of infinite redirects.
+- **Rule**: [MUST NOT] Do not call `navigate()` unconditionally inside `useEffect`. This risks infinite redirects.
 - **Good example**:
 
 ```typescript
@@ -739,7 +739,7 @@ function BadRedirect() {
 
 ### useNavigation()
 
-- **Rule**: [SHOULD] For route transition state UI (global loading bar, etc.), utilize the `state` value from `useNavigation()`.
+- **Rule**: [SHOULD] Route transition state UI (global loading bar, etc.) should use the `state` value from `useNavigation()`.
 
 ```typescript
 import { useNavigation } from "react-router";
@@ -760,13 +760,13 @@ function GlobalLoadingBar() {
 
 ### URL State Management
 
-- **Rule**: [MUST] Manage complex URL state such as filters, sorting, and pagination with nuqs (`useQueryStates`). Follow the URL state management section in STATE_CONVENTION.md for detailed patterns.
-- **Rule**: [MAY] For simple cases that only read a single parameter, `useSearchParams()` can be used.
+- **Rule**: [MUST] Complex URL state such as filters, sorting, and pagination must be managed with nuqs (`useQueryStates`). Follow the detailed patterns in the URL State Management section of STATE_CONVENTION.md.
+- **Rule**: [MAY] For simple cases where only a single parameter needs to be read, `useSearchParams()` can be used.
 
 ### Scroll Restoration
 
-- **Rule**: [MUST] Include `<ScrollRestoration />` inside the `Layout` function of `root.tsx`.
-- To force scroll to the top on specific routes, call `window.scrollTo(0, 0)` in `useEffect`.
+- **Rule**: [MUST] Include `<ScrollRestoration />` inside the `Layout` function in `root.tsx`.
+- To force scroll to top on specific routes, call `window.scrollTo(0, 0)` in `useEffect`.
 
 ---
 
@@ -774,11 +774,11 @@ function GlobalLoadingBar() {
 
 ### Token Storage
 
-- **Rule**: [MUST] Store the Access Token in memory (module-scope variable). The Refresh Token is managed by the backend via `httpOnly` cookies.
+- **Rule**: [MUST] Access Token must be stored in memory (module-scope variable). Refresh Token is managed by the backend via `httpOnly` cookie.
 
 ### AuthGuard Layout
 
-- **Rule**: [MUST] Wrap routes that require authentication with an AuthGuard layout using the `layout()` function. Redirect unauthenticated users to the login page with a `/login?returnTo=` parameter.
+- **Rule**: [MUST] Routes requiring authentication must be wrapped with an AuthGuard layout using the `layout()` function. When unauthenticated, redirect to the login page with a `/login?returnTo=` parameter.
 
 ```typescript
 // app/routes.ts
@@ -856,7 +856,7 @@ export default function GuestGuard() {
 
 ### RoleGuard
 
-- **Rule**: [SHOULD] When role-based access control is needed, create guard route modules per role. Since they are used with the `layout()` function in `routes.ts`, separate files by role.
+- **Rule**: [SHOULD] When role-based access control is needed, create guard route modules per role. Since they are used with the `layout()` function in `routes.ts`, separate files per role.
 
 ```typescript
 // app/routes/guards/admin-guard.tsx -- Used as a layout() route module
@@ -881,7 +881,7 @@ export default function AdminGuard() {
 
 ### Authentication State Management
 
-- **Rule**: [SHOULD] Manage current user information (authentication state) with TanStack Query (`useCurrentUser` hook). Do not duplicate it in a Zustand store.
+- **Rule**: [SHOULD] Current user information (authentication state) should be managed with TanStack Query (`useCurrentUser` hook). Do not replicate it in a Zustand store.
 
 ```typescript
 // features/auth/api/query-options.ts
@@ -913,7 +913,7 @@ export function useCurrentUser() {
 
 ### ErrorBoundary Export
 
-- **Rule**: [SHOULD] Export `ErrorBoundary` in each route module to provide route-specific error UI.
+- **Rule**: [SHOULD] Export an `ErrorBoundary` in each route module to provide route-specific error UI.
 - **Good example**:
 
 ```typescript
@@ -943,15 +943,15 @@ export function ErrorBoundary() {
 
 ### Global Error Boundary
 
-- **Rule**: [MUST] Export `ErrorBoundary` in `root.tsx` to handle top-level errors.
+- **Rule**: [MUST] Export an `ErrorBoundary` in `root.tsx` to handle top-level errors.
 
 ---
 
 ## 11. Loading States
 
-### TanStack Query Loading State
+### TanStack Query Loading States
 
-- **Rule**: [MUST] Handle default loading states inside Feature components through TanStack Query's `isPending`/`isLoading` states.
+- **Rule**: [MUST] Default loading states should be handled inside Feature components through TanStack Query's `isPending`/`isLoading` states.
 - **Good example**:
 
 ```typescript
@@ -971,7 +971,7 @@ export function OrderList() {
 
 ### Loading Pattern with Suspense
 
-- **Rule**: [MAY] Combine TanStack Query's `useSuspenseQuery` with `<Suspense>` to implement declarative loading UI.
+- **Rule**: [MAY] Declarative loading UI can be implemented by combining TanStack Query's `useSuspenseQuery` with `<Suspense>`.
 - **Good example**:
 
 ```typescript
@@ -1006,21 +1006,21 @@ export function OrderList() {
 
 ## 12. Environment Variable Management
 
-- **Rule**: [MUST] Use the `VITE_` prefix for variables exposed to the client.
+- **Rule**: [MUST] Variables to be exposed to the client must use the `VITE_` prefix.
 - **Rule**: [MUST NOT] Do not use the `VITE_` prefix for sensitive information such as API keys, secrets, or DB URLs.
 
 | Variable | Prefix | Correct Usage |
 | --- | --- | --- |
 | `VITE_API_URL` | VITE_ | Public API endpoint |
 | `VITE_GA_ID` | VITE_ | Public ID used in the browser |
-| `DATABASE_URL` | None | Access only from build-time scripts |
-| `JWT_SECRET` | None | Access only from the server (prerender build scripts, etc.) |
+| `DATABASE_URL` | None | Accessed only in build-time scripts |
+| `JWT_SECRET` | None | Accessed only on the server (pre-render build scripts, etc.) |
 
 - **Good example**:
 
 ```bash
-VITE_API_URL=https://api.example.com   # Used for API calls from the client
-DATABASE_URL=postgresql://user:pass@host/db    # Access only from build scripts
+VITE_API_URL=https://api.example.com   # Used for API calls on the client
+DATABASE_URL=postgresql://user:pass@host/db    # Accessed only in build scripts
 ```
 
 - **Bad example**:
@@ -1035,7 +1035,7 @@ VITE_JWT_SECRET=my-secret-key                      # JWT secret exposed!
 ## 13. Code Splitting
 
 - **Rule**: React Router Framework Mode automatically code-splits each route module. There is no need to use `React.lazy` or `dynamic import` at the route level.
-- **Rule**: [SHOULD] Within routes, additionally split heavy components (charts, editors, etc.) using `React.lazy`.
+- **Rule**: [SHOULD] Heavy components inside routes (charts, editors, etc.) should be additionally split using `React.lazy`.
 - **Good example**:
 
 ```typescript
@@ -1084,7 +1084,7 @@ function Hero() {
 
 ### Fonts
 
-- **Rule**: [SHOULD] Define fonts used in the project with `@font-face` in `app/globals.css` or load them via CDNs such as Google Fonts.
+- **Rule**: [SHOULD] Fonts used in the project should be defined with `@font-face` in `app/globals.css` or loaded through a CDN such as Google Fonts.
 
 ---
 
@@ -1092,7 +1092,7 @@ function Hero() {
 
 ### List-to-Detail Hover Prefetch
 
-- **Rule**: [SHOULD] When transitioning from list to detail, prefetch data at the link hover timing using `queryClient.prefetchQuery()`.
+- **Rule**: [SHOULD] When transitioning from list to detail, prefetch data at link hover time using `queryClient.prefetchQuery()`.
 
 ```typescript
 import { Link } from "react-router";
@@ -1149,7 +1149,7 @@ export function PrefetchLink({ queryOptions, children, ...linkProps }: PrefetchL
 
 ## 16. Middleware (v7.9+)
 
-- **Rule**: [SHOULD] The Middleware API (`future.v8_middleware`) from React Router 7.9+ can be utilized to handle cross-cutting concerns such as authentication and logging.
+- **Rule**: [SHOULD] React Router 7.9+'s Middleware API (`future.v8_middleware`) can be used to handle cross-cutting concerns such as authentication and logging.
 
 > **Note**: The Middleware API was stabilized in React Router v7.9.0 through the `future.v8_middleware` flag. It is activated by adding `future: { v8_middleware: true }` to `react-router.config.ts`. It supports both server middleware and client middleware, but in an `ssr: false` environment, **only client middleware** can be used.
 
@@ -1190,11 +1190,11 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 
 - **Rule**: [MUST NOT] Do not use `loader` in routes that are not pre-render targets. (Only the root route is an exception in SPA mode)
 
-- **Rule**: [MUST NOT] Do not directly use `createBrowserRouter` in Framework Mode.
+- **Rule**: [MUST NOT] Do not use `createBrowserRouter` directly in Framework Mode.
 
-- **Rule**: [SHOULD NOT] Do not use `clientLoader`/`clientAction` as direct data fetching methods. `clientLoader` is only for TanStack Query `ensureQueryData` calls, and `clientAction` is only used after ADR approval.
+- **Rule**: [SHOULD NOT] Do not use `clientLoader`/`clientAction` as direct data fetching mechanisms. `clientLoader` should only be used for TanStack Query `ensureQueryData` calls, and `clientAction` should only be used after ADR approval.
 
-- **Rule**: [MUST NOT] Do not directly call `useQuery`/`useMutation` etc. in route modules (Page components).
+- **Rule**: [MUST NOT] Do not call `useQuery`/`useMutation` etc. directly in route modules (Page components).
 
 - **Rule**: [SHOULD NOT] Do not write business logic directly in route modules.
 

@@ -48,7 +48,7 @@
 
 ### Layer Caching Optimization
 
-- [SHOULD] Place less frequently changing instructions at the top of the Dockerfile and more frequently changing instructions at the bottom.
+- [SHOULD] Place instructions that change less frequently at the top of the Dockerfile, and those that change more frequently at the bottom.
 - **Good example**:
   ```dockerfile
   COPY package.json pnpm-lock.yaml ./
@@ -59,7 +59,7 @@
 
 ### RUN Instruction Optimization
 
-- [SHOULD] Chain related `RUN` instructions with `&&` and clean up package manager caches in the same layer.
+- [SHOULD] Chain related `RUN` instructions with `&&`, and clean up package manager caches in the same layer.
 - **Good example**:
   ```dockerfile
   RUN apk add --no-cache curl tzdata && \
@@ -68,7 +68,7 @@
 
 ### .dockerignore
 
-- [MUST] Create a `.dockerignore` file in the project root to exclude unnecessary files from the build context.
+- [MUST] Create a `.dockerignore` file at the project root to exclude unnecessary files from the build context.
 - **Good example**:
   ```
   node_modules
@@ -83,7 +83,7 @@
 
 ### COPY vs ADD
 
-- [SHOULD] Use `COPY` instead of `ADD` for copying files. (`ADD` has implicit behaviors such as automatic decompression)
+- [SHOULD] Use `COPY` instead of `ADD` for copying files. (`ADD` has implicit behaviors such as automatic archive extraction)
 
 ## Image Naming/Tagging
 
@@ -149,7 +149,7 @@
 
 ### Health Check
 
-- [SHOULD] Define `healthcheck` for dependent services and use `condition: service_healthy` in `depends_on`.
+- [SHOULD] Define `healthcheck` for dependent services, and use `condition: service_healthy` in `depends_on`.
 
 ### Volumes
 

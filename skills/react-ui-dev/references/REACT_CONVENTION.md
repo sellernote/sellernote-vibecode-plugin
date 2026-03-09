@@ -5,9 +5,9 @@
 
 ---
 
-## 1. Tech Stack
+## 1. Technology Stack
 
-| Item | Version/Config |
+| Item | Version/Configuration |
 | --- | --- |
 | React | 19.2+ |
 | TypeScript | 5.x |
@@ -16,7 +16,7 @@
 | Virtualization | @tanstack/react-virtual (when needed) |
 
 > **React 19 syntax changes**: The code examples in this document are written based on React 19.
-> - Context: In React 19, you can use the `<MyContext value={...}>` syntax. `<MyContext.Provider>` is legacy syntax from before React 19.
+> - Context: In React 19, you can use the `<MyContext value={...}>` syntax. `<MyContext.Provider>` is a legacy syntax from before React 19.
 > - ref: In React 19, you can pass `ref` as a regular prop. `forwardRef` still works but is scheduled to be deprecated in a future release.
 > - In previous versions (React 18 and below), this syntax does not work.
 
@@ -89,7 +89,7 @@ export { Select };
 
 ### Controlled vs Uncontrolled Components
 
-- **Rule**: [MUST] Input components within forms must be written as controlled components. However, one-off internal UI that does not need external value management may remain uncontrolled.
+- **Rule**: [MUST] Input components within forms must be written as Controlled components. However, one-off internal UI elements that don't need external value management may remain Uncontrolled.
 - **Good example**:
 
 ```typescript
@@ -116,7 +116,7 @@ function SignupForm() {
 
 ### Conditional Rendering
 
-- **Rule**: [MUST] When using conditional rendering, do not use numeric values (number) directly on the left side of the `&&` operator. Use ternary operators or early return patterns for complex conditions.
+- **Rule**: [MUST] Do not use numeric values (number) directly on the left side of the `&&` operator in conditional rendering. Use ternary operators or early return patterns for complex conditions.
 - **Good example**:
 
 ```typescript
@@ -150,10 +150,10 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 
 ### Dialog / Overlay Rendering
 
-- **Rule**: [MUST] Overlay components such as `Dialog`, `Sheet`, and `AlertDialog` must always be rendered, with open/close controlled via the `open` prop.
+- **Rule**: [MUST] Overlay components such as `Dialog`, `Sheet`, and `AlertDialog` should always be rendered, with open/close state controlled via the `open` prop.
 - **Rule**: [MUST NOT] Do not conditionally render the overlay shell itself like `{open && <Dialog />}`.
-- **Rule**: [SHOULD] If you want to render heavy content only when open, conditionally render only the internal content such as `DialogContent`.
-- **Rule**: [SHOULD] When internal state needs to be reset when the target id changes (e.g., Edit Dialog), use `key={id}`.
+- **Rule**: [SHOULD] If you need to render heavy content only when open, conditionally render only the internal content such as `DialogContent`.
+- **Rule**: [SHOULD] When internal state needs to be reset when a target id changes (e.g., Edit Dialog), use `key={id}`.
 - **Good example**:
 
 ```tsx
@@ -177,7 +177,7 @@ function EditUserDialog({ open, onOpenChange, userId }: Props) {
 }
 ```
 
-- **Custom overlay rules**: Even when not using shadcn `Dialog`, separate the shell and content. Place the exported shell component at the bottom of the file, and mount the actual stateful content only when open.
+- **Custom overlay rules**: Even when not using shadcn `Dialog`, separate the shell and content. Place the exported shell component at the bottom of the file, and mount the actual stateful content only when opened.
 
 ### List Rendering and key
 
@@ -215,7 +215,7 @@ function ProductList({ products }: { products: Product[] }) {
 }
 ```
 
-### children and Composition Patterns In-Depth
+### children and Composition Pattern Deep Dive
 
 - **Rule**: [SHOULD] Layout or wrapper components should use the composition pattern via the `children` prop. Render Props should only be used when JSX rendering control is needed that cannot be replaced by hooks.
 - **Good example**:
@@ -242,9 +242,9 @@ function Text<T extends React.ElementType = "p">({
 
 ### Component File Consistency
 
-- **Rule**: [MUST] The component file name must match the primary component name. (`OrderList.tsx` ↔ `OrderList`)
-- **Rule**: [MUST NOT] Do not place unrelated screen components or domain components together in a single file.
-- **Rule**: [MUST] The placement of components/data logic must follow the layer rules in `ARCHITECTURE_CONVENTION.md`.
+- **Rule**: [MUST] The component file name must match the representative component name. (`OrderList.tsx` ↔ `OrderList`)
+- **Rule**: [MUST NOT] Do not place unrelated page components or domain components in the same file.
+- **Rule**: [MUST] The placement of component/data logic must follow the layer rules in `ARCHITECTURE_CONVENTION.md`.
 
 ---
 
@@ -252,7 +252,7 @@ function Text<T extends React.ElementType = "p">({
 
 ### Basic Rules
 
-- **Rule**: [MUST] Hooks must only be called at the top level of component functions or Custom Hooks. Do not call them inside conditionals, loops, or nested functions.
+- **Rule**: [MUST] Hooks must only be called at the top level of a component function or Custom Hook. Do not call them inside conditions, loops, or nested functions.
 - **Good example**:
 
 ```typescript
@@ -270,7 +270,7 @@ function UserProfile({ userId }: { userId: string }) {
 
 ### useState Patterns
 
-- **Rule**: [MUST] Updates that depend on previous state must use functional updates. Object state must be updated immutably using spread.
+- **Rule**: [MUST] Use functional updates for state updates that depend on the previous state. Update object state immutably using spread syntax.
 - **Good example**:
 
 ```typescript
@@ -304,7 +304,7 @@ function ProfileForm() {
 
 ### useEffect Rules
 
-- **Rule**: [MUST] All reactive values referenced inside `useEffect` must be explicitly listed in the dependency array without omission. The ESLint `exhaustive-deps` rule must be enabled.
+- **Rule**: [MUST] Explicitly list all reactive values referenced inside the Effect in the `useEffect` dependency array without omission. The ESLint `exhaustive-deps` rule must be enabled.
 - **Rule**: [MUST] `useEffect` should only be used for synchronization with external systems (DOM manipulation, subscriptions, timers). Do not use it for event handling or derived state computation.
 - **Rule**: [MUST] Effects that require cleanup (subscriptions, timers, connections) must return a cleanup function.
 - **Good example**:
@@ -334,10 +334,10 @@ function ProductList({ products }: { products: Product[] }) {
 
 ### useRef Usage Patterns
 
-> **Note**: The ref passing approach itself is based on Section 4 "Passing ref directly as a prop".
+> **Note**: The ref passing approach itself follows Section 4 "Passing ref directly as a prop".
 
-- **Rule**: [SHOULD] Values that do not affect rendering results (timer IDs, previous value tracking, flags) should be stored with `useRef` instead of `useState`.
-- **Rule**: [MUST] When performing side effects inside a callback ref (observer registration, measurement, focus management, etc.), use `useCallback`.
+- **Rule**: [SHOULD] Values that do not affect the rendering result (timer IDs, previous value tracking, flags) should be stored with `useRef` instead of `useState`.
+- **Rule**: [MUST] Use `useCallback` when performing side effects such as observer registration, measurement, or focus shifting inside a callback ref.
 - **Good example**:
 
 ```typescript
@@ -374,9 +374,9 @@ function ResizablePanel() {
 
 ### useMemo / useCallback
 
-- **Rule**: [SHOULD NOT] In new code, do not use `useMemo`, `useCallback`, or `React.memo` by default. Rely on the Compiler's automatic optimization as the baseline.
-- **Rule**: [MAY] Use them only when there are measured performance issues or third-party compatibility problems.
-- **Rule**: [MAY] Use `useCallback` when reference stability is needed due to React behavior characteristics, such as callback ref stabilization.
+- **Rule**: [SHOULD NOT] In new code, do not use `useMemo`, `useCallback`, or `React.memo` by default. Rely on the Compiler's automatic optimization as the default.
+- **Rule**: [MAY] Use them only in limited cases where measured performance issues exist or third-party compatibility problems arise.
+- **Rule**: [MAY] Use `useCallback` when reference stability is needed due to React's behavioral characteristics, such as stabilizing callback refs.
 > **Note**: Manual memo and `"use no memo"` are separate concepts. `"use no memo"` is not a tool for using manual memo — it is an **escape hatch that disables compiler optimization for that function**. See the `"use no memo"` section below for details.
 - **Good example**:
 
@@ -404,13 +404,13 @@ function ProductList({ products, filter }: { products: Product[]; filter: string
 ### Custom Hooks Design
 
 - **Rule**: [MUST] Custom Hook names must start with `use`.
-- **Rule**: [MUST] Each Hook must be responsible for a single concern.
-- **Rule**: [SHOULD] Hooks should encapsulate state and logic that have reuse value. One-off UI state used only in a specific component (modal open/close, etc.) should be managed within that component by default.
-- **Rule**: [SHOULD] Pure functions that do not depend on internal Hook state should be extracted outside the Hook function. They can be placed as private helpers at the top of the same file.
+- **Rule**: [MUST] Each Hook should be responsible for a single concern.
+- **Rule**: [SHOULD] Hooks should encapsulate reusable state and logic. One-off UI state used only in a specific component (modal open/close, etc.) should be managed within that component by default.
+- **Rule**: [SHOULD] Pure functions that do not depend on the Hook's internal state should be extracted outside the Hook function. They can be placed as private helpers at the top of the same file.
 - **Rule**: [MUST] The placement of data transformation functions and layer separation must follow the rules in ARCHITECTURE_CONVENTION.md.
 - **Rule**: [SHOULD] Hook parameters should prioritize a flat structure by default.
 - **Rule**: [MAY] Values that move together, such as `filters`, `pagination`, and `sort`, can be grouped and passed as an object.
-- **Rule**: [SHOULD] Return values should be objects when destructuring is natural, and arrays (tuples) for simple value/function pairs.
+- **Rule**: [SHOULD] Return values should be returned as objects when destructuring is natural, and as arrays (tuples) for simple value/function pairs.
 - **Good example**:
 
 ```typescript
@@ -504,7 +504,7 @@ function useScheduleList({
 
 - **Rule**: [SHOULD] Use the `use()` hook when reading Promise or Context values, and components that consume Promises must be placed inside a `<Suspense>` boundary.
 
-> **Note**: The pattern of consuming Promises with `use()` works by receiving a Promise created in a parent component via props. For most data fetching, use TanStack Query (`useQuery`, `useSuspenseQuery`). `use()` is utilized for reading already-created Promises or conditionally reading Context.
+> **Note**: The pattern of consuming Promises with `use()` works by receiving a Promise created in a parent component via props. For most data fetching, use TanStack Query (`useQuery`, `useSuspenseQuery`). `use()` is used for reading already-created Promises or conditionally reading Context.
 
 - **Good example**:
 
@@ -556,17 +556,17 @@ function ThemeText({ showTheme }: { showTheme: boolean }) {
 ### React Compiler (v1.0 Stable)
 
 - **Rule**: [MUST] Enable React Compiler from the start in new projects.
-- **Rule**: [SHOULD NOT] Do not use manual memo by default in new code. Use it only as an exception when necessary. (See the `useMemo / useCallback` section above for detailed criteria)
+- **Rule**: [SHOULD NOT] In new code, do not use manual memo by default. Use it only as an exception when necessary. (See the `useMemo / useCallback` section above for detailed criteria)
 
 > **v1.0 major changes**:
 > - `eslint-plugin-react-compiler` has been integrated into `eslint-plugin-react-hooks`. In Flat Config, applying the `react-hooks/recommended` or `recommended-latest` preset enables Compiler-related lint rules.
-> - In projects with Compiler enabled, manual memo is not used by default. Use it only as an exception when necessary.
+> - In projects with Compiler enabled, do not use manual memo by default. Use it only as an exception when necessary.
 
 #### Compiler + ESLint Operation Rules
 
 - **Rule**: [MUST] Use the latest version of `eslint-plugin-react-hooks` and apply the `react-hooks/recommended` or `recommended-latest` preset based on Flat Config.
-- **Rule**: [MUST] Enforce `rules-of-hooks`, `immutability`, `purity`, `refs`, `set-state-in-render` rules as `error` in CI.
-- **Rule**: [MUST] Treat React Compiler as a performance optimization tool only. Write code so that logic correctness is maintained even when the compiler is disabled.
+- **Rule**: [MUST] Enforce the `rules-of-hooks`, `immutability`, `purity`, `refs`, and `set-state-in-render` rules as `error` in CI.
+- **Rule**: [MUST] Treat React Compiler solely as a performance optimization tool. Write code so that logical correctness is maintained even when the compiler is disabled.
 
 - **Good example**:
 
@@ -593,8 +593,8 @@ function ProductList({ products, filter }: ProductListProps) {
 
 ### "use no memo" Directive
 
-- **Rule**: [MAY] When React Compiler is incompatible with a specific component/Hook and causes behavioral issues, declare `"use no memo"` at the top of that function to **exclude only that function from compiler optimization**.
-- **Rule**: [SHOULD] `"use no memo"` is **not a means to use manual memo**, but an **emergency workaround** for cases where the compiler's transformation causes problems. Leave a comment explaining the cause and removal conditions when used.
+- **Rule**: [MAY] When React Compiler is incompatible with a specific component/Hook and causes behavioral issues, you can declare `"use no memo"` at the top of that function to **exclude only that function from compiler optimization**.
+- **Rule**: [SHOULD] `"use no memo"` is **not a means for using manual memo**, but an **emergency workaround** for cases where the compiler's transformation causes problems. Leave a comment with the cause and removal conditions when used.
 - **Good example**:
 
 ```typescript
@@ -623,7 +623,7 @@ function RevenueChart({ data }: { data: ChartData[] }) {
 
 - **Additional rules**:
   - `dispatchAction` (or `formAction`) should only be called via the `<form action={...}>` path or inside `startTransition()`.
-  - `useActionState` action receives **the previous state** as its first argument.
+  - The `useActionState` action receives the **previous state** as its first argument.
 
 - **Good example**:
 
@@ -720,7 +720,7 @@ export function LikeButton({ postId, initialIsLiked }: { postId: string; initial
 
 ### useEffectEvent (stable, React 19.2+)
 
-- **Rule**: [SHOULD] Callbacks that are used inside Effects but should not be included in the dependency array (logging, analytics events, etc.) should be wrapped with `useEffectEvent`.
+- **Rule**: [SHOULD] Wrap callbacks used inside an Effect but that should not be included in the dependency array (logging, analytics events, etc.) with `useEffectEvent`.
 - **Additional rules**:
   - Functions created with `useEffectEvent` should only be called inside Effects.
   - Do not pass Effect Event functions as props or use them like external utility functions.
@@ -749,7 +749,7 @@ function ChatRoom({ roomId, theme }: { roomId: string; theme: string }) {
 
 ### Activity (stable, React 19.2+)
 
-- **Rule**: [MAY] For UI that is hidden from the screen but needs to preserve state (tab switching, back navigation cache, etc.), you can use the `<Activity>` component. It works using a `display: none` + state preservation approach.
+- **Rule**: [MAY] For UI that is hidden from view but needs to preserve state (tab switching, back navigation cache, etc.), the `<Activity>` component can be used. It works with a `display: none` + state preservation approach.
 - **Good example**:
 
 ```typescript
@@ -809,7 +809,7 @@ function TextInput({ label, placeholder, ref }: TextInputProps) {
 
 ### Metadata Support
 
-- **Rule**: [SHOULD] React 19 automatically hoists `<title>` and `<meta>` tags rendered inside components to `<head>`. When a router framework provides a route-level metadata API, use that API first. For component-level dynamic metadata, use React's built-in support.
+- **Rule**: [SHOULD] React 19 automatically hoists `<title>` and `<meta>` tags rendered inside components to `<head>`. If a router framework provides a route-level metadata API, prioritize that API. Use React's built-in support for component-level dynamic metadata.
 - **Good example**:
 
 ```typescript
@@ -827,7 +827,7 @@ export default function BlogPostPage({ post }: { post: Post }) {
 
 ### Root Error Callbacks (`createRoot` Options)
 
-- **Rule**: [SHOULD] Projects that need global error collection (Sentry, etc.) should use the `onUncaughtError`, `onCaughtError`, and `onRecoverableError` callbacks of `createRoot`/`hydrateRoot`.
+- **Rule**: [SHOULD] Projects that require global error collection (Sentry, etc.) should use the `onUncaughtError`, `onCaughtError`, and `onRecoverableError` callbacks of `createRoot`/`hydrateRoot`.
 - **Good example**:
 
 ```typescript
@@ -854,7 +854,7 @@ root.render(<App />);
 
 ### Handler Naming
 
-- **Rule**: [MUST] Event callbacks exposed via Props use the `onXxx` format, and internal handler functions within a component use the `handleXxx` format.
+- **Rule**: [MUST] Event callbacks exposed as props use the `onXxx` format, and internal handler functions within components use the `handleXxx` format.
 - **Good example**:
 
 ```typescript
@@ -888,7 +888,7 @@ interface FilterPanelProps {
 
 ### Event Types
 
-- **Rule**: [MUST] When extracting event handlers into separate functions, specify the correct React event type. Do not use `any` or the DOM native `Event` type.
+- **Rule**: [MUST] When extracting event handlers into separate functions, specify the correct React event type. Do not use `any` or DOM native `Event` types.
 - **Good example**:
 
 ```typescript
@@ -962,7 +962,7 @@ function ProductTable({ products }: { products: Product[] }) {
 
 ### State Colocation
 
-- **Rule**: [MUST] State should be placed as close as possible to the component that actually uses it. Do not lift it up to a parent component unnecessarily.
+- **Rule**: [MUST] Place state as close as possible to the component that actually uses it. Do not unnecessarily lift state up to parent components.
 - **Good example**:
 
 ```typescript
@@ -988,7 +988,7 @@ function SearchPanel() {
 
 ### Lazy Initialization
 
-- **Rule**: [MUST] When the initial value of `useState` is the result of an expensive computation (localStorage access, parsing, etc.), pass a function reference, not a function call.
+- **Rule**: [MUST] When the initial value of `useState` is the result of an expensive computation (localStorage access, parsing, etc.), pass a function reference rather than a function call.
 - **Good example**:
 
 ```typescript
@@ -1046,7 +1046,7 @@ export function VirtualOrderList({ orders }: { orders: Order[] }) {
 
 ### Error Boundary Implementation
 
-- **Rule**: [SHOULD] Use the `react-error-boundary` library. If custom implementation is needed, implement both `getDerivedStateFromError` and `componentDidCatch`.
+- **Rule**: [SHOULD] Use the `react-error-boundary` library. If a custom implementation is needed, implement both `getDerivedStateFromError` and `componentDidCatch`.
 - **Good example**:
 
 ```typescript
@@ -1206,14 +1206,14 @@ export default function DashboardPage() {
     );
   }
   ```
-> **Note**: The specific placement of Suspense boundaries and skeleton design should be decided in consultation with the design team. For sections where skeleton components are not yet available, use `useQuery`, and switch to `useSuspenseQuery` once skeletons are ready.
+> **Note**: The specific placement of Suspense boundaries and skeleton design should be decided in consultation with the design team. For sections that don't have a skeleton component yet, use `useQuery`, and switch to `useSuspenseQuery` once the skeleton is ready.
 
 
 ## 9. Context API
 
 ### Context vs Zustand Selection Criteria
 
-- **Rule**: [MUST] **Pure UI state** shared across multiple pages should use Zustand. Context API is used for infrequently changing configuration values (theme/locale) or internal state sharing within Compound Components. Server data/URL state/form state should use TanStack Query, nuqs, and React Hook Form respectively. (See STATE_CONVENTION.md for details)
+- **Rule**: [MUST] Use Zustand for **pure UI state** shared across multiple pages. Use Context API for configuration values with low change frequency (theme/locale) or internal state sharing within Compound Components. Use TanStack Query, nuqs, and React Hook Form for server data, URL state, and form state respectively. (See STATE_CONVENTION.md for details)
 
 | Criteria | Context API | Zustand |
 |------|-------------|---------|
@@ -1224,7 +1224,7 @@ export default function DashboardPage() {
 
 ### Provider Pattern
 
-- **Rule**: [MUST] Context Providers must be separated into dedicated components. Since React Compiler automatically handles value stabilization for Providers, manual `useMemo`/`useCallback` is unnecessary.
+- **Rule**: [MUST] Separate Context Providers into dedicated components. Since React Compiler automatically handles value stabilization for Providers, manual `useMemo`/`useCallback` is unnecessary.
 - **Good example**:
 
 ```typescript
@@ -1259,7 +1259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 ### Context Separation Principle
 
-- **Rule**: [MUST] Instead of one large Context, separate Contexts by change frequency and concern.
+- **Rule**: [MUST] Instead of one monolithic Context, separate Contexts by change frequency and concern.
 - **Good example**:
 
 ```typescript
@@ -1327,9 +1327,9 @@ function TextInput({ label, error, ref, ...rest }: TextInputProps) {
 }
 ```
 
-### Typing Props Variants with Discriminated Union
+### Typing Props Variants with Discriminated Unions
 
-- **Rule**: [SHOULD] When a component has multiple variants with different allowed props per variant, use a discriminated union.
+- **Rule**: [SHOULD] When a component has multiple variants and allowed props differ per variant, use discriminated unions.
 - **Good example**:
 
 ```typescript
@@ -1359,7 +1359,7 @@ function Button(props: ButtonProps) {
 
 ### Hook Typing
 
-- **Rule**: [MUST] When using union types with `useState`, specify them via generics. When referencing DOM elements with `useRef`, pass `null` as the initial value. Use `as const` for tuple returns from custom Hooks.
+- **Rule**: [MUST] When using union types with `useState`, specify them via generics. When referencing DOM elements with `useRef`, pass `null` as the initial value. Use `as const` for tuple returns in custom Hooks.
 - **Good example**:
 
 ```typescript
@@ -1384,7 +1384,7 @@ function useToggle(initial = false) {
 
 ### Generic Components
 
-- **Rule**: [SHOULD] General-purpose UI components that do not depend on specific data types should be implemented using the generic props pattern.
+- **Rule**: [SHOULD] General-purpose UI components that do not depend on a specific data type should be implemented using the generic props pattern.
 - **Good example**:
 
 ```typescript
@@ -1426,7 +1426,7 @@ function DataTable<T extends { id: string | number }>({
 
 ### children Typing
 
-- **Rule**: [MUST] Use `React.ReactNode` as the default type for `children`. Use `React.ReactElement` only when specific React elements must be enforced.
+- **Rule**: [MUST] Use `React.ReactNode` as the default type for `children`. Use `React.ReactElement` only when you need to restrict to specific React elements.
 - **Good example**:
 
 ```typescript
@@ -1445,11 +1445,11 @@ interface TooltipTriggerProps {
 
 ---
 
-## 11. Anti-Patterns
+## 11. Anti-patterns
 
-### Using render Function Patterns
+### Using render Function Pattern
 
-- **Rule**: [SHOULD NOT] Do not declare `renderXxx` functions inside components that return JSX. Separate sub-UI into dedicated components.
+- **Rule**: [SHOULD NOT] Do not declare `renderXxx` functions inside components that return JSX. Extract sub-UI into separate components.
 - **Rule**: [MAY] Render prop patterns required by libraries (`renderItem`, `renderCell`) are allowed as exceptions.
 - **Good example**:
 
@@ -1595,9 +1595,9 @@ function OrderForm() {
 }
 ```
 
-### Not Utilizing key for Component Reset
+### Not Using key for Component Reset
 
-- **Rule**: [SHOULD] When all internal state of a component needs to be reset upon a specific value change, pass that value to the `key` prop instead of resetting individual states with `useEffect`.
+- **Rule**: [SHOULD] When all internal state of a component needs to be reset when a specific value changes, pass that value to the `key` prop instead of resetting individual states with `useEffect`.
 - **Good example**:
 
 ```typescript
@@ -1616,7 +1616,7 @@ function ChatPage({ rooms }: { rooms: ChatRoom[] }) {
 
 ### Lying About useEffect Dependencies
 
-- **Rule**: [MUST NOT] Do not exclude values actually used from the `useEffect` dependency array, or suppress dependency warnings with `eslint-disable`.
+- **Rule**: [MUST NOT] Do not omit actually used values from the `useEffect` dependency array, or suppress dependency warnings with `eslint-disable`.
 
 ### Side Effects During Rendering
 

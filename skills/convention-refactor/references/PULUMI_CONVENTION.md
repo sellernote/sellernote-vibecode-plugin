@@ -3,9 +3,9 @@
 > Defines rules applied to Pulumi IaC projects.
 > Parent rules: INFRASTRUCTURE_CONVENTION.md
 
-## Technology Stack
+## Tech Stack
 
-| Item | Version/Setting |
+| Item | Version/Config |
 |------|----------|
 | Language | TypeScript |
 
@@ -74,7 +74,7 @@ infra/
 
 ### Tagging Strategy
 
-- [MUST] All AWS resources must have the `Environment`, `Service`, and `ManagedBy` tags.
+- [MUST] Apply `Environment`, `Service`, and `ManagedBy` tags to all AWS resources as mandatory.
 - [SHOULD] Define common tags once in config.ts and apply them uniformly to all resources.
 - **Good example**:
   ```typescript
@@ -120,7 +120,7 @@ infra/
 ### Type Safety
 
 - [MUST] Handle Pulumi `Output<T>` types correctly. Use `pulumi.interpolate` when string interpolation is needed.
-- [MUST NOT] Access Output values synchronously using the `.get()` method. (Causes runtime errors and breaks secret tracking)
+- [MUST NOT] Access Output values synchronously with the `.get()` method. (Causes runtime errors and breaks secret tracking)
 - [SHOULD] Use `.apply()` only for simple transformations, and use `pulumi.all()` for complex logic.
 - **Good example**:
   ```typescript
@@ -140,7 +140,7 @@ infra/
 ### Stack Outputs
 
 - [MUST] Define stack outputs with `export` for values that need to be referenced by other stacks or external systems.
-- [MUST NOT] Expose secret values in plaintext in stack outputs. They must be wrapped with `pulumi.secret()`.
+- [MUST NOT] Expose secret values as plaintext in stack outputs. They must be wrapped with `pulumi.secret()`.
 - **Good example**:
   ```typescript
   export const vpcId = vpc.id;
@@ -190,10 +190,10 @@ infra/
 
 ## Component Resource
 
-### Reusable Infrastructure Modularization
+### Modularizing Reusable Infrastructure
 
 - [SHOULD] Abstract repeating infrastructure patterns into classes that extend `pulumi.ComponentResource`.
-- [MUST] Always set the `{ parent: this }` option for child resources created within a Component Resource.
+- [MUST] Always set the `{ parent: this }` option on child resources created inside a Component Resource.
 - [MUST] Call `this.registerOutputs()` at the end of the Component Resource constructor.
 - [MUST] Use the `{organization}:{module}:{type}` pattern for Component Resource type URNs.
 - **Good example** (core pattern):
@@ -227,12 +227,12 @@ infra/
 | Item | Pulumi Cloud | S3 Self-managed |
 |------|-------------|-----------------|
 | State Locking | Built-in | Built-in (blob protocol-based) |
-| Secret Management | Built-in | External provider required (AWS KMS, etc.) |
-| RBAC | Built-in | Must configure directly with IAM/bucket policies |
+| Secret Management | Built-in | Requires external provider (AWS KMS, etc.) |
+| RBAC | Built-in | Must be configured manually via IAM/bucket policies |
 | Cost | Free tier + paid plans | Only S3 storage costs |
 
-- [SHOULD] Prefer Pulumi Cloud for quick start and team collaboration needs.
-- [MAY] Choose S3 Self-managed backend when data sovereignty or regulatory compliance requirements exist.
+- [SHOULD] Prefer Pulumi Cloud for quick setup and team collaboration needs.
+- [MAY] Choose an S3 Self-managed backend when data sovereignty or regulatory compliance requirements exist.
 - **Good example**:
   ```bash
   pulumi login                                              # Pulumi Cloud
@@ -242,20 +242,20 @@ infra/
 ### State Access Management
 
 - [MUST] Manage access permissions to State at the team level.
-- [MUST] Grant change permissions for production State to only the minimum number of people.
+- [MUST] Grant production State write permissions to only a minimal number of personnel.
 - **Good example**:
   ```
-  - dev stack: write permissions for the entire team
-  - staging stack: read for the entire team, write for senior engineers
-  - production stack: read for the entire team, write for CI/CD + infra lead
+  - dev 스택: 팀 전체 write 권한
+  - staging 스택: 팀 전체 read, 시니어 엔지니어 write 권한
+  - production 스택: 팀 전체 read, CI/CD + 인프라 리드 write 권한
   ```
 
 ## Security
 
 ### Secret Encryption
 
-- [MUST] Store secrets encrypted using the `pulumi config set --secret` command.
-- [MUST NOT] Expose secret values in plaintext in Pulumi stack outputs. They must be wrapped with `pulumi.secret()`.
+- [MUST] Encrypt and store secrets using the `pulumi config set --secret` command.
+- [MUST NOT] Expose secret values as plaintext in Pulumi stack outputs. They must be wrapped with `pulumi.secret()`.
 - [SHOULD] Use customer-managed keys such as AWS KMS instead of default encryption when regulatory compliance is required.
 - **Good example**:
   ```bash
@@ -270,7 +270,7 @@ infra/
 
 ### IAM Least Privilege
 
-- [MUST] Grant only the minimum necessary permissions to IAM roles used for Pulumi execution.
+- [MUST] Grant only the minimum required permissions to IAM roles used for Pulumi execution.
 - [SHOULD] Separate the IAM role for Pulumi execution in CI/CD pipelines from the IAM role for developers' local execution.
 - **Good example**:
   ```json
@@ -293,8 +293,8 @@ infra/
 ### Preview -> Up Workflow
 
 - [MUST] Automatically run `pulumi preview` on PRs to review changes.
-- [MUST] For production deployments, always review preview results before executing `pulumi up` with approval-based workflows.
-- [SHOULD] Use GitHub Actions' `pulumi/actions` and automatically post preview results as PR comments.
+- [MUST] For production deployments, always review the preview results before executing `pulumi up` with an approval-based process.
+- [SHOULD] Use GitHub Actions `pulumi/actions` and automatically post preview results as PR comments.
 - **Good example** (core structure):
   ```yaml
   # Preview: on pull_request (paths: infra/**)
@@ -308,7 +308,7 @@ infra/
   #   Step 1: pulumi preview (stack: production)
   #   Step 2: pulumi up (stack: production)
   ```
-  **Note**: Running `up` directly without preview or omitting `environment: production` (no approval process) is prohibited.
+  **Note**: Running `up` directly without a preview or omitting `environment: production` (no approval process) is prohibited.
 
 ### Plugin Caching
 
@@ -325,9 +325,9 @@ infra/
 
 ## Anti-Patterns
 
-- [MUST NOT] Hard-code secrets in source code or store them in plaintext in configuration files without `--secret`. Correct approach: `pulumi config set --secret`, `config.requireSecret()`
-- [MUST NOT] Directly modify resources managed by Pulumi through the AWS console or CLI. (Causes State Drift)
+- [MUST NOT] Hard-code secrets in source code or store them as plaintext in configuration files without `--secret`. Correct approach: `pulumi config set --secret`, `config.requireSecret()`
+- [MUST NOT] Directly modify resources managed by Pulumi through the AWS Console or CLI. (Causes State Drift)
 - [MUST NOT] Manage all infrastructure resources in a single stack. Separate them by logical units.
-- [MUST NOT] Access Output values synchronously using the `Output.get()` method. Use `pulumi.interpolate` or `.apply()`.
+- [MUST NOT] Access Output values synchronously with `Output.get()`. Use `pulumi.interpolate` or `.apply()`.
 - [MUST NOT] Create AWS resources without tags.
 - [MUST NOT] Execute `pulumi up` directly on production without reviewing `pulumi preview` first.
