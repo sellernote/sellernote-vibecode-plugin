@@ -1,6 +1,6 @@
 # Terraform Convention
 
-> Defines rules applied to Terraform projects.
+> Defines the rules applied to Terraform projects.
 > Parent rules: INFRASTRUCTURE_CONVENTION.md
 
 ## Project Structure
@@ -46,19 +46,19 @@ terraform/
 | `providers.tf` | Provider configuration (environment directories only) |
 | `data.tf` | Data source definitions (as needed) |
 
-- [SHOULD] When the number of resources grows, split files by logical groups. (e.g., `network.tf`, `ecs.tf`, `rds.tf`)
+- [SHOULD] When the number of resources grows, split them into separate files by logical group. (e.g., `network.tf`, `ecs.tf`, `rds.tf`)
 
 ## Naming
 
 ### Resource Naming
 
-- [MUST] Terraform resource names (internal HCL identifiers) must use `snake_case`.
+- [MUST] Terraform resource names (HCL internal identifiers) must use `snake_case`.
 - [SHOULD] Do not repeat the resource type in the resource name.
 - **Good examples**:
   ```hcl
   resource "aws_instance" "api" {}          # aws_instance.api
   resource "aws_security_group" "api" {}    # aws_security_group.api
-  resource "aws_db_instance" "main" {}      # Use main or this if it's the only resource
+  resource "aws_db_instance" "main" {}      # Use main or this if it is the only resource
   ```
 
 ### Variable Naming
@@ -97,8 +97,8 @@ terraform/
 
 ### Module Naming
 
-- [SHOULD] Internal module directory names should be written in `snake_case` and clearly indicate the infrastructure being managed.
-- [SHOULD] External public modules should follow the `terraform-{provider}-{name}` pattern.
+- [SHOULD] Internal module directory names should be written in `snake_case` and clearly indicate the infrastructure they manage.
+- [SHOULD] Externally published modules should follow the `terraform-{provider}-{name}` pattern.
 - **Good examples**:
   ```
   modules/networking/
@@ -129,7 +129,7 @@ terraform/
 
 ### Module Design Principles
 
-- [MUST NOT] Do not configure providers directly inside modules. Providers should be configured in the calling root module.
+- [MUST NOT] Do not configure providers directly inside modules. Providers must be configured in the calling root module.
 - [SHOULD] Avoid direct module-to-module calls (deep nesting) and compose modules at the root module level.
 
 ### Module Versioning
@@ -168,12 +168,12 @@ terraform/
 ### State Separation
 
 - [MUST] Separate State files by environment (dev/staging/production).
-- [SHOULD] Consider separating State for logically independent infrastructure components as well. (Minimize Blast Radius)
+- [SHOULD] Consider separating State for logically independent infrastructure components as well. (Minimizing Blast Radius)
 
 ### State Security
 
 - [MUST] Store State files with encryption. (e.g., S3 server-side encryption)
-- [MUST NOT] Do not commit State files to a Git repository.
+- [MUST NOT] Do not commit State files to the Git repository.
 
 ### Cross-State References
 
@@ -192,8 +192,8 @@ terraform/
 
 ## Workspaces
 
-- [SHOULD] Prefer directory-based separation over Terraform Workspaces for environment isolation. (Workspaces share the same backend, making complete isolation difficult)
-- [MAY] Workspaces may be used for minor variations of the same configuration (e.g., region-specific deployments).
+- [SHOULD] For environment separation, prefer directory-based separation over Terraform Workspaces. (Workspaces share the same backend, making complete isolation difficult)
+- [MAY] Workspaces may be used for minor variations of the same configuration (e.g., per-region deployments).
 
 ## Code Quality
 
@@ -221,7 +221,7 @@ terraform/
 ## Anti-Patterns
 
 - [MUST NOT] Do not use local State (`terraform.tfstate`) in team projects.
-- [MUST NOT] Do not hardcode values that differ by environment. Extract them as variables.
+- [MUST NOT] Do not hardcode values that vary by environment. Extract them as variables.
   **Good examples**:
   ```hcl
   resource "aws_instance" "api" {
@@ -232,5 +232,5 @@ terraform/
   ```
 - [MUST NOT] Do not manage all infrastructure in a single module or a single State.
 - [MUST NOT] Do not manually transfer State files via Slack, email, shared drives, etc.
-- [MUST NOT] Do not directly run `terraform apply` without reviewing `terraform plan` in the production environment.
+- [MUST NOT] Do not run `terraform apply` directly on the production environment without reviewing `terraform plan`.
 - [SHOULD] Run production `terraform apply` through CI/CD pipelines and include an approval process for plan results.

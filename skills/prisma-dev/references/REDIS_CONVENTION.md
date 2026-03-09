@@ -32,7 +32,7 @@
 
 ### Key Length Limit
 
-- **Rule**: [SHOULD] Key names should be kept as short as possible without losing meaning. Must not exceed 1024 bytes.
+- **Rule**: [SHOULD] Key names should be kept as short as possible without losing meaning. Do not exceed a maximum of 1024 bytes.
 
 ### Key Naming Patterns
 
@@ -45,11 +45,11 @@
 
 | Data Structure | Selection Criteria | Representative Use Cases |
 |---------------|-------------------|------------------------|
-| String | Single value storage, counters, simple caching | Page cache, view counter, session token |
-| Hash | Object/entity representation (field-value pairs) | User profile, product information, configuration values |
-| List | Ordered data, queue/stack | Job queue, recent activity log, timeline |
-| Set | Unique collection, tagging, unique tracking | Unique visitor count, tag list, liked users |
-| Sorted Set | Score-based sorting, ranking, scheduling | Leaderboard, Rate Limiter, scheduled tasks |
+| String | Single value storage, counters, simple caching | Page cache, view counters, session tokens |
+| Hash | Object/entity representation (field-value pairs) | User profiles, product information, configuration values |
+| List | Ordered data, queues/stacks | Job queues, recent activity logs, timelines |
+| Set | Unique collections, tagging, unique tracking | Unique visitor counts, tag lists, liked-by users |
+| Sorted Set | Score-based sorting, ranking, scheduling | Leaderboards, Rate Limiter, scheduled tasks |
 
 ### String
 
@@ -112,14 +112,14 @@
 ### TTL Configuration Criteria
 
 - **Rule**: [MUST] TTL must always be set for cache data (with `cache:` prefix).
-- **Rule**: [SHOULD] Apply different TTL values based on the data's change frequency.
+- **Rule**: [SHOULD] Apply differentiated TTL values based on data change frequency.
 
 | Data Type | Recommended TTL | Example |
 |-----------|----------------|---------|
 | Frequently changing data | 1–5 minutes | Real-time inventory, trending search terms |
-| Semi-static data | 1–24 hours | User profile, product details |
-| Rarely changing data | 24 hours–7 days | Category list, configuration values |
-| Session data | 30 minutes–24 hours | Login session |
+| Semi-static data | 1–24 hours | User profiles, product details |
+| Rarely changing data | 24 hours–7 days | Category lists, configuration values |
+| Session data | 30 minutes–24 hours | Login sessions |
 
 - **Good examples**:
   ```redis
@@ -127,11 +127,11 @@
   SET session:abc123 '{"user_id":1001}' EX 1800
   ```
 
-### Cache Strategy
+### Cache Strategies
 
 #### Cache-Aside (Lazy Loading)
 
-- **Rule**: [SHOULD] The default cache strategy should use the Cache-Aside pattern.
+- **Rule**: [SHOULD] Use the Cache-Aside pattern as the default cache strategy.
 - **Good examples**:
   ```python
   def get_product(product_id):
@@ -146,11 +146,11 @@
 
 #### Write-Through
 
-- **Rule**: [MAY] The Write-Through pattern may be applied when data consistency is important. (Updates both cache and DB at write time)
+- **Rule**: [MAY] The Write-Through pattern may be applied when data consistency is critical. (Update both cache and DB at write time)
 
 ### Cache Invalidation
 
-- **Rule**: [MUST] Related cache must be immediately invalidated (deleted) when data changes (CUD).
+- **Rule**: [MUST] Immediately invalidate (delete) related caches when data is changed (CUD operations).
 - **Good examples**:
   ```python
   def update_product(product_id, data):
@@ -163,7 +163,7 @@
 
 ### Cache Stampede Prevention
 
-- **Rule**: [SHOULD] Prevent cache stampede where many concurrent requests update the same cache simultaneously. Resolve with distributed locks or by adding random jitter to TTL.
+- **Rule**: [SHOULD] Prevent cache stampedes where many requests simultaneously refresh the same cache. Resolve with distributed locks or by adding random jitter to TTL.
 - **Good examples**:
   ```python
   import random
@@ -177,12 +177,12 @@
 ### When to Use
 
 - **Rule**: [MAY] Redis Pub/Sub may be used when real-time event broadcasting is needed.
-- **Rule**: [MUST NOT] Do not use Pub/Sub for critical business logic where message loss is not acceptable. (Fire-and-forget approach causes message loss when subscribers are not connected. Use Redis Streams or a separate message queue instead)
+- **Rule**: [MUST NOT] Do not use Pub/Sub for critical business logic where message loss is unacceptable. (Fire-and-forget approach causes message loss when subscribers are disconnected. Use Redis Streams or a dedicated message queue instead)
 
 ### Message Design
 
-- **Rule**: [SHOULD] Pub/Sub channel names should follow the same colon (`:`) delimited pattern as key naming.
-- **Rule**: [SHOULD] Message bodies should be serialized in JSON format and include `event`, `data`, and `timestamp` fields.
+- **Rule**: [SHOULD] Pub/Sub channel names follow the same colon (`:`) delimiter pattern as key naming.
+- **Rule**: [SHOULD] Message bodies are serialized in JSON format and include `event`, `data`, and `timestamp` fields.
 - **Good examples**:
   ```json
   // 채널: event:order:status_changed
@@ -201,23 +201,23 @@
 
 | Use Case | Channel Pattern | Description |
 |----------|----------------|-------------|
-| Cache invalidation broadcast | `event:cache:invalidate` | Synchronize local caches in multi-instance environments |
-| Real-time notifications | `event:notification:{user_id}` | Deliver real-time notifications per user |
+| Cache invalidation broadcast | `event:cache:invalidate` | Local cache synchronization in multi-instance environments |
+| Real-time notifications | `event:notification:{user_id}` | Per-user real-time notification delivery |
 | Configuration change propagation | `event:config:updated` | Propagate configuration changes to all instances |
 
 ## Anti-Patterns
 
-### Big Key
+### Big Keys
 
 - **Rule**: [MUST NOT] Do not store excessively large values in a single key. (String: over 1MB, Collection: over 10,000 elements)
-- **Solution**: Split data by sharding across multiple keys.
+- **Resolution**: Split (shard) data across multiple keys.
 - **Good examples**:
   ```redis
   SADD users:group:1 "user:1" "user:2" ... "user:1000"
   SADD users:group:2 "user:1001" "user:1002" ... "user:2000"
   ```
 
-### KEYS Command Usage
+### Using the KEYS Command
 
 - **Rule**: [MUST NOT] Do not use the `KEYS` command in production environments. (O(N) command that causes Redis server blocking)
 - **Good examples**:
@@ -233,7 +233,7 @@
 ### Single Key Overload (Hot Key)
 
 - **Rule**: [MUST NOT] Do not design systems where all traffic concentrates on a single key. (Redis is single-threaded, so this affects overall performance)
-- **Solution**: Add a local cache layer, or distribute the key across multiple shards.
+- **Resolution**: Add a local cache layer or distribute (shard) across multiple keys.
 - **Good examples**:
   ```python
   import random
@@ -241,6 +241,6 @@
   value = redis.get(f"cache:hot_data:shard:{shard}")
   ```
 
-### Flush Command Usage
+### Using Flush Commands
 
 - **Rule**: [MUST NOT] Do not use `FLUSHDB` or `FLUSHALL` commands in production environments. (All data is immediately deleted and cannot be recovered)

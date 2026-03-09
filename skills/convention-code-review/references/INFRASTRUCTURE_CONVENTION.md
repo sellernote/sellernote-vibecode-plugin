@@ -17,12 +17,12 @@
 
 ### Environment Parity
 
-- [SHOULD] Keep the infrastructure configuration (network, service stack, runtime version) between staging and production environments as identical as possible.
+- [SHOULD] Keep the infrastructure configuration (network, service stack, runtime version) of staging and production environments as identical as possible.
 
-### Environment Identifier
+### Environment Identifiers
 
-- [MUST] Include an environment identifier (`dev`, `staging`, `production`) in all resource names and tags.
-- **Good example**:
+- [MUST] Include environment identifiers (`dev`, `staging`, `production`) in all resource names and tags.
+- **Good examples**:
   ```
   dev-sellernote-api-server
   staging-sellernote-rds
@@ -33,9 +33,9 @@
 
 ### .env File Rules
 
-- [MUST] Never include `.env` files in version control (Git).
+- [MUST] `.env` files must never be included in version control (Git).
 - [MUST] Provide a `.env.example` file to document the list and format of required environment variables.
-- **Good example**:
+- **Good examples**:
   ```bash
   # .env.example
   DATABASE_URL=postgresql://user:password@host:5432/dbname
@@ -47,7 +47,7 @@
 
 - [MUST] Write environment variables in `UPPER_SNAKE_CASE`.
 - [SHOULD] Use service/domain prefixes for grouping.
-- **Good example**:
+- **Good examples**:
   ```bash
   DATABASE_HOST=localhost
   DATABASE_PORT=5432
@@ -64,7 +64,7 @@
 | Environment | Secret Management Method |
 |------|-----------------|
 | Local development | `.env` file (not included in Git) |
-| CI/CD | CI/CD tool's secret store (e.g., GitHub Secrets) |
+| CI/CD | CI/CD tool's secret storage (e.g., GitHub Secrets) |
 | Cloud | AWS Secrets Manager, AWS SSM Parameter Store |
 
 ## CI/CD Pipeline
@@ -82,16 +82,16 @@
 | Lint/Format | Code style and static analysis | Pipeline aborted |
 | Build | Application build, Docker image creation | Pipeline aborted |
 | Test | Unit tests, integration tests | Pipeline aborted |
-| Security Scan | Dependency vulnerability, image scanning | Warning or abort (depending on severity) |
-| Deploy to Staging | Staging environment deployment and verification | Production deployment blocked |
-| Deploy to Production | Production environment deployment | Rollback procedure executed |
+| Security Scan | Dependency vulnerabilities, image scanning | Warning or abort (depending on severity) |
+| Deploy to Staging | Deploy to staging environment and verify | Production deployment blocked |
+| Deploy to Production | Deploy to production environment | Execute rollback procedure |
 
 ### Immutable Artifacts
 
 - [MUST] Once built, artifacts (Docker images, build outputs) must be deployed identically to all environments without modification.
-- **Good example**:
+- **Good examples**:
   ```
-  Build → Image(v1.2.3) created → staging deployment → production deployment (same image)
+  Build → Create image (v1.2.3) → Deploy to staging → Deploy to production (same image)
   ```
 
 ## Deployment Strategy
@@ -100,22 +100,22 @@
 
 - [SHOULD] Choose a deployment strategy that fits the service characteristics.
 
-| Strategy | Description | Suitable When |
+| Strategy | Description | Suitable For |
 |------|------|------------|
-| Rolling | Replace instances sequentially | General services, minimizing downtime |
-| Blue-Green | Prepare new environment then switch traffic | Core services requiring immediate rollback |
-| Canary | Route only partial traffic to new version | Large-scale user-facing services, gradual verification |
+| Rolling | Replace instances sequentially | General services, minimize downtime |
+| Blue-Green | Prepare new environment then switch traffic | Core services requiring instant rollback |
+| Canary | Route only some traffic to the new version | Large-scale user-facing services, gradual verification |
 
 ### Rollback Strategy
 
 - [MUST] All production deployments must have rollback procedures defined in advance.
-- [SHOULD] Rollback should be performed by redeploying the previous version's artifact. Do not revert code and rebuild.
+- [SHOULD] Rollbacks should be performed by redeploying the previous version's artifact. Do not revert code and rebuild.
 
 ## Security Policy
 
-- [MUST] All service accounts, IAM roles, and containers must be granted only the minimum permissions necessary to perform their duties. (Principle of Least Privilege)
-- [MUST] Backend services such as production databases and caches must be configured to be inaccessible directly from the public internet.
-- [SHOULD] Inter-service communication should be performed through internal networks (VPC, Private Subnet).
+- [MUST] All service accounts, IAM roles, and containers must be granted only the minimum permissions necessary to perform their tasks. (Principle of Least Privilege)
+- [MUST] Backend services such as production databases and caches must be configured so they are not directly accessible from the public internet.
+- [SHOULD] Inter-service communication should be conducted through internal networks (VPC, Private Subnet).
 - [SHOULD] Critical secrets (DB passwords, API keys) should be rotated periodically.
 
 ## Monitoring/Alerting
@@ -132,9 +132,9 @@
 
 ### Log Aggregation
 
-- [MUST] Application logs must be collected into a centralized log system.
+- [MUST] Application logs must be collected into a centralized logging system.
 - [SHOULD] Logs should be output in a structured format (JSON).
-- **Good example**:
+- **Good examples**:
   ```json
   {"timestamp":"2025-01-15T10:30:00Z","level":"ERROR","service":"api","message":"DB connection failed","error":"timeout"}
   ```
@@ -147,7 +147,7 @@
 |------|-------------------|--------|
 | Error rate | Error rate > 5% over 5 minutes | Critical |
 | Response time | P95 > 3 seconds | Warning |
-| CPU utilization | Average > 80% over 5 minutes | Warning |
+| CPU utilization | 5-minute average > 80% | Warning |
 | Disk utilization | > 85% | Critical |
 | Service health check | 3 consecutive failures | Critical |
 
@@ -156,6 +156,6 @@
 ## Anti-patterns
 
 - [MUST NOT] Do not write secrets directly in source code or configuration files. (e.g., `DATABASE_PASSWORD: "mysecretpassword123"` in `docker-compose.yml`)
-- [MUST NOT] Do not deploy manually by SSH-ing into the production environment.
+- [MUST NOT] Do not manually deploy by SSH-ing into the production environment.
 - [MUST NOT] Do not operate production services without monitoring/alerting.
 - [MUST NOT] Do not branch code logic based on environment. Handle environment differences through environment variables and configuration.

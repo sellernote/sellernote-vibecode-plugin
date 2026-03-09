@@ -1,7 +1,7 @@
 # State Management Convention
 
 > This document defines the state management strategy for the frontend.
-> Parent rules: FRONTEND_CONVENTION.md
+> Parent rule: FRONTEND_CONVENTION.md
 
 ---
 
@@ -38,18 +38,18 @@
 
 ## 2. State Classification Criteria
 
-- **Rule**: [MUST] All state must be classified into one of the following 4 types, and the appropriate tool must be used for each type.
+- **Rule**: [MUST] All state must be classified into one of the following 4 types, and use the appropriate tool for each type.
 
 | State Type | Description | Tool | Example |
 |----------|------|------|------|
-| Server State | Data fetched from APIs | TanStack Query | Product list, user profile, order history |
-| URL State | Route parameters, search | nuqs | Pagination, filters, sorting |
-| Local State | State within a single component | useState / useReducer | Modal open, input values, toggle |
+| Server State | Data fetched from API | TanStack Query | Product list, user profile, order history |
+| URL State | Route parameters, search | nuqs | Pagination, filter, sort |
+| Local State | State within a single component | useState / useReducer | Modal open, input value, toggle |
 | Global UI State | Pure UI state shared across multiple pages | Zustand (last resort) | Sidebar open/close, toast queue |
 
 - **Rule**: [MUST] Data from the server must always be managed with TanStack Query.
 
-- **Rule**: [MUST] State used only in a single component must use useState. Do not put it in a global store.
+- **Rule**: [MUST] State used only within a single component must use useState. Do not put it in a global store.
 
 - **Rule**: [SHOULD] Zustand should only be used for pure UI state shared across multiple pages. Do not use Zustand for server data, URL state, form state, or local state.
 
@@ -57,7 +57,7 @@
 
 ### Feature-Scoped Store
 
-- **Rule**: [MUST] Create an independent Zustand store for each feature domain. Place it in the `features/{domain}/store/` directory.
+- **Rule**: [MUST] Create independent Zustand stores for each feature domain. Place them in the `features/{domain}/store/` directory.
 - **Good Example**:
   ```typescript
   // features/ui/store/ui-store.ts
@@ -109,7 +109,7 @@
   ```typescript
   import { useShallow } from 'zustand/react/shallow';
 
-  // Select multiple values at once with shallow comparison to optimize re-renders
+  // Select multiple values at once with shallow comparison for re-render optimization
   const { isSidebarOpen, notifications } = useUIStore(
     useShallow((s) => ({ isSidebarOpen: s.isSidebarOpen, notifications: s.notifications })),
   );
@@ -135,151 +135,88 @@
 
 ## 4. TanStack Query Patterns
 
-### Query Factory Pattern
+### TanStack Query Basic Structure
 
-- **Rule**: [MUST] Define a factory object that integrates TanStack Query v5's built-in `queryOptions()` function with query keys. Place it in the `features/{domain}/api/` directory.
+File placement and layer responsibilities follow `ARCHITECTURE_CONVENTION.md`, and this document only covers TanStack Query usage rules.
+
+- **Rule**: [MUST] Query factories are placed in `features/{domain}/api/query-options.ts`.
+- **Rule**: [MUST] File naming and placement of custom query/mutation hooks per endpoint follow the API file structure defined in `ARCHITECTURE_CONVENTION.md`.
+- **Rule**: [MUST] `queryFn` in `query-options.ts` is responsible only for pure API calls.
+- **Rule**: [MUST NOT] Do not write `select` or view-specific transformation logic in `query-options.ts`.
+- **Rule**: [SHOULD] Endpoint-specific transforms/helpers/types should be co-located as private within the endpoint hook file as defined in `ARCHITECTURE_CONVENTION.md`.
+- **Rule**: [MUST] API request/response types must use the shared auto-generated types as-is.
 - **Good Example**:
   ```typescript
-  // features/order/api/query-keys.ts
+  // features/order/api/query-options.ts
   import { queryOptions } from '@tanstack/react-query';
-  import { fetchOrders, fetchOrder } from './order-api';
+  import { apiClient } from '@/lib/api-client';
+  import type { GetOrdersRequest, GetOrdersResponse } from '@/types/generated/order.generated';
 
-  export const orderKeys = {
-    all: () => ['orders'],
-    lists: () => [...orderKeys.all(), 'list'],
-    list: (filters: OrderFilters) =>
+  const fetchOrders = (params: GetOrdersRequest): Promise<GetOrdersResponse> =>
+    apiClient.get('/orders', { params });
+
+  export const orderQueryOptions = {
+    all: ['orders'] as const,
+    list: (params: GetOrdersRequest) =>
       queryOptions({
-        queryKey: [...orderKeys.lists(), filters],
-        queryFn: () => fetchOrders(filters),
-        staleTime: 5 * 60 * 1000,
-      }),
-    detail: (id: string) =>
-      queryOptions({
-        queryKey: [...orderKeys.all(), 'detail', id],
-        queryFn: () => fetchOrder(id),
+        queryKey: [...orderQueryOptions.all, 'list', params] as const,
+        queryFn: () => fetchOrders(params),
       }),
   };
   ```
 
-### Custom Hooks
-
-- **Rule**: [MUST] Define query factories and custom hooks together in the `features/{domain}/api/` directory.
-- **Good Example**:
   ```typescript
   // features/order/api/use-orders-query.ts
-  import { useQuery, useQueryClient } from '@tanstack/react-query';
-  import { orderKeys } from './query-keys';
-
-  export function useOrdersQuery(filters: OrderFilters) {
-    return useQuery(orderKeys.list(filters));
-  }
-
-  export function useOrderQuery(id: string) {
-    return useQuery(orderKeys.detail(id));
-  }
-  ```
-
-  ```typescript
-  // features/order/api/use-create-order-mutation.ts
-  import { useMutation, useQueryClient } from '@tanstack/react-query';
-  import { orderKeys } from './query-keys';
-
-  export function useCreateOrderMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: createOrder,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orderKeys.all() });
-      },
-    });
-  }
-  ```
-
-### Using useSuspenseQuery
-
-- **Rule**: [SHOULD] Use `useSuspenseQuery` for default data fetching.
-- **Rule**: [SHOULD] Use `useQuery` when conditional fetching (`enabled` option needed) or partial loading is required.
-- **Good Example**:
-  ```typescript
-  // features/order/api/use-orders-query.ts — default fetching
   import { useSuspenseQuery } from '@tanstack/react-query';
-  import { orderKeys } from './query-keys';
+  import type { GetOrdersRequest, GetOrdersResponse } from '@/types/generated/order.generated';
+  import { orderQueryOptions } from './query-options';
 
-  export function useOrdersQuery(filters: OrderFilters) {
-    return useSuspenseQuery(orderKeys.list(filters));
-    // data is always defined — no undefined check needed
-  }
-  ```
+  type OrderListItem = {
+    id: string;
+    title: string;
+    statusLabel: string;
+  };
 
-  ```tsx
-  // features/order/components/order-list/OrderList.tsx — used with Suspense boundary
-  import { Suspense } from 'react';
-
-  function OrderPage() {
-    return (
-      <Suspense fallback={<OrderListSkeleton />}>
-        <OrderList />
-      </Suspense>
-    );
-  }
-
-  function OrderList() {
-    const { data } = useOrdersQuery(filters);
-    // data always exists, so it can be used directly
-    return <DataTable data={data.orders} columns={ORDER_COLUMNS} />;
-  }
-  ```
-
-  ```typescript
-  // When useQuery is appropriate — conditional fetching
-  export function useUserOrdersQuery(userId: string | undefined) {
-    return useQuery({
-      ...orderKeys.list({ userId }),
-      enabled: !!userId, // Only execute when userId exists
-    });
-  }
-  ```
-
-### Using Transform Functions from transforms/
-
-- **Rule**: [MUST] `queryFn` in `queryOptions` should only handle pure API calls. Do not define `select` options or data transformation logic directly in `api/` files.
-- **Rule**: [MUST] When data transformation is needed, define transform functions in the `transforms/` directory and import them in custom hooks to pass to `select`.
-- **Good Example**:
-  ```typescript
-  // features/order/transforms/to-order-list-item.ts — pure transform function
-  export const toOrderListItem = (data: OrdersResponse): OrderListItem[] =>
+  const toOrderListItem = (data: GetOrdersResponse): OrderListItem[] =>
     data.orders.map((order) => ({
       id: order.id,
       title: order.title,
       statusLabel: ORDER_STATUS_LABEL[order.status],
-      formattedTotal: formatCurrency(order.totalAmount),
     }));
+
+  export function useOrdersQuery(params: GetOrdersRequest) {
+    return useSuspenseQuery({
+      ...orderQueryOptions.list(params),
+      select: toOrderListItem,
+    });
+  }
   ```
 
-  ```typescript
-  // features/order/api/use-order-list-items-query.ts — import from transforms/ and pass to select
-  import { useQuery } from '@tanstack/react-query';
-  import { orderKeys } from './query-keys';
-  import { toOrderListItem } from '@/features/order/transforms/to-order-list-item';
+### useSuspenseQuery Usage
 
-  export function useOrderListItemsQuery(filters: OrderFilters) {
+- **Rule**: [SHOULD] Use `useSuspenseQuery` for basic data fetching.
+- **Rule**: [SHOULD] Use `useQuery` when conditional fetching (`enabled` option needed) or partial loading is required.
+- **Rule**: [SHOULD] Follow the Suspense boundary placement principles from the Suspense section of `REACT_CONVENTION.md`.
+- **Good Example**:
+  ```typescript
+  export function useUserOrdersQuery(userId: string | undefined) {
     return useQuery({
-      ...orderKeys.list(filters),
-      select: toOrderListItem,
+      ...orderQueryOptions.list({ userId }),
+      enabled: !!userId,
     });
   }
   ```
 
 ### Cache Strategy
 
-- **Rule**: [SHOULD] Set `staleTime` and `gcTime` based on how frequently the data changes.
+- **Rule**: [SHOULD] Configure `staleTime` and `gcTime` based on how frequently data changes.
 
 | Data Type | staleTime | gcTime | Example |
 |------------|-----------|--------|------|
 | Frequently changing | 30s ~ 1min | 5min | Real-time inventory, notification count |
 | Normal | 5min (default) | 10min | Product list, order history |
 | Rarely changing | 30min ~ 1hr | 2hr | Category list, announcements |
-| Never changing | Infinity | 24hr | Country codes, exchange rate base date |
+| Never changing | Infinity | 24hr | Country codes, exchange rate reference date |
 
 - **Good Example**:
   ```typescript
@@ -305,12 +242,12 @@
     return useMutation({
       mutationFn: updateOrder,
       onMutate: async (updatedOrder) => {
-        const queryKey = orderKeys.detail(updatedOrder.id).queryKey;
+        const queryKey = orderQueryOptions.detail({ id: updatedOrder.id }).queryKey;
 
-        // 1. Cancel ongoing refetches — prevent overwriting optimistic update
+        // 1. Cancel in-progress refetches — prevent overwriting the optimistic update
         await queryClient.cancelQueries({ queryKey });
 
-        // 2. Save current data snapshot — used for rollback on error
+        // 2. Save snapshot of current data — used for rollback on error
         const previousOrder = queryClient.getQueryData(queryKey);
 
         // 3. Optimistic update — reflect in UI immediately before server response
@@ -322,14 +259,14 @@
         // 4. Rollback on error — restore original state from snapshot
         if (context?.previousOrder) {
           queryClient.setQueryData(
-            orderKeys.detail(updatedOrder.id).queryKey,
+            orderQueryOptions.detail({ id: updatedOrder.id }).queryKey,
             context.previousOrder,
           );
         }
       },
       onSettled: (_data, _error, updatedOrder) => {
         // 5. Sync with server data regardless of success/failure
-        queryClient.invalidateQueries({ queryKey: orderKeys.detail(updatedOrder.id).queryKey });
+        queryClient.invalidateQueries({ queryKey: orderQueryOptions.detail({ id: updatedOrder.id }).queryKey });
       },
     });
   }
@@ -345,7 +282,7 @@
     return useMutation({
       mutationFn: (id: string) => deleteOrder(id),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orderKeys.all() });
+        queryClient.invalidateQueries({ queryKey: orderQueryOptions.all });
       },
     });
   }
@@ -401,13 +338,13 @@ export const queryClient = new QueryClient({
 
 ### Mutation Feedback Pattern
 
-- **Rule**: [SHOULD] Provide feedback to users via toast on mutation success/error. Set `meta.successMessage` when using the global handler.
+- **Rule**: [SHOULD] Provide feedback to the user via toast on mutation success/error. When using the global handler, set `meta.successMessage`.
 
 ```typescript
 // features/order/api/use-update-order-mutation.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { orderKeys } from './query-keys';
+import { orderQueryOptions } from './query-options';
 
 export function useUpdateOrderMutation(orderId: string) {
   const queryClient = useQueryClient();
@@ -416,7 +353,7 @@ export function useUpdateOrderMutation(orderId: string) {
     mutationFn: (data: UpdateOrderDto) => apiClient.put(`/orders/${orderId}`, data),
     meta: { successMessage: '주문이 수정되었습니다.' }, // Toast displayed by global onSuccess
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orderKeys.all() });
+      queryClient.invalidateQueries({ queryKey: orderQueryOptions.all });
     },
     // onError is handled by global MutationCache.onError
   });
@@ -447,7 +384,40 @@ export default function App() {
 
 - **Rule**: [MUST] Manage filters, sorting, and pagination as URL state using nuqs (`useQueryStates`). Do not manage them with Zustand or useState.
 
-### Defining searchParams Parsers
+### Search Input Pattern
+
+- **Rule**: [MUST] When managing search terms as URL query strings on list pages, use the uncontrolled input + `form onSubmit` pattern instead of local state + `useEffect` synchronization.
+- **Rule**: [MUST NOT] Do not duplicate `appliedSearch` with `useState` and re-synchronize with `useEffect`.
+- **Rule**: [SHOULD] Use `key={appliedSearch}`, `defaultValue={appliedSearch}`, and `name="search"` together on the input.
+- **Good Example**:
+
+```tsx
+const [{ search: appliedSearch }, setParams] = useQueryStates({
+  search: parseAsString.withDefault(''),
+});
+
+const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  const formData = new FormData(e.currentTarget);
+  const value = (formData.get('search') as string) || '';
+  void setParams({ search: value, page: 1 });
+};
+
+<form className="flex items-center gap-2" onSubmit={handleSearchSubmit}>
+  <input
+    key={appliedSearch}
+    name="search"
+    type="text"
+    defaultValue={appliedSearch}
+    placeholder="검색..."
+  />
+  <button type="submit">검색</button>
+</form>;
+```
+
+- **Effect**: When the URL changes due to browser back navigation, the input automatically resets via the `key` prop, and unnecessary re-renders during typing are also reduced.
+
+### searchParams Parser Definition
 
 - **Rule**: [MUST] Use nuqs built-in parsers such as `parseAsInteger`, `parseAsStringLiteral` to define searchParams in a type-safe manner.
 
@@ -502,23 +472,24 @@ function OrderList() {
 
 ## 7. Dependent Query Pattern
 
-- **Rule**: [SHOULD] Use the `enabled` option when the next query requires the result of a previous query.
+- **Rule**: [SHOULD] Use the `enabled` option when the next query requires the result of a previous query to execute.
 
 ```typescript
-// Pattern: fetch user info first, then fetch the user's order list
+// Pattern for fetching user info first, then fetching that user's order list
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
-function UserOrders() {
-  // Step 1: Fetch current user info
-  const { data: user } = useCurrentUser();
-
-  // Step 2: Fetch order list only when user ID exists
-  const { data: orders, isPending } = useQuery({
-    queryKey: userQueries.orders(user?.id ?? '').queryKey,
-    queryFn: () => apiClient.get<Order[]>(`/users/${user!.id}/orders`),
-    enabled: !!user?.id, // Only execute when user.id exists
+export function useUserOrdersQuery(userId?: string) {
+  return useQuery({
+    queryKey: userQueries.orders(userId ?? '').queryKey,
+    queryFn: () => apiClient.get<Order[]>(`/users/${userId!}/orders`),
+    enabled: !!userId,
   });
+}
+
+function UserOrders() {
+  const { data: user } = useCurrentUser();
+  const { data: orders, isPending } = useUserOrdersQuery(user?.id);
 
   if (isPending) return <OrderListSkeleton />;
 
@@ -527,17 +498,12 @@ function UserOrders() {
 ```
 
 ```typescript
-// Category selection → fetch product list for that category
+// Category selection → query product list for that category
 function CategoryProducts() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   const { data: categories } = useCategoriesQuery();
-
-  // Fetch product list only when selectedCategoryId exists
-  const { data: products, isPending } = useQuery({
-    ...categoryQueries.products(selectedCategoryId!),
-    enabled: !!selectedCategoryId,
-  });
+  const { data: products, isPending } = useCategoryProductsQuery(selectedCategoryId);
 
   return (
     <div>
@@ -563,7 +529,7 @@ function CategoryProducts() {
     const { data: user } = useUser();
     const setUser = useAuthStore((state) => state.setUser);
     useEffect(() => {
-      if (user) setUser(user); // Sync issue between TanStack Query cache and Zustand!
+      if (user) setUser(user); // Synchronization issue between TanStack Query cache and Zustand!
     }, [user, setUser]);
     const storedUser = useAuthStore((state) => state.user);
     return <div>{storedUser?.name}</div>;
@@ -571,13 +537,13 @@ function CategoryProducts() {
   ```
 - **Good Example**:
   ```typescript
-  // Use TanStack Query hook directly - guarantees single source of truth
+  // Use TanStack Query hooks directly - ensures single source of truth
   function UserProfile() {
     const { data: user, isLoading } = useUser();
     if (isLoading) return <Skeleton />;
     return <div>{user?.name}</div>;
   }
-  // Even when multiple components call the same hook, they share the cache so there are no duplicate requests
+  // Even when multiple components call the same hook, cache is shared so no duplicate requests
   function UserAvatar() {
     const { data: user } = useUser();
     return <Avatar src={user?.avatarUrl} />;
@@ -586,12 +552,12 @@ function CategoryProducts() {
 
 ## 9. Anti-Patterns
 
-### 1. Global State Abuse
+### 1. Global State Overuse
 
 - **Rule**: [MUST NOT] Do not store data in Zustand when local state is sufficient.
 - **Bad Example**:
   ```typescript
-  // Putting local state in Zustand store
+  // Putting local state into Zustand store
   interface StoreState {
     isDeleteModalOpen: boolean;
     searchInputValue: string;
@@ -637,9 +603,9 @@ function CategoryProducts() {
 
 - **Rule**: [SHOULD NOT] Do not put state with different concerns into a single store. Separate into feature-scoped stores by domain.
 
-### 4. Subscribing to the Entire Store Without a Selector
+### 4. Subscribing to Entire Store Without Selectors
 
-- **Rule**: [MUST NOT] Do not subscribe to the entire store without a selector.
+- **Rule**: [MUST NOT] Do not subscribe to the entire store without using selectors.
 - **Bad Example**:
   ```typescript
   const { isSidebarOpen, notifications, toggleSidebar } = useUIStore();
@@ -649,10 +615,10 @@ function CategoryProducts() {
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
   ```
 
-### 5. Defining Transform Logic Directly in queryOptions
+### 5. Defining Transformation Logic Directly in queryOptions
 
-- **Rule**: [MUST NOT] Do not define transform functions directly in queryOptions or custom hook files in the `api/` directory. Define transform functions in `transforms/` and import them in `api/` files to pass to `select`.
+- **Rule**: [MUST NOT] Do not define transformation functions directly in `query-options.ts`. Endpoint-specific transformations should follow the endpoint hook file rules in `ARCHITECTURE_CONVENTION.md`.
 
-### 6. Duplicating Server State to Zustand
+### 6. Duplicating Server State in Zustand
 
 - **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query into a Zustand store using useEffect.

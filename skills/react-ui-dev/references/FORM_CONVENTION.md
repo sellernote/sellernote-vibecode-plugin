@@ -177,7 +177,7 @@ export function NameField() {
 ## 4. Validation Strategy
 
 - **Rule**: [MUST] Perform validation on both the client and server sides (dual validation principle)
-- **Rule**: [MUST] Perform client-side validation per field at the `onBlur` timing to provide immediate feedback
+- **Rule**: [MUST] Client-side validation is performed per field at the `onBlur` point to provide immediate feedback
 - **Rule**: [MUST] Perform final validation at the API endpoint using the same Zod schema
 - **Rule**: [MUST NOT] Replace security validation with client-side validation alone
 
@@ -348,7 +348,7 @@ export const Step2Schema = z.object({ name: z.string().min(2), phone: phoneSchem
 export const Step3Schema = z.object({ company: z.string().min(1), role: z.enum(["developer", "designer", "manager"]) });
 export const SignupWizardSchema = Step1Schema.merge(Step2Schema).merge(Step3Schema);
 
-// store/slices/signup-wizard-slice.ts — Maintain data between steps
+// store/slices/signup-wizard-slice.ts — Persist data between steps
 export const useSignupWizardStore = create<SignupWizardState>((set) => ({
   currentStep: 1,
   formData: {},
@@ -414,7 +414,10 @@ export function OrderForm() {
 
 ### Conditional Fields
 
-- **Rule**: [SHOULD] When showing/hiding fields based on a specific field value, use `watch()` to observe the value and conditionally render
+- **Rule**: [SHOULD] Use `useWatch()` instead of `watch()` for subscribing to field values needed for rendering.
+- **Rule**: [MUST NOT] Use `watch()` in the render path, causing unnecessary re-renders on every form change.
+- **Rule**: [SHOULD] When subscribing to multiple fields together, call `useWatch()` once with a `name` array.
+- **Rule**: [MAY] Use `getValues()` or `watch()` in places unrelated to rendering, such as event handlers or submission logic.
 - **Good Example**:
 ```typescript
 const ShippingSchema = z.discriminatedUnion("method", [
@@ -423,11 +426,11 @@ const ShippingSchema = z.discriminatedUnion("method", [
 ]);
 
 export function ShippingForm() {
-  const { control, watch, handleSubmit, formState: { errors } } = useForm<z.infer<typeof ShippingSchema>>({
+  const { control, handleSubmit, formState: { errors } } = useForm<z.infer<typeof ShippingSchema>>({
     resolver: zodResolver(ShippingSchema),
     defaultValues: { method: "delivery", address: "" },
   });
-  const method = watch("method");
+  const method = useWatch({ control, name: "method" });
   return (
     <form>
       {/* RadioGroup for method selection */}
@@ -468,9 +471,9 @@ export function ShippingForm() {
 }
 ```
 
-### Async Validation
+### Asynchronous Validation
 
-- **Rule**: [SHOULD] Perform async validations such as email duplication checks at the `onBlur` timing with debounce applied
+- **Rule**: [SHOULD] Perform asynchronous validations such as email duplication checks at the `onBlur` point with debounce applied
 - **Good Example**:
 ```typescript
 import { useDebouncedCallback } from 'use-debounce';
@@ -480,7 +483,7 @@ const debouncedCheck = useDebouncedCallback(async (value: string) => {
   if (exists) setError("email", { message: "이미 사용 중인 이메일입니다" });
 }, 500);
 
-// Call debouncedCheck along with field.onChange inside Controller
+// Call debouncedCheck alongside field.onChange inside the Controller
 ```
 
 ---
@@ -505,7 +508,7 @@ const onSubmit = async (formData: FormData) => {
 - **Bad Example**:
 ```typescript
 try { await submitForm(data); }
-catch (error) { console.error(error); } // Only logging to console without displaying to the user
+catch (error) { console.error(error); } // Only logging to console without displaying to user
 ```
 - **Good Example**:
 ```typescript
@@ -515,11 +518,11 @@ catch (error) { setFormError("요청 처리 중 오류가 발생했습니다. �
 
 ### Storing Form State in Global Store
 
-- **Rule**: [SHOULD NOT] Store form input state in a global store such as Zustand. Let React Hook Form manage the form state. The exception is when interim data needs to be maintained between steps in a multi-step form.
+- **Rule**: [SHOULD NOT] Store form input state in a global store such as Zustand. Let React Hook Form manage form state. The exception is when interim data needs to be persisted between steps in multi-step forms.
 
 ### API Calls on Every input onChange
 
-- **Rule**: [MUST NOT] Call APIs on every `onChange` event of an input. Apply debounce or call at the `onBlur` timing instead.
+- **Rule**: [MUST NOT] Call APIs on every input `onChange` event. Apply debounce or call at the `onBlur` point instead.
 - **Bad Example**:
 ```typescript
 <Input onChange={async (e) => {

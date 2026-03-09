@@ -1,6 +1,6 @@
 # Docker Convention
 
-> Defines the rules applied to Docker projects.
+> Defines rules applied to Docker projects.
 > Parent rules: INFRASTRUCTURE_CONVENTION.md
 
 ## Tech Stack
@@ -48,7 +48,7 @@
 
 ### Layer Caching Optimization
 
-- [SHOULD] Place less frequently changing instructions at the top of the Dockerfile, and more frequently changing instructions at the bottom.
+- [SHOULD] Place less frequently changing instructions at the top of the Dockerfile and more frequently changing instructions at the bottom.
 - **Good example**:
   ```dockerfile
   COPY package.json pnpm-lock.yaml ./
@@ -59,7 +59,7 @@
 
 ### RUN Instruction Optimization
 
-- [SHOULD] Chain related `RUN` instructions with `&&`, and clean up package manager caches in the same layer.
+- [SHOULD] Chain related `RUN` instructions with `&&` and clean up package manager caches in the same layer.
 - **Good example**:
   ```dockerfile
   RUN apk add --no-cache curl tzdata && \
@@ -68,7 +68,7 @@
 
 ### .dockerignore
 
-- [MUST] Create a `.dockerignore` file at the project root to exclude unnecessary files from the build context.
+- [MUST] Create a `.dockerignore` file in the project root to exclude unnecessary files from the build context.
 - **Good example**:
   ```
   node_modules
@@ -83,7 +83,7 @@
 
 ### COPY vs ADD
 
-- [SHOULD] Use `COPY` instead of `ADD` for copying files. (`ADD` has implicit behaviors such as automatic archive extraction)
+- [SHOULD] Use `COPY` instead of `ADD` for copying files. (`ADD` has implicit behaviors such as automatic decompression)
 
 ## Image Naming/Tagging
 
@@ -174,7 +174,7 @@
 ### Secret Handling
 
 - [MUST NOT] Do not include secrets in Dockerfile `ENV` or `ARG`. (`ARG` is exposed in image history, `ENV` is accessible inside the container)
-- [SHOULD] Use BuildKit's `--mount=type=secret` when secrets are needed during build.
+- [SHOULD] Use BuildKit's `--mount=type=secret` when secrets are needed during the build.
 - **Good example**:
   ```dockerfile
   RUN --mount=type=secret,id=npm_token \
@@ -204,4 +204,4 @@
 - [MUST NOT] Do not run containers without a `USER` directive in the Dockerfile.
 - [MUST NOT] Do not include build tools, debugging tools, or devDependencies in production images.
 - [MUST NOT] Do not use full OS images such as `ubuntu` or `debian` as production base images. (Use `alpine` or `distroless`)
-- [MUST NOT] Do not copy secrets in a Dockerfile and then delete them in the next layer. (The secrets still exist in the previous layer)
+- [MUST NOT] Do not copy secrets in a Dockerfile and then delete them in a subsequent layer. (The secrets still exist in the previous layer)

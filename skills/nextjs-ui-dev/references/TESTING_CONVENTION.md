@@ -1,6 +1,6 @@
 # Testing Convention
 
-> This document defines the frontend testing strategy and Storybook usage guidelines.
+> This document defines the frontend testing strategy.
 > Parent rules: FRONTEND_CONVENTION.md
 
 ---
@@ -10,225 +10,26 @@
 Frontend testing follows the pyramid structure below. Lower levels should be faster, more stable, and have a higher proportion.
 
 ```text
-       /    E2E     \         ← Playwright, 핵심 사용자 시나리오
-      /  Integration  \       ← React Testing Library, 컴포넌트 조합
-     /   Component      \     ← Storybook Interaction Testing
-    /    Unit Testing     \   ← Vitest, 유틸리티/훅 단위
-   ────────────────────────
+      /     E2E      \      ← Playwright, 핵심 사용자 시나리오
+     /  Integration   \     ← React Testing Library, 사용자 흐름/조합
+    /   Unit Testing   \    ← Vitest, 유틸리티/훅/순수 로직
+   ──────────────────────
 ```
 
 | Level | Tool | Target | Proportion |
 | --- | --- | --- | --- |
-| Unit | Vitest | Utility functions, custom hooks, pure logic | 40% |
-| Component | Storybook + Interaction Testing | Rendering and interaction of individual UI components | 25% |
-| Integration | React Testing Library | Combination of multiple components, form submission flows, etc. | 25% |
-| E2E | Playwright | Core user scenarios such as login, order creation, etc. | 10% |
+| Unit | Vitest | Utility functions, custom hooks, pure logic | 50% |
+| Integration | React Testing Library | Combination of multiple components, form submission flows, screen-level verification | 35% |
+| E2E | Playwright | Core user scenarios such as login, order creation | 15% |
 
 ---
 
-## 2. Storybook Convention
+## 2. Unit Testing (Vitest + React Testing Library)
 
-### 2-1. Setup
+### 2-1. Component Testing
 
-- **Rule**: [MUST] Storybook uses the `@storybook/react-vite` framework
-
-`.storybook/main.ts`:
-
-```typescript
-import type { StorybookConfig } from "@storybook/react-vite";
-
-const config: StorybookConfig = {
-  stories: ["../app/**/*.stories.@(ts|tsx)"],
-  addons: [
-    "@storybook/addon-essentials",
-    "@storybook/addon-interactions",
-    "@storybook/addon-a11y",
-  ],
-  framework: "@storybook/react-vite",
-  staticDirs: ["../public"],
-};
-
-export default config;
-```
-
-`.storybook/preview.ts`:
-
-```typescript
-import type { Preview } from "@storybook/react";
-import "../app/globals.css";
-
-const preview: Preview = {
-  parameters: {
-    controls: {
-      matchers: {
-        color: /(background|color)$/i,
-        date: /Date$/i,
-      },
-    },
-    layout: "fullscreen",
-  },
-};
-
-export default preview;
-```
-
-### 2-2. Story File Location
-
-- **Rule**: [MUST] Story files are placed in the same folder as the component, following the `[ComponentName].stories.tsx` pattern
-- **Good Example**:
-
-```text
-app/components/ui/button/
-├── Button.tsx
-├── Button.stories.tsx
-├── Button.test.tsx
-└── button.types.ts
-```
-
-### 2-3. CSF3 Format
-
-- **Rule**: [MUST] Use Component Story Format 3 (CSF3) with `Meta` and `StoryObj` types
-- **Good Example**:
-
-```typescript
-import type { Meta, StoryObj } from "@storybook/react";
-import { Button } from "./Button";
-
-const meta = {
-  title: "Atoms/Button",
-  component: Button,
-  args: {
-    children: "버튼",
-  },
-  argTypes: {
-    variant: {
-      control: "select",
-      options: ["primary", "secondary"],
-    },
-    size: {
-      control: "select",
-      options: ["sm", "md", "lg"],
-    },
-    disabled: {
-      control: "boolean",
-    },
-  },
-} satisfies Meta<typeof Button>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Primary: Story = {
-  args: {
-    variant: "primary",
-    children: "Primary 버튼",
-  },
-};
-
-export const Secondary: Story = {
-  args: {
-    variant: "secondary",
-    children: "Secondary 버튼",
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    variant: "primary",
-    disabled: true,
-    children: "비활성 버튼",
-  },
-};
-```
-
-### 2-4. Story Hierarchy
-
-- **Rule**: [SHOULD] The `title` property should be written hierarchically according to the Atomic Design classification
-
-| Classification | Target | Example |
-| --- | --- | --- |
-| Atoms | Basic elements that cannot be broken down further | `Atoms/Button`, `Atoms/Input`, `Atoms/Badge` |
-| Molecules | Functional units composed of Atoms | `Molecules/SearchField`, `Molecules/FormField` |
-| Organisms | Independent sections composed of Molecules | `Organisms/Header`, `Organisms/OrderTable` |
-| Templates | Page layout structures | `Templates/DashboardLayout` |
-| Pages | Pages connected with actual data | `Pages/OrderListPage` |
-
-### 2-5. Interaction Testing
-
-- **Rule**: [SHOULD] Components with user interactions should use the `play` function to verify behavior within Storybook
-- **Good Example**:
-
-```typescript
-import type { Meta, StoryObj } from "@storybook/react";
-import { within, userEvent, expect } from "@storybook/test";
-import { ContactForm } from "./ContactForm";
-
-const meta = {
-  title: "Molecules/ContactForm",
-  component: ContactForm,
-} satisfies Meta<typeof ContactForm>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const SubmitSuccess: Story = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    // 이름 입력
-    const nameInput = canvas.getByRole("textbox", { name: "이름" });
-    await userEvent.clear(nameInput);
-    await userEvent.type(nameInput, "홍길동");
-
-    // 이메일 입력
-    const emailInput = canvas.getByRole("textbox", { name: "이메일" });
-    await userEvent.clear(emailInput);
-    await userEvent.type(emailInput, "hong@example.com");
-
-    // 제출 버튼 클릭
-    const submitButton = canvas.getByRole("button", { name: "제출" });
-    await userEvent.click(submitButton);
-
-    // 성공 메시지 확인
-    await expect(
-      canvas.getByText("성공적으로 제출되었습니다.")
-    ).toBeInTheDocument();
-  },
-};
-```
-
-### 2-6. Autodocs
-
-- **Rule**: [SHOULD] Shared components should enable automatic documentation by setting `tags: ['autodocs']`
-- **Good Example**:
-
-```typescript
-const meta = {
-  title: "Atoms/Button",
-  component: Button,
-  tags: ["autodocs"],
-  argTypes: {
-    variant: {
-      description: "버튼의 시각적 스타일",
-      control: "select",
-      options: ["primary", "secondary"],
-    },
-    onClick: {
-      action: "clicked",
-      description: "클릭 이벤트 핸들러",
-    },
-  },
-} satisfies Meta<typeof Button>;
-```
-
----
-
-## 3. Unit Testing (Vitest + React Testing Library)
-
-### 3-1. Component Testing
-
-- **Rule**: [MUST] Component tests follow the render -> interact -> assert pattern, prioritizing `screen.getByRole`
-- **Good Example**:
+- **Rule**: [MUST] Component tests follow the render -> interact -> assert pattern and prioritize using `screen.getByRole`
+- **Good example**:
 
 ```typescript
 import { render, screen } from "@testing-library/react";
@@ -260,10 +61,10 @@ describe("UserProfile", () => {
 });
 ```
 
-### 3-2. Hook Testing
+### 2-2. Hook Testing
 
 - **Rule**: [SHOULD] Custom hooks should be tested independently using `renderHook`
-- **Good Example**:
+- **Good example**:
 
 ```typescript
 import { renderHook, act } from "@testing-library/react";
@@ -298,10 +99,10 @@ describe("useCounter", () => {
 });
 ```
 
-### 3-3. useSuspenseQuery Testing
+### 2-3. useSuspenseQuery Testing
 
-- **Rule**: [SHOULD] Components using `useSuspenseQuery` should be tested with a `Suspense` boundary, and APIs should be mocked with MSW
-- **Good Example**:
+- **Rule**: [SHOULD] Components using `useSuspenseQuery` should be tested with `Suspense` boundaries, and APIs should be mocked with MSW
+- **Good example**:
 
 ```typescript
 import { Suspense } from "react";
@@ -338,16 +139,18 @@ describe("UserProfile", () => {
 });
 ```
 
-### 3-4. File Location
+### 2-4. File Location
 
-- **Rule**: [MUST] Test files are placed in the same folder as the test target, using the `*.test.tsx` (or `*.spec.tsx`) pattern
+- **Rule**: [MUST NOT] Do not create `.test.tsx` and `.stories.tsx` files per component as a default structure.
+- **Rule**: [SHOULD] When testing is needed, write separate test files on a feature basis.
 
 ```text
-app/components/ui/button/
-├── Button.tsx
-├── Button.test.tsx          ← 컴포넌트 테스트
-├── Button.stories.tsx       ← 스토리
-└── button.types.ts
+app/features/order/
+├── api/
+│   ├── query-options.ts
+│   └── use-orders-query.ts
+└── tests/
+    └── use-orders-query.test.ts
 
 app/hooks/
 ├── use-counter.ts
@@ -358,7 +161,7 @@ app/utils/
 └── format-date.test.ts      ← 유틸리티 테스트
 ```
 
-### 3-5. Mock Patterns
+### 2-5. Mock Patterns
 
 - **Rule**: [SHOULD] External dependencies should be isolated using appropriate mock tools
 
@@ -474,10 +277,10 @@ describe("AuthenticatedContent", () => {
 
 ---
 
-## 4. E2E Testing
+## 3. E2E Testing
 
 - **Rule**: [SHOULD] Write E2E tests for core user scenarios using Playwright
-- **Good Example**:
+- **Good example**:
 
 ```typescript
 import { test, expect } from "@playwright/test";
@@ -490,7 +293,7 @@ test.describe("주문 생성 플로우", () => {
     await page.getByLabel("비밀번호").fill("password123");
     await page.getByRole("button", { name: "로그인" }).click();
 
-    // 대시보드 도착 확인
+    // 대시보��� 도착 확인
     await expect(page).toHaveURL("/dashboard");
     await expect(page.getByRole("heading", { name: "대시보드" })).toBeVisible();
 
@@ -509,7 +312,7 @@ test.describe("주문 생성 플로우", () => {
 });
 ```
 
-E2E tests are expensive, so focus on core scenarios such as the following:
+E2E tests are costly, so focus on the following core scenarios:
 
 | Scenario | Verification Items |
 | --- | --- |
@@ -520,10 +323,10 @@ E2E tests are expensive, so focus on core scenarios such as the following:
 
 ---
 
-## 5. Test Naming
+## 4. Test Naming
 
 - **Rule**: [SHOULD] Specify the test target with `describe`, and write the condition and expected result in `it`
-- **Good Example**:
+- **Good example**:
 
 ```typescript
 describe("OrderTable", () => {
@@ -545,12 +348,12 @@ describe("OrderTable", () => {
 
 ---
 
-## 6. Anti-Patterns
+## 5. Anti-patterns
 
 ### Testing Implementation Details
 
-- **Rule**: [MUST NOT] Do not overuse `data-testid` or write tests that depend on internal implementation. Prioritize `getByRole`, `getByText`, and `getByLabelText`.
-- **Good Example**:
+- **Rule**: [MUST NOT] Do not overuse `data-testid` or write tests that depend on internal implementation. Prioritize using `getByRole`, `getByText`, and `getByLabelText`.
+- **Good example**:
 
 ```typescript
 // 사용자 관점에서 요소를 탐색
@@ -559,7 +362,7 @@ expect(screen.getByLabelText("이메일")).toHaveValue("hong@example.com");
 expect(screen.getByText("주문이 완료되었습니다.")).toBeInTheDocument();
 ```
 
-- **Bad Example**:
+- **Bad example**:
 
 ```typescript
 // data-testid에 의존하면 접근성 검증이 누락되고 리팩토링에 취약함
@@ -568,14 +371,14 @@ expect(screen.getByTestId("email-input")).toHaveValue("hong@example.com");
 expect(screen.getByTestId("success-msg")).toBeInTheDocument();
 ```
 
-### Overuse of Snapshot Testing
+### Overuse of Snapshot Tests
 
-- **Rule**: [SHOULD NOT] Do not use snapshot testing for UI components that change frequently
+- **Rule**: [SHOULD NOT] Do not use snapshot tests for UI components that change frequently
 
 ### Sharing State Between Tests
 
 - **Rule**: [MUST NOT] Do not share state between tests. Each test must run independently.
-- **Good Example**:
+- **Good example**:
 
 ```typescript
 describe("CartStore", () => {
@@ -597,7 +400,7 @@ describe("CartStore", () => {
 });
 ```
 
-- **Bad Example**:
+- **Bad example**:
 
 ```typescript
 describe("CartStore", () => {
@@ -620,7 +423,7 @@ describe("CartStore", () => {
 ### Missing waitFor for Asynchronous Logic
 
 - **Rule**: [MUST NOT] Do not assert on asynchronously rendered elements without `waitFor`
-- **Good Example**:
+- **Good example**:
 
 ```typescript
 it("사용자 목록을 로딩 후 표시한다", async () => {
@@ -633,7 +436,7 @@ it("사용자 목록을 로딩 후 표시한다", async () => {
 });
 ```
 
-- **Bad Example**:
+- **Bad example**:
 
 ```typescript
 it("사용자 목록을 로딩 후 표시한다", () => {

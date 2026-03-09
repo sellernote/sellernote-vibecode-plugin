@@ -44,7 +44,7 @@
 
 ### Token Payload
 
-- **Rule**: [MUST NOT] Do not include sensitive information (passwords, social security numbers, card numbers, etc.) in JWT token payloads.
+- **Rule**: [MUST NOT] Do not include sensitive information (passwords, resident registration numbers, card numbers, etc.) in the JWT token payload.
 - **Rule**: [SHOULD] Include only the minimum information necessary for authentication/authorization in the token payload.
 - **Good example**:
   ```typescript
@@ -71,7 +71,7 @@
       if (!storedToken) {
         // Already used token - suspected theft, invalidate all Refresh Tokens
         await this.refreshTokenRepository.update({ userId: payload.sub }, { isRevoked: true });
-        throw new UnauthorizedException('Abnormal token renewal detected.');
+        throw new UnauthorizedException('Abnormal token renewal has been detected.');
       }
 
       await this.refreshTokenRepository.update({ id: storedToken.id }, { isRevoked: true });
@@ -85,7 +85,7 @@
 
 ### Authentication Header
 
-- **Rule**: [MUST] Authentication tokens must be sent in the `Authorization` header using the Bearer scheme.
+- **Rule**: [MUST] Send the authentication token in the `Authorization` header using the Bearer scheme.
 - **Good example**:
   ```
   Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
@@ -93,7 +93,7 @@
 
 ### Role-Based Access Control (RBAC)
 
-- **Rule**: [SHOULD] Use a role-based permission system.
+- **Rule**: [SHOULD] Use a Role-based permission system.
 - **Good example**:
   ```typescript
   // NestJS
@@ -118,11 +118,11 @@
       }
   }
   ```
-> [MUST NOT] Direct role checking inside Controller methods is prohibited. Use Guard/SecurityConfig instead.
+> [MUST NOT] Do not perform role checks directly inside Controller methods. Use Guard/SecurityConfig instead.
 
 ### Password Handling
 
-- **Rule**: [MUST] Passwords must be stored using a one-way hash algorithm such as bcrypt. Storing in plaintext is strictly prohibited.
+- **Rule**: [MUST] Store passwords using a one-way hash algorithm such as bcrypt. Storing in plaintext is strictly prohibited.
 - **Rule**: [MUST NOT] Do not include password hashes in API responses.
 - **Good example**:
   ```typescript
@@ -148,7 +148,7 @@
 ### Input Validation Principles
 
 - **Rule**: [MUST] All user input must be validated on the server side.
-- **Rule**: [MUST] Input validation must be performed using a whitelist (allow list) approach.
+- **Rule**: [MUST] Perform input validation based on a whitelist (allow list).
 - **Good example**:
   ```typescript
   // NestJS - Whitelist-based validation with ValidationPipe + DTO
@@ -180,12 +180,12 @@
   @Query("SELECT u FROM User u WHERE u.email = :email AND u.status = :status")
   List<User> findByEmailAndStatus(@Param("email") String email, @Param("status") String status);
   ```
-> [MUST NOT] Constructing SQL queries with string interpolation/concatenation is prohibited (e.g., `` `user.email = '${userInput}'` ``).
+> [MUST NOT] Do not construct SQL queries using string interpolation/concatenation (e.g., `` `user.email = '${userInput}'` ``).
 
 ### XSS (Cross-Site Scripting) Prevention
 
 - **Rule**: [MUST] Always perform escaping when outputting user input as HTML.
-- **Rule**: [MUST NOT] Do not directly insert user input into HTML without validation.
+- **Rule**: [MUST NOT] Do not insert user input directly into HTML without validation.
 - **Rule**: [SHOULD] Sanitize user HTML content using `sanitize-html` or similar to keep only allowed tags.
 - **Good example**:
   ```typescript
@@ -205,7 +205,7 @@
 
 ### Mass Assignment Prevention
 
-- **Rule**: [MUST] Only allow fields defined in the DTO, and reject or ignore undefined fields.
+- **Rule**: [MUST] Allow only fields defined in the DTO and reject or ignore undefined fields.
 
 > Refer to NESTJS_CONVENTION.md for NestJS `ValidationPipe` configuration.
 
@@ -216,7 +216,7 @@
   export class UpdateUserDto {
     @IsString() @IsOptional() nickname?: string;
     @IsString() @IsOptional() bio?: string;
-    // isAdmin, role, etc. are not defined -> rejected if included in request
+    // isAdmin, role, etc. are not defined -> rejected if included in the request
   }
   ```
   ```java
@@ -230,7 +230,7 @@
 ### Path Traversal Prevention
 
 - **Rule**: [MUST] Block `../` patterns when using user input in file paths.
-- **Rule**: [MUST] Only allow file path access within an allowed base directory.
+- **Rule**: [MUST] Allow file path access only within permitted base directories.
 - **Good example**:
   ```typescript
   import * as path from 'path';
@@ -254,13 +254,13 @@
 
 ### HTTPS/TLS Enforcement
 
-- **Rule**: [MUST] All API communication must use HTTPS in production environments.
-- **Rule**: [MUST] HTTP requests must be redirected to HTTPS.
+- **Rule**: [MUST] All API communication in production environments must use HTTPS.
+- **Rule**: [MUST] Redirect HTTP requests to HTTPS.
 
 ### CORS Configuration
 
-- **Rule**: [MUST] CORS allowed origins must be explicitly configured using a whitelist approach. Wildcard (`*`) is prohibited.
-- **Rule**: [MUST] Wildcard origins cannot be used when using credentials.
+- **Rule**: [MUST] Explicitly configure CORS allowed origins using a whitelist approach. Wildcard (`*`) is prohibited.
+- **Rule**: [MUST] Wildcard origin cannot be used when using credentials.
 - **Good example**:
   ```typescript
   // NestJS
@@ -287,7 +287,7 @@
 
 ### Security HTTP Headers
 
-- **Rule**: [MUST] Use `helmet` middleware in NestJS and Spring Security's `headers()` configuration in Spring.
+- **Rule**: [MUST] Use the `helmet` middleware in NestJS and Spring Security's `headers()` configuration in Spring.
 
 | Header | Value | Description |
 |------|-----|------|
@@ -322,7 +322,7 @@
 | Attribute | Description |
 |------|------|
 | `HttpOnly` | Prevents access via `document.cookie` in JavaScript |
-| `Secure` | Sends cookies only over HTTPS connections |
+| `Secure` | Sends cookie only over HTTPS connections |
 | `SameSite` | Restricts cookie transmission on cross-site requests with `Strict` or `Lax` |
 
 - **Good example**:
@@ -339,14 +339,14 @@
 ### CSRF Prevention
 
 - **Rule**: [SHOULD] `SameSite` Cookie and Bearer token-based APIs do not require a separate CSRF token.
-- **Rule**: [MUST] Apply CSRF tokens when using cookie-based session authentication.
+- **Rule**: [MUST] Apply a CSRF token when using Cookie-based session authentication.
 - **Good example**:
   ```java
-  // Spring Security - Enable CSRF when using cookie-based sessions
+  // Spring Security - Enable CSRF when using Cookie-based sessions
   http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
   ```
-> [MUST NOT] Do not disable CSRF in cookie-based sessions.
+> [MUST NOT] Do not disable CSRF in Cookie-based sessions.
 
 ## Sensitive Data Management
 
@@ -378,9 +378,9 @@
   !.env.example
   ```
 
-### Prohibit Logging Sensitive Data
+### Prohibition of Logging Sensitive Data
 
-- **Rule**: [MUST NOT] Do not output sensitive information such as passwords, tokens, credit card numbers, or social security numbers in logs.
+- **Rule**: [MUST NOT] Do not output sensitive information such as passwords, tokens, credit card numbers, or resident registration numbers in logs.
 - **Rule**: [SHOULD] Apply masking when sensitive data must be included in logs.
 
 | Data | Masking Example |
@@ -388,7 +388,7 @@
 | Email | `u***@example.com` |
 | Phone number | `010-****-5678` |
 | Credit card number | `****-****-****-1234` |
-| Social security number | `900101-*******` |
+| Resident registration number | `900101-*******` |
 
 - **Good example**:
   ```typescript
@@ -405,7 +405,7 @@
   this.logger.log(`Order processing complete: userId=${userId}, email=${MaskingUtil.maskEmail(email)}`);
   ```
 
-### Exclude Sensitive Information from API Responses
+### Excluding Sensitive Information from API Responses
 
 - **Rule**: [MUST] Explicitly select fields to expose through ResponseDto (whitelist approach).
 - **Rule**: [MUST NOT] Do not return Entity directly as an API response.
@@ -433,9 +433,9 @@
 
 ### Encryption
 
-- **Rule**: [MUST] Passwords must be one-way hashed with bcrypt.
-- **Rule**: [SHOULD] Sensitive personal information (social security numbers, card numbers, etc.) must be encrypted with AES-256 or similar when stored.
-- **Rule**: [MUST] Encryption keys must not be included in source code and must be managed with secret management tools.
+- **Rule**: [MUST] Hash passwords one-way using bcrypt.
+- **Rule**: [SHOULD] Encrypt sensitive personal information (resident registration numbers, card numbers, etc.) with AES-256 or similar when storing.
+- **Rule**: [MUST] Do not include encryption keys in source code; manage them with secret management tools.
 - **Good example**:
   ```typescript
   import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
@@ -469,9 +469,9 @@
 
 ### PII (Personally Identifiable Information) Handling
 
-- **Rule**: [MUST] Personal information must be destroyed or de-identified without delay after the purpose of collection has been fulfilled.
+- **Rule**: [MUST] Destroy or de-identify personal information without delay after the purpose of collection has been fulfilled.
 - **Rule**: [SHOULD] Record access logs when processing personal information.
-- **Rule**: [SHOULD] Encrypt personal information DB columns or separate them into a dedicated table.
+- **Rule**: [SHOULD] Encrypt personal information DB columns or separate them into dedicated tables.
 - **Good example**:
   ```typescript
   @Entity()
@@ -499,7 +499,7 @@
 
 ### Dependency Security Scanning
 
-- **Rule**: [MUST] Automate dependency vulnerability scanning in CI pipelines (`npm audit`, `yarn audit`).
+- **Rule**: [MUST] Automate dependency vulnerability scanning in the CI pipeline (`npm audit`, `yarn audit`).
 - **Rule**: [SHOULD] Use automated vulnerability detection tools such as Snyk, Dependabot, or Renovate.
 - **Good example**:
   ```yaml
@@ -529,12 +529,12 @@
 
 - **Rule**: [SHOULD] Consider the following criteria when selecting libraries.
 
-| Criteria | Verification Items |
+| Criterion | Items to Check |
 |------|----------|
-| Maintenance status | Verify that the last update was within 6 months |
+| Maintenance status | Verify last update is within 6 months |
 | Security vulnerabilities | Verify no known vulnerabilities in Snyk or npm audit |
 | Community size | Weekly download count, GitHub stars, issue response time |
-| License compatibility | Verify the license is compatible with commercial projects (MIT, Apache 2.0, etc.) |
+| License compatibility | Verify license is compatible with commercial projects (MIT, Apache 2.0, etc.) |
 
 ## Request Limiting and Service Protection
 
@@ -570,8 +570,8 @@
 | Target | Recommended Timeout | Description |
 |------|-------------|------|
 | API server response | 30 seconds | Maximum response time to client |
-| External API calls | 5~10 seconds | Maximum wait time for external service calls |
-| DB queries | 5 seconds | Maximum execution time for database queries |
+| External API call | 5~10 seconds | Maximum wait time when calling external services |
+| DB query | 5 seconds | Maximum database query execution time |
 
 - **Good example**:
   ```typescript
@@ -584,8 +584,8 @@
 
 ### Slowloris/DDoS Basic Defense
 
-- **Rule**: [SHOULD] Configure connection limits and request rate limits on reverse proxies (Nginx, CloudFront, etc.).
-- **Rule**: [SHOULD] Utilize WAF (Web Application Firewall) in cloud environments.
+- **Rule**: [SHOULD] Configure connection limits and request rate limits at the reverse proxy (Nginx, CloudFront, etc.).
+- **Rule**: [SHOULD] Utilize a WAF (Web Application Firewall) in cloud environments.
 - **Good example**:
   ```nginx
   http {
@@ -605,7 +605,7 @@
 
 ## Security Logging and Auditing
 
-### Required Audit Log Events
+### Mandatory Audit Log Events
 
 - **Rule**: [MUST] The following security-related events must be recorded in audit logs.
 
@@ -633,14 +633,14 @@
   }
   ```
 
-### Prohibit Sensitive Information in Logs
+### Prohibition of Sensitive Information in Logs
 
-> Refer to the [Prohibit Logging Sensitive Data](#prohibit-logging-sensitive-data) section.
+> Refer to the [Prohibition of Logging Sensitive Data](#prohibition-of-logging-sensitive-data) section.
 
 ### Security Event Monitoring
 
 - **Rule**: [SHOULD] Monitor consecutive login failures (5 or more), abnormal access patterns, etc. in real-time and trigger alerts.
-- **Rule**: [SHOULD] Apply account lockout policies: lock the account for a certain period after N consecutive login failures.
+- **Rule**: [SHOULD] Apply an account lockout policy: lock the account for a certain period after N consecutive login failures.
 - **Good example**:
   ```typescript
   @Injectable()
@@ -672,7 +672,7 @@
 
 - **Rule**: [SHOULD] Check the following OWASP Top 10 items during code review.
 
-| Rank | Vulnerability | Verification Items |
+| Rank | Vulnerability | Items to Check |
 |------|--------|----------|
 | A01 | Broken Access Control | Authentication/authorization Guard applied, resource owner verification |
 | A02 | Cryptographic Failures | Sensitive data encryption, HTTPS enforcement, secure hash algorithms |
@@ -680,14 +680,14 @@
 | A04 | Insecure Design | Business logic security, threat modeling reflection |
 | A05 | Security Misconfiguration | Default settings changed, unnecessary features/ports disabled |
 | A06 | Vulnerable Components | Dependency vulnerability scanning, library updates |
-| A07 | Auth Failures | JWT expiration settings, password policies, Refresh Token Rotation |
+| A07 | Auth Failures | JWT expiration settings, password policy, Refresh Token Rotation |
 | A08 | Integrity Failures | CI/CD pipeline security, dependency integrity verification |
 | A09 | Logging Failures | Audit log recording, security event monitoring |
 | A10 | SSRF | External URL input validation, internal network access blocking |
 
 ### Static Analysis Tools
 
-- **Rule**: [SHOULD] Use ESLint security plugins (`eslint-plugin-security`).
+- **Rule**: [SHOULD] Use ESLint security plugin (`eslint-plugin-security`).
 - **Rule**: [MAY] Integrate static analysis tools such as SonarQube into CI.
 - **Good example**:
   ```javascript
@@ -704,7 +704,7 @@
   };
   ```
 
-### Dependency Vulnerability CI Automated Checks
+### Dependency Vulnerability CI Automated Inspection
 
 > Refer to the [Dependency Security Scanning](#dependency-security-scanning) section.
 
@@ -721,30 +721,30 @@
 
 ### 1. Hardcoded Secrets
 
-- **Rule**: Directly writing passwords, API Keys, JWT Secrets, etc. in source code is prohibited.
+- **Rule**: Do not write passwords, API Keys, JWT Secrets, etc. directly in source code.
 - **Solution**: Refer to [Secret/Environment Variable Management](#secretenvironment-variable-management).
 
-### 2. Stack Trace Exposure in Error Responses
+### 2. Exposing Stack Traces in Error Responses
 
-- **Rule**: Exposing stack traces, SQL queries, file paths, etc. to clients in production environments is prohibited.
+- **Rule**: Do not expose stack traces, SQL queries, file paths, etc. to clients in production environments.
 - **Solution**: Use a global Exception Filter to return only safe error messages.
 
 ### 3. CORS Wildcard Allowed
 
-- **Rule**: Setting `origin: '*'` or `origin: true` is prohibited.
+- **Rule**: Do not use `origin: '*'` or `origin: true` configuration.
 - **Solution**: Refer to [CORS Configuration](#cors-configuration).
 
 ### 4. Trusting User Input Without Validation
 
-- **Rule**: Using user input directly without DTO validation is prohibited.
+- **Rule**: Do not use user input directly without DTO validation.
 - **Solution**: Refer to [Input Validation Principles](#input-validation-principles).
 
 ### 5. Storing/Transmitting Sensitive Data in Plaintext
 
-- **Rule**: Storing passwords in plaintext or storing personal information without encryption is prohibited.
+- **Rule**: Do not store passwords in plaintext or store personal information without encryption.
 - **Solution**: Refer to [Password Handling](#password-handling) and [Encryption](#encryption).
 
 ### 6. Indefinite JWT Expiration
 
-- **Rule**: Not setting `expiresIn` or using excessively long expiration times (e.g., 1 year) is prohibited.
-- **Solution**: Access Token 15 minutes ~ 1 hour, Refresh Token 7 days ~ 30 days. Refer to [JWT Token Management](#jwt-token-management).
+- **Rule**: Do not leave `expiresIn` unset or set an excessively long expiration time (e.g., 1 year).
+- **Solution**: Access Token 15 min ~ 1 hour, Refresh Token 7 days ~ 30 days. Refer to [JWT Token Management](#jwt-token-management).

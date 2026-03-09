@@ -1,6 +1,6 @@
 # Database Convention
 
-> This document defines common rules that apply to the entire database.
+> This document defines common rules that apply across all databases.
 > For rules specific to a particular database, refer to the documents in the subdirectories.
 >
 > - [MySQL Convention](mysql/MYSQL_CONVENTION.md)
@@ -11,17 +11,17 @@
 ### Normalization Level
 
 - **Rule**: [SHOULD] Design targeting Third Normal Form (3NF) by default.
-- **Rule**: [MAY] When read performance is critical, intentional denormalization is allowed. However, when denormalizing, the approach for maintaining data consistency must be documented.
+- **Rule**: [MAY] Intentional denormalization is allowed when read performance is critical. However, the approach for maintaining data consistency during denormalization must be documented.
 
-### ERD Writing Standards
+### ERD Creation Standards
 
-- **Rule**: [MUST] Major domain entities and relationships must be documented as ERDs.
-- **Rule**: [SHOULD] ERDs should specify table names, key columns, PK/FK relationships, and cardinality.
+- **Rule**: [MUST] Major domain entities and relationships must be documented as an ERD.
+- **Rule**: [SHOULD] The ERD should specify table names, key columns, PK/FK relationships, and cardinality.
 
 ### Relationship Design Principles
 
 - **Rule**: [MUST] Explicitly define relationships between tables through foreign keys (FK).
-- **Rule**: [SHOULD] Many-to-many (M:N) relationships should use junction tables.
+- **Rule**: [SHOULD] Many-to-many (M:N) relationships should use a junction table.
 
 ## Naming Rules
 
@@ -40,7 +40,7 @@
 
 - **Rule**: [MUST] Column names must use lowercase `snake_case`.
 - **Rule**: [MUST] PK columns are named `id` (UUID), and sequential identifier columns are named `_no` (AUTO_INCREMENT).
-- **Rule**: [MUST] FK columns follow the `{referenced_table_singular}_id` pattern.
+- **Rule**: [MUST] FK columns must follow the `{referenced_table_singular}_id` pattern.
 - **Good Example**:
   ```sql
   -- user 테이블의 PK
@@ -50,7 +50,7 @@
   -- order 테이블에서 user를 참조하는 FK
   user_id CHAR(36) NOT NULL  -- UUID FK
   ```
-- **Rule**: [MUST NOT] Do not use data type names in column names. (e.g., `text`, `timestamp`, `number`)
+- **Rule**: [MUST NOT] Do not use data types in column names. (e.g., `text`, `timestamp`, `number`)
 - **Rule**: [SHOULD] Boolean columns should use `is_`, `has_`, `can_` prefixes.
 - **Good Example**:
   ```sql
@@ -99,12 +99,12 @@
 |-------|------|-------------|
 | `id` | CHAR(36) | PK. Stores a UUID value |
 | `_no` | BIGINT, AUTO_INCREMENT, UNIQUE | Internal sequential identifier. Uses a UNIQUE KEY index |
-| `created_at` | DATETIME | Record creation timestamp (UTC) |
-| `updated_at` | DATETIME | Record last modified timestamp (UTC) |
+| `created_at` | DATETIME | Record creation time (UTC) |
+| `updated_at` | DATETIME | Record last modified time (UTC) |
 
 ### Soft Delete
 
-- **Rule**: [SHOULD] Tables that require deletion history for business purposes should apply soft delete via the `deleted_at` field.
+- **Rule**: [SHOULD] Tables that require deletion history for business purposes should implement soft delete through a `deleted_at` field.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -129,7 +129,7 @@
   SELECT * FROM user WHERE deleted_at IS NULL;
   ```
 
-- **Rule**: [MUST] Tables with soft delete must always include the `deleted_at IS NULL` condition in default queries.
+- **Rule**: [MUST] Tables with soft delete applied must always include the `deleted_at IS NULL` condition in default queries.
 
 ### ID Strategy
 
@@ -145,7 +145,7 @@
 
 ### Strings
 
-- **Rule**: [SHOULD] Use `VARCHAR(n)` for strings with fixed or predictable length, and use `TEXT` types for large text with unpredictable length.
+- **Rule**: [SHOULD] Use `VARCHAR(n)` for strings with fixed or predictable lengths, and `TEXT` types for large text with unpredictable lengths.
 
 | Purpose | Recommended Type | Example |
 |---------|-----------------|---------|
@@ -156,10 +156,10 @@
 
 ### Date/Time
 
-- **Rule**: [MUST] Store date/time data in UTC and convert to the appropriate timezone when displaying.
+- **Rule**: [MUST] Store date/time data in UTC and convert the timezone when displaying.
 - **Rule**: [SHOULD] Use ISO 8601 format (YYYY-MM-DD HH:MM:SS) as the standard.
 
-### Currency/Decimal
+### Monetary/Decimal Values
 
 - **Rule**: [MUST] Use `DECIMAL(precision, scale)` type for monetary data. Do not use `FLOAT`/`DOUBLE`.
 - **Good Example**:
@@ -180,13 +180,13 @@
 - **Rule**: [MUST] In composite indexes, place columns with higher cardinality (better selectivity) first.
 - **Good Example**:
   ```sql
-  -- user_id의 카디널리티가 status보다 높으므로 앞에 배치
+  -- user_id has higher cardinality than status, so it is placed first
   CREATE INDEX idx_order_user_id_status ON `order` (user_id, status);
   ```
 
 ### Covering Index
 
-- **Rule**: [MAY] For frequently executed queries, include the SELECT target columns in the index to utilize a covering index.
+- **Rule**: [MAY] For frequently executed queries, a covering index can be used by including the SELECT target columns in the index.
 - **Good Example**:
   ```sql
   -- user_id로 검색하고 email만 반환하는 쿼리가 빈번한 경우
@@ -201,7 +201,7 @@
 ### Migration File Management
 
 - **Rule**: [MUST] Schema changes must be managed through migration files. Do not execute DDL directly on the DB manually.
-- **Rule**: [MUST] Migration file names must use timestamp-based naming to guarantee ordering.
+- **Rule**: [MUST] Migration file names must be timestamp-based to ensure ordering.
 - **Good Example**:
   ```
   20250101_000001_create_user_table.sql
@@ -232,19 +232,19 @@
 ### Zero-Downtime Schema Changes
 
 - **Rule**: [MUST] Schema changes in production environments must be performed without service interruption.
-- **Rule**: [SHOULD] Schema changes for large tables should follow this sequence:
+- **Rule**: [SHOULD] Schema changes on large tables should follow this sequence:
   1. Add new column (nullable or with default value) -- compatible with existing code
   2. Deploy code to use the new column in the application
   3. Migrate existing data in batches
   4. Add NOT NULL constraint if needed
-  5. Remove old column (in a separate migration)
-- **Rule**: [MUST NOT] Do not perform column renames or deletions in a single deployment in production environments.
+  5. Remove the old column (in a separate migration)
+- **Rule**: [MUST NOT] Do not perform column renaming or deletion in a single deployment in production environments.
 
 ## Business Logic Management
 
 ### No FUNCTION / Trigger Usage
 
-- **Rule**: [MUST NOT] Do not use database-internal FUNCTIONs, Triggers, or Stored Procedures. All business logic must be implemented in application code.
+- **Rule**: [MUST NOT] Do not use database internal FUNCTIONs, Triggers, or Stored Procedures. All business logic must be implemented in application code.
 - **Good Example**:
   ```typescript
   // 애플리케이션 코드에서 비즈니스 로직 처리
@@ -268,9 +268,9 @@
   SELECT id, email, name FROM user WHERE id = 'uuid-value';
   ```
 
-### N+1 Queries
+### N+1 Query
 
-- **Rule**: [MUST NOT] Do not execute queries repeatedly inside loops.
+- **Rule**: [MUST NOT] Do not execute queries repeatedly inside a loop.
 - **Good Example**:
   ```sql
   -- JOIN으로 한 번에 조회
@@ -282,7 +282,7 @@
 
 ### Implicit Type Conversion
 
-- **Rule**: [MUST NOT] Do not compare a column with a value of a different type in WHERE conditions. (This invalidates indexes and causes Full Table Scans)
+- **Rule**: [MUST NOT] Do not compare a column with a value of a different type in WHERE conditions. (This invalidates indexes and causes Full Table Scan)
 
 ### NULL Comparison Errors
 

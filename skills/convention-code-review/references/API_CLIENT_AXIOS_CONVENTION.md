@@ -69,7 +69,7 @@ function processRefreshQueue(error: Error | null, token: string | null) {
 }
 
 async function refreshAccessToken(): Promise<string> {
-  // Refresh Token is automatically attached as httpOnly cookie
+  // Refresh Token is automatically attached as an httpOnly cookie
   const response = await axios.post(
     `${BASE_URL}/auth/refresh`,
     {},
@@ -105,10 +105,10 @@ apiClient.interceptors.response.use(
     };
 
     if (status === 401) {
-      // If a retried request after refresh also returns 401 → prevent infinite loop, force logout immediately
+      // If a retried request after refresh returns 401 again → prevent infinite loop, force logout immediately
       if (originalRequest._retried) {
         forceLogout();
-        throw new ApiError(401, '세션이 만료되었습니다. 다시 로그인해주세요.', 'SESSION_EXPIRED');
+        throw new ApiError(401, 'Session has expired. Please log in again.', 'SESSION_EXPIRED');
       }
 
       if (isRefreshing) {

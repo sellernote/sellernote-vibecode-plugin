@@ -3,7 +3,7 @@
 > This document defines the rules applied to MySQL projects.
 > Parent rules: DATABASE_CONVENTION.md
 
-## Technology Stack
+## Tech Stack
 
 | Item | Version/Setting |
 |------|----------|
@@ -15,8 +15,8 @@
 
 ### Table Names
 
-- **Rule**: [MUST] Table names must be written in lowercase snake_case, singular form.
-- **Good Example**:
+- **Rule**: [MUST] Table names must be written in lowercase snake_case and singular form.
+- **Good Examples**:
   ```sql
   CREATE TABLE `order` ( ... );
   CREATE TABLE order_item ( ... );
@@ -25,8 +25,8 @@
 
 ### Field COMMENT
 
-- **Rule**: [MUST] Add a COMMENT to all fields describing the field's purpose and constraints.
-- **Good Example**:
+- **Rule**: [MUST] Add a COMMENT to all fields describing the purpose and constraints of the field.
+- **Good Examples**:
   ```sql
   CREATE TABLE `order` (
       id CHAR(36) NOT NULL PRIMARY KEY COMMENT '주문 고유 식별자 (UUID v4)',
@@ -46,8 +46,8 @@
 
 ### DECIMAL Precision
 
-- **Rule**: [SHOULD] The default precision for monetary amount fields is `DECIMAL(15, 2)`. Use `DECIMAL(15, 4)` when GAAP compliance is required.
-- **Good Example**:
+- **Rule**: [SHOULD] The default precision for monetary amount fields should be `DECIMAL(15, 2)`. Use `DECIMAL(15, 4)` when GAAP compliance is required.
+- **Good Examples**:
   ```sql
   total_amount DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT '주문 총 금액 (KRW)',
   unit_price DECIMAL(15, 4) NOT NULL DEFAULT 0.0000 COMMENT '단가 (GAAP 4자리 소수점)',
@@ -58,7 +58,7 @@
 ### Server/Session Timezone UTC Setting
 
 - **Rule**: [MUST] Set the MySQL server's global timezone and session timezone to UTC (`'+00:00'`).
-- **Good Example**:
+- **Good Examples**:
   ```ini
   # my.cnf (MySQL 설정 파일)
   [mysqld]
@@ -76,7 +76,7 @@
 ### Application Connection UTC Setting
 
 - **Rule**: [MUST] Explicitly set the session timezone to UTC when connecting to MySQL from the application.
-- **Good Example**:
+- **Good Examples**:
   ```sql
   SET SESSION time_zone = '+00:00';
   SELECT @@session.time_zone;  -- '+00:00'
@@ -91,10 +91,10 @@
 
 ## SQL Style
 
-### Keyword Uppercase
+### Uppercase Keywords
 
 - **Rule**: [MUST] SQL reserved words (keywords) must be written in uppercase.
-- **Good Example**:
+- **Good Examples**:
   ```sql
   SELECT u.id, u.email, u.name
   FROM user u
@@ -104,8 +104,8 @@
 
 ### Indentation and Line Breaks
 
-- **Rule**: [SHOULD] Major SQL clauses (SELECT, FROM, WHERE, JOIN, ORDER BY, GROUP BY, etc.) should each be written on a new line, and items within clauses should be indented.
-- **Good Example**:
+- **Rule**: [SHOULD] Major SQL clauses (SELECT, FROM, WHERE, JOIN, ORDER BY, GROUP BY, etc.) should each be written on a new line, with items within clauses indented.
+- **Good Examples**:
   ```sql
   SELECT
       o.id,
@@ -122,8 +122,8 @@
 
 ### JOIN Syntax
 
-- **Rule**: [MUST] Explicitly specify the JOIN type. (INNER JOIN, LEFT JOIN, etc.) Do not use implicit JOINs (listing tables separated by commas).
-- **Good Example**:
+- **Rule**: [MUST] Explicitly specify the JOIN type (INNER JOIN, LEFT JOIN, etc.). Do not use implicit JOINs (listing tables separated by commas).
+- **Good Examples**:
   ```sql
   SELECT o.id, u.name
   FROM `order` o
@@ -146,7 +146,7 @@
 |------|------|-----------------|----------|
 | TINYINT | 1 byte | 0 ~ 255 | boolean, status values |
 | INT | 4 bytes | 0 ~ approx. 4.2 billion | general integers |
-| BIGINT | 8 bytes | 0 ~ approx. 18.44 quintillion | `_no`, high-volume counters |
+| BIGINT | 8 bytes | 0 ~ approx. 18.44 quintillion | `_no`, large-scale counters |
 
 - **Rule**: [SHOULD] Use TINYINT(1) for boolean values. (MySQL does not have a native BOOLEAN type)
 
@@ -155,10 +155,10 @@
 | Type | Usage Criteria |
 |------|----------|
 | VARCHAR(n) | Strings with a predictable maximum length (up to 65,535 bytes) |
-| TEXT | Long text where length is difficult to predict |
+| TEXT | Long text with unpredictable length |
 | CHAR(n) | Fixed-length strings (e.g., country code `KR`, currency code `KRW`) |
 
-- **Rule**: [MUST NOT] Do not specify an unnecessarily large length for VARCHAR. (When creating temporary tables, memory may be allocated up to the specified maximum length)
+- **Rule**: [MUST NOT] Do not specify meaninglessly large lengths for VARCHAR. (When creating temporary tables, memory may be allocated up to the specified maximum length)
 
 ### Date/Time Types
 
@@ -166,16 +166,16 @@
 |------|------|------|----------|
 | DATETIME | 1000-01-01 ~ 9999-12-31 | 8 bytes | General date/time storage |
 | TIMESTAMP | 1970-01-01 ~ 2038-01-19 | 4 bytes | Do not use (see rule below) |
-| DATE | 1000-01-01 ~ 9999-12-31 | 3 bytes | When only the date is needed (e.g., date of birth) |
+| DATE | 1000-01-01 ~ 9999-12-31 | 3 bytes | When only date is needed (e.g., date of birth) |
 
-- **Rule**: [MUST] Date/time fields must use the DATETIME type. Do not use TIMESTAMP. (TIMESTAMP has the 2038 limitation, and its automatic timezone conversion causes confusion under a UTC storage policy)
-- **Rule**: [MUST NOT] Do not store date/time as strings (VARCHAR).
+- **Rule**: [MUST] Date/time fields must use the DATETIME type. Do not use TIMESTAMP. (TIMESTAMP has a 2038 limitation, and its automatic timezone conversion causes confusion under a UTC storage policy)
+- **Rule**: [MUST NOT] Do not store date/time values as strings (VARCHAR).
 
 ### JSON Type
 
-- **Rule**: [MAY] The JSON type may be used for unstructured data with flexible structure or frequently changing schemas.
+- **Rule**: [MAY] JSON type may be used for unstructured data with flexible structure or frequently changing schemas.
 - **Rule**: [MUST NOT] Do not store structured data that can be normalized in JSON. (Fields within JSON are difficult to index directly and cannot be joined)
-- **Good Example**:
+- **Good Examples**:
   ```sql
   -- 외부 API 응답, 사용자 설정 등 유동적 데이터
   CREATE TABLE api_log (
@@ -190,7 +190,7 @@
 ### ENUM Type
 
 - **Rule**: [MUST NOT] Do not use the ENUM type. (Adding/modifying values requires ALTER TABLE, causes ORM compatibility issues, and integer-based sorting produces unexpected results)
-- **Good Example**:
+- **Good Examples**:
   ```sql
   -- 상태값은 VARCHAR 또는 참조 테이블 사용
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
@@ -209,7 +209,7 @@
 ### Full-text Index
 
 - **Rule**: [MAY] Full-text indexes may be used when text search is needed. (`LIKE '%keyword%'` cannot utilize indexes)
-- **Good Example**:
+- **Good Examples**:
   ```sql
   CREATE FULLTEXT INDEX ft_idx_product_name_desc
       ON product (name, description);
@@ -221,8 +221,8 @@
 ### Partitioning Strategy
 
 - **Rule**: [MAY] Partitioning may be considered for large-scale tables (tens of millions of rows or more).
-- **Rule**: [SHOULD] Choose a partitioning key from columns frequently used in the WHERE conditions of queries.
-- **Good Example**:
+- **Rule**: [SHOULD] Choose partitioning keys from columns frequently used in query WHERE conditions.
+- **Good Examples**:
   ```sql
   CREATE TABLE log (
       id CHAR(36) NOT NULL,
@@ -243,8 +243,8 @@
 
 ### Using EXPLAIN
 
-- **Rule**: [MUST] New queries or queries suspected of performance issues must have their execution plans verified with EXPLAIN.
-- **Good Example**:
+- **Rule**: [MUST] New queries or queries suspected of performance issues must have their execution plans verified using EXPLAIN.
+- **Good Examples**:
   ```sql
   EXPLAIN SELECT o.id, o.total_amount
   FROM `order` o
@@ -260,23 +260,23 @@
 
 ### Slow Queries
 
-- **Rule**: [MUST] Enable slow query logging and monitor it periodically.
-- **Rule**: [SHOULD] Set the slow query threshold to 1 second. (May be adjusted based on project characteristics)
+- **Rule**: [MUST] Enable slow query logs and monitor them periodically.
+- **Rule**: [SHOULD] Set the slow query threshold to 1 second. (Can be adjusted based on project characteristics)
 
-### Execution Plan Analysis Considerations
+### Precautions for Execution Plan Analysis
 
 | EXPLAIN Item | Warning Signal | Action |
 |-------------|----------|----------|
 | type = ALL | Full Table Scan | Add appropriate indexes |
 | type = index | Full Index Scan | Review indexes matching WHERE conditions |
-| Extra: Using filesort | File sort occurring | Add index on ORDER BY columns |
+| Extra: Using filesort | File sort occurring | Add indexes on ORDER BY columns |
 | Extra: Using temporary | Temporary table used | Optimize GROUP BY/ORDER BY |
-| Very large rows value | Large row scan | Improve indexes or query structure |
+| Very large rows value | Scanning large number of rows | Improve indexes or query structure |
 
 ### Pagination
 
-- **Rule**: [SHOULD] For large data pagination, use cursor-based (keyset) pagination instead of OFFSET-based.
-- **Good Example**:
+- **Rule**: [SHOULD] For large dataset pagination, use cursor-based (keyset) pagination instead of OFFSET-based pagination.
+- **Good Examples**:
   ```sql
   -- 커서 기반 페이지네이션 (이전 페이지 마지막 id 이후의 데이터 조회)
   SELECT id, title, created_at
@@ -293,7 +293,7 @@
 ### Excessive Subqueries
 
 - **Rule**: [SHOULD] Use JOIN or EXISTS instead of WHERE IN subqueries.
-- **Good Example**:
+- **Good Examples**:
   ```sql
   SELECT u.id, u.name
   FROM user u
@@ -305,27 +305,27 @@
 ### Index Invalidation Patterns
 
 - **Rule**: [MUST NOT] Do not apply functions or operations on indexed columns.
-- **Good Example**:
+- **Good Examples**:
   ```sql
   -- 범위 조건으로 변환하여 인덱스 활용
   SELECT * FROM `order`
   WHERE created_at >= '2025-01-01'
       AND created_at < '2025-02-01';
   ```
-  -- Note: `WHERE YEAR(created_at) = 2025`와 같이 함수를 적용하면 인덱스가 무효화됨
+  -- Note: Applying a function like `WHERE YEAR(created_at) = 2025` invalidates the index
 
 ### Leading Wildcard in LIKE
 
 - **Rule**: [MUST NOT] Do not use a leading wildcard in LIKE patterns. (`LIKE '%keyword'` cannot utilize indexes)
-- **Good Example**:
+- **Good Examples**:
   ```sql
   SELECT * FROM user WHERE name LIKE '김%';
   ```
 
 ### Bulk Data Batch Processing
 
-- **Rule**: [MUST NOT] Do not process large volumes of INSERT/UPDATE/DELETE in a single transaction. (Long transactions cause lock contention, replication lag, and undo log bloat)
-- **Good Example**:
+- **Rule**: [MUST NOT] Do not process large INSERT/UPDATE/DELETE operations in a single transaction. (Long transactions cause lock contention, replication lag, and undo log bloat)
+- **Good Examples**:
   ```sql
   -- 배치 단위로 나누어 처리
   DELETE FROM log

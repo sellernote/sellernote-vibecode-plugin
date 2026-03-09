@@ -5,13 +5,13 @@
 
 ## Tech Stack
 
-| Item | Version/Config |
+| Item | Version/Configuration |
 |------|----------|
 | Database | MySQL (default) |
 
 ## DataSource Configuration
 
-- [MUST] Apply `SnakeNamingStrategy`. Automatic conversion: `OrderItem` → `order_item`, `orderNumber` → `order_number`.
+- [MUST] Apply `SnakeNamingStrategy`. `OrderItem` → `order_item`, `orderNumber` → `order_number` automatic conversion.
 
 ```typescript
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
@@ -66,8 +66,8 @@ export abstract class BaseEntity {
 ### Column Definition
 
 - [MUST] Explicitly specify the DB type in `@Column()`.
-- [MUST] Nullable columns: explicitly set `nullable: true` + add TypeScript `| null`.
-- [SHOULD] Be aware that the MySQL driver returns `decimal` types as `string`.
+- [MUST] Nullable columns: explicitly specify `nullable: true` + add TypeScript `| null`.
+- [SHOULD] Note that the MySQL driver returns `decimal` types as `string`.
 - [SHOULD] Exclude sensitive columns (passwords, etc.) from default queries using `select: false`.
 
 ```typescript
@@ -83,8 +83,8 @@ description: string | null;
 
 ### Domain Model Interface Pattern
 
-- [MUST] Entity must `implements` `IOrderModel` (data fields only) + `IOrderModelRelation` (relation fields only).
-- [MUST] Do not include relation fields in Domain Model Interface (ORM-dependent).
+- [MUST] Entity `implements` `IOrderModel` (data fields only) + `IOrderModelRelation` (relation fields only).
+- [MUST] Do not include relation fields in the Domain Model Interface (ORM-dependent).
 
 ```typescript
 export interface IOrderModel {
@@ -120,8 +120,8 @@ export class Order extends BaseEntity implements IOrderModel, IOrderModelRelatio
 
 ### Monetary Field Custom Transformer
 
-- [MUST] Apply `DecimalTransformer` to monetary (decimal) columns. Warning: without it, `number` operations will behave as string concatenation, causing bugs.
-- [MUST] Define `DecimalTransformer` as a shared utility in one place and reuse it.
+- [MUST] Apply `DecimalTransformer` to monetary (decimal) columns. Caution: without it, `number` operations behave as string concatenation, causing bugs.
+- [MUST] Define `DecimalTransformer` as a shared utility in a single location and reuse it.
 
 ```typescript
 // common/transformers/decimal.transformer.ts
@@ -140,8 +140,8 @@ totalAmount: number;
 
 ### Relation Definition
 
-- [MUST] Use the `Relation<>` wrapper for relation types. Warning: direct reference like `user: User` → risk of circular dependency.
-- [MUST] Explicitly define FK columns in `@ManyToOne` (allows direct FK access when relation is not loaded).
+- [MUST] Use the `Relation<>` wrapper for relation types. Caution: direct reference like `user: User` → risk of circular references.
+- [MUST] Explicitly define FK columns in `@ManyToOne` (allows direct FK access when the relation is not loaded).
 - [MUST] Place `@JoinColumn()` only on the owning side (`@ManyToOne` side).
 - [MUST] Do not hardcode FK column names in `@JoinColumn()`. `SnakeNamingStrategy` handles automatic conversion.
 - [MUST] Specify the join table name and column names in `@JoinTable()` for `@ManyToMany`.
@@ -157,10 +157,10 @@ userId: string;
 user: Relation<User>;
 ```
 
-### Indexes
+### Index
 
 - [MUST] Specify index names in `@Index()` using the format `idx_{table_name}_{column_name}`. (Refer to DATABASE_CONVENTION.md)
-- [SHOULD] Unique constraints: `@Index('uq_user_email', ['email'], { unique: true })`.
+- [SHOULD] Unique constraint: `@Index('uq_user_email', ['email'], { unique: true })`.
 
 ```typescript
 @Entity()
@@ -172,8 +172,8 @@ export class Order extends BaseEntity { ... }
 ### Enum Handling
 
 - [MUST] Use string-based TypeScript Enum + `type: 'varchar'`. Do not use `type: 'enum'` (MySQL ENUM causes ALTER TABLE issues).
-  - Warning: Numeric-based Enums and untyped strings are also prohibited.
-- [SHOULD] Define Enums in separate files (`enums/` directory).
+  - Caution: Numeric-based Enums and untyped strings are also prohibited.
+- [SHOULD] Define Enums in a separate file (`enums/` directory).
 
 ```typescript
 export enum OrderStatus {
@@ -189,13 +189,13 @@ status: OrderStatus;
 ### Soft Delete
 
 - [MUST] Use `softDelete()` / `softRemove()`. Do not use `delete()` / `remove()` (hard delete).
-- [MUST] Entities with `@DeleteDateColumn()` automatically apply `WHERE deleted_at IS NULL`. To include deleted records: `withDeleted: true`.
+- [MUST] Entities with `@DeleteDateColumn()` automatically apply `WHERE deleted_at IS NULL`. To include deleted records: use `withDeleted: true`.
 
 ## Repository Pattern
 
 - [SHOULD] Simple CRUD → Repository API. Complex queries (OR, subqueries, aggregation, bulk UPDATE/DELETE) → QueryBuilder.
-- [MUST] When using `find` methods, explicitly specify options such as `relations`, `select`, `order`, `take`.
-- [SHOULD] Prefer `findOne` + null check over `findOneOrFail` (provides business-context errors).
+- [MUST] When using `find` methods, explicitly specify options such as `relations`, `select`, `order`, `take`, etc.
+- [SHOULD] Prefer `findOne` + null check over `findOneOrFail` (to provide business-context errors).
 
 ```typescript
 const orders = await this.orderRepository.find({
@@ -210,16 +210,16 @@ const orders = await this.orderRepository.find({
 
 | Action | Pattern | Example |
 |------|------|------|
-| Single record lookup | `findOneBy[Condition]` | `findOneByEmail(email)` |
-| List lookup | `findBy[Condition]` | `findByUserId(userId)` |
+| Single record query | `findOneBy[Condition]` | `findOneByEmail(email)` |
+| List query | `findBy[Condition]` | `findByUserId(userId)` |
 | Existence check | `existsBy[Condition]` | `existsByEmail(email)` |
 | Count | `countBy[Condition]` | `countByStatus(status)` |
 
 ## QueryBuilder
 
 - [MUST] Parameter binding: use `:paramName` syntax. Do not use string interpolation (SQL Injection).
-- [SHOULD] Select only the required columns. Use `leftJoinAndSelect` when relation data is needed, `leftJoin` when only conditions are needed.
-- [MAY] Subqueries may be used for complex aggregations/conditions.
+- [SHOULD] Select only necessary columns. Use `leftJoinAndSelect` when relation data is needed, `leftJoin` when only conditions are needed.
+- [MAY] Subqueries may be used for complex aggregation/conditions.
 
 ```typescript
 const orders = await this.orderRepository
@@ -233,8 +233,8 @@ const orders = await this.orderRepository
 
 ### typeorm-transactional
 
-- [MUST] Modifying multiple tables simultaneously → transactions are required.
-- [MUST] Use the `@Transactional()` decorator (based on Async Local Storage, works with existing Repositories as-is).
+- [MUST] When modifying multiple tables simultaneously → transactions are required.
+- [MUST] Use the `@Transactional()` decorator (based on Async Local Storage, uses existing Repository as-is).
 
 ### Initial Setup
 
@@ -270,11 +270,11 @@ async createOrder(dto: CreateOrderDto): Promise<Order> {
 
 | Propagation | Behavior | Use Case |
 |-------------|------|----------|
-| `REQUIRED` (default) | Joins existing, creates new if none exists | General business logic |
+| `REQUIRED` (default) | Joins existing, creates if none | General business logic |
 | `REQUIRES_NEW` | Always creates a new transaction | Audit logs, independent commits |
-| `MANDATORY` | Requires existing, throws error if none exists | Internal-only methods |
+| `MANDATORY` | Requires existing, throws error if none | Internal-only methods |
 
-- [MUST] Manage transactions in the Service layer. Do not start transactions in Controller/Repository.
+- [MUST] Manage transactions in the Service layer. Do not start them in Controller/Repository.
 - [MUST NOT] Do not use QueryRunner-based manual transactions. Use `@Transactional()`.
 
 ## Migration Management
@@ -284,20 +284,20 @@ async createOrder(dto: CreateOrderDto): Promise<Order> {
 
 | Command | Purpose |
 |--------|------|
-| `migration:generate` | Auto-generate based on Entities |
+| `migration:generate` | Auto-generate based on Entity |
 | `migration:create` | Manually create an empty file |
 | `migration:run` | Apply migrations |
-| `migration:revert` | Rollback the last migration |
+| `migration:revert` | Revert the last migration |
 
 - [MUST] File naming: timestamp + meaningful description (e.g., `1706000000000-CreateOrderTable.ts`).
-- [MUST NOT] Do not use `synchronize: true` in production. [MAY] Allowed in local environments.
+- [MUST NOT] Do not use `synchronize: true` in production. [MAY] Allowed in local development.
 - [MUST] Implement both `up()` and `down()`. (Refer to DATABASE_CONVENTION.md rollback strategy)
 
 ## Performance Optimization
 
-- [MUST] Default relation loading: keep lazy (default). Explicitly load when needed using the `relations` option.
-- [MUST NOT] Do not load relations individually inside loops (N+1 problem). Use the `relations` option or `leftJoinAndSelect`.
-- [SHOULD] Query only the required columns using the `select` option.
+- [MUST] Default relation loading: keep lazy (default). Load explicitly with `relations` option when needed.
+- [MUST NOT] Do not load relations individually inside loops (N+1 problem). Use `relations` option or `leftJoinAndSelect`.
+- [SHOULD] Query only necessary columns using the `select` option.
 - [MUST] Apply `take`/`skip` pagination for list queries.
 - [SHOULD] Use `findAndCount` to retrieve data and count in a single query.
 
@@ -314,7 +314,7 @@ const [items, totalItems] = await this.orderRepository.findAndCount({
 
 - [MUST] Use `TypeOrmModule.forRootAsync()` + ConfigService for environment variable-based configuration.
 - [MUST] Register `TypeOrmModule.forFeature([Entity])` in Feature Modules.
-- [MUST] Repository: inject via constructor using `@InjectRepository()`.
+- [MUST] Repository: constructor injection via `@InjectRepository()`.
 - [MUST] When DataSource is needed, inject via NestJS DI.
 
 ## Anti-Patterns
@@ -324,4 +324,4 @@ const [items, totalItems] = await this.orderRepository.findAndCount({
 - [MUST NOT] Do not execute raw SQL with `query()`. Use QueryBuilder/Repository API.
 - [MUST NOT] Do not omit transactions when modifying multiple tables.
 - [MUST NOT] Do not use string interpolation in QueryBuilder (SQL Injection).
-- [MUST NOT] Do not reference Entities directly without the `Relation<>` wrapper (circular dependency).
+- [MUST NOT] Do not directly reference Entities without the `Relation<>` wrapper (circular references).

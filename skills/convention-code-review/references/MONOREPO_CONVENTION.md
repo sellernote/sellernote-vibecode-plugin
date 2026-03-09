@@ -1,7 +1,7 @@
 # Monorepo Convention
 
 > Defines rules applied to monorepo configuration and management.
-> Parent rules: INFRASTRUCTURE_CONVENTION.md
+> Parent rule: INFRASTRUCTURE_CONVENTION.md
 
 ## Workspace Structure
 
@@ -96,7 +96,7 @@ monorepo-root/
 
 ### Cache Strategy
 
-- [SHOULD] Actively leverage build caching to optimize CI/CD speed.
+- [SHOULD] Actively utilize build caching to optimize CI/CD speed.
 
 ## Shared Configuration Management
 
@@ -143,7 +143,7 @@ monorepo-root/
 1. Create a directory under `apps/` or `packages/`.
 2. Define the scoped name and required scripts in `package.json`.
 3. Add the path to the workspace configuration file (e.g., `pnpm-workspace.yaml`).
-4. Add required internal packages as dependencies with `workspace:*`.
+4. Add required internal packages as dependencies using `workspace:*`.
 5. Verify that the build tool's pipeline configuration applies to the new workspace.
 
 ### Shared Package Design Principles
@@ -152,6 +152,6 @@ monorepo-root/
 
 ## Anti-Patterns
 
-- [MUST NOT] Create circular dependencies between workspaces. Extract common logic into a separate package to keep the dependency direction unidirectional.
-- [MUST NOT] Install packages used only by a specific workspace in the root `package.json`.
+- [MUST NOT] Create circular dependencies between workspaces. Extract common logic into a separate package to maintain unidirectional dependency flow.
+- [MUST NOT] Install packages used only in a specific workspace in the root `package.json`.
 - [MUST NOT] Use undeclared packages by relying on hoisting.

@@ -1,7 +1,7 @@
 # Frontend Template Collection
 
 > A collection of standard boilerplates that AI agents copy and use when creating new features.
-> All templates follow the rules of ARCHITECTURE_CONVENTION.md and STATE_CONVENTION.md.
+> All templates follow the rules in ARCHITECTURE_CONVENTION.md and STATE_CONVENTION.md.
 >
 > **Usage**: After copying a template, replace the placeholders `{domain}` (kebab-case), `{Domain}`/`{Entity}`/`{Component}` (PascalCase), `{entity}`/`{component}` (kebab-case) with actual names.
 
@@ -16,50 +16,80 @@ app/features/{domain}/
 ├── components/              # [Required] Feature components
 │   └── {entity}-list/
 │       └── {Entity}List.tsx
-├── api/                     # [Required] queryKey + queryFn (queryOptions factory pattern)
-│   ├── query-keys.ts
+├── api/                     # [Required] queryOptions + TanStack Query hooks
+│   ├── query-options.ts
 │   ├── use-{entity}s-query.ts
-│   └── use-{entity}-query.ts
-├── transforms/              # [Required] Data transformation (Transform layer)
-│   └── to-{entity}-list-item.ts       # Pure transform function
-├── hooks/                   # [Optional] Feature-specific hooks (including orchestration hooks)
-│   └── use-adapted-{entity}-dashboard.ts  # Multi-source composition hook (create when needed)
+│   ├── use-{entity}-query.ts
+│   └── use-update-{entity}-mutation.ts
+├── hooks/                   # [Optional] Feature-specific hooks (UI/permissions/form helpers)
 ├── store/                   # [Optional] Feature-specific Zustand store (create when needed)
 ├── schemas/                 # [Optional] Feature-specific Zod schemas (create when needed)
-└── types/                   # [Optional] Feature-specific types (create when needed)
+├── constants/               # [Optional] Feature-specific constants (create when needed)
+├── types/                   # [Optional] Feature-specific form/view types (create when needed)
+└── utils/                   # [Optional] Feature-specific pure utils/helpers (create when needed)
 ```
+
+### Feature Common Modules (`features/_common/{domain}`)
+
+Domain-contextual code reused across two or more Features is placed in `features/_common/{domain}/`.
+
+```text
+app/features/_common/
+└── {domain}/
+    ├── components/          # [Recommended] Components shared across Features
+    │   └── {component}/
+    │       └── {Component}.tsx
+    ├── api/                 # [Optional] API / TanStack Query hooks shared across Features
+    ├── hooks/               # [Optional] Hooks shared across Features
+    ├── schemas/             # [Optional] Zod schemas shared across Features
+    ├── constants/           # [Optional] Constants shared across Features
+    ├── types/               # [Optional] Types shared across Features
+    └── utils/               # [Optional] Pure utils/helpers shared across Features
+```
+
+- Only code with domain context belongs in `features/_common/{domain}/`. (e.g., PO picker, settlement table)
+- Domain-specific pure functions/helpers shared across multiple Features go in `features/_common/{domain}/utils/`.
+- Domain-specific query hooks/options shared across multiple Features go in `features/_common/{domain}/api/`.
+- Domain-agnostic general-purpose code goes in `components/`, `hooks/`, `lib/`, `types/`.
+- `features/_common/{domain}/` must not import from `features/{domain}/`.
 
 ---
 
 ## 2. New Query Hook (useXxxQuery)
 
-### query-keys.ts (Full Factory Pattern)
+### query-options.ts (QueryOptions Factory Pattern)
 
-Define fetch functions and `queryOptions` factories together in `query-keys.ts`. Do not include transformation logic (such as select).
+Define query keys and `queryOptions` factories together in `query-options.ts`. Do not include `select` or screen-specific transformation logic.
 
 ```typescript
-// features/{domain}/api/query-keys.ts
+// features/{domain}/api/query-options.ts
 import { queryOptions } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import type { {Entity}, {Entity}Filters, PaginatedResponse } from '@/types/{domain}.types';
+import type {
+  Get{Entity}Request,
+  Get{Entity}Response,
+  Get{Entity}sRequest,
+  Get{Entity}sResponse,
+} from '@/types/generated/{domain}.generated';
 
-const fetch{Entity}s = (filters: {Entity}Filters): Promise<PaginatedResponse<{Entity}>> =>
-  apiClient.get('/{domain}s', { params: filters });
+const fetch{Entity}s = (params: Get{Entity}sRequest): Promise<Get{Entity}sResponse> =>
+  apiClient.get('/{domain}s', { params });
 
-const fetch{Entity} = (id: string): Promise<{Entity}> =>
-  apiClient.get(`/{domain}s/${id}`);
+const fetch{Entity} = (params: Get{Entity}Request): Promise<Get{Entity}Response> =>
+  apiClient.get(`/{domain}s/${params.id}`);
 
-export const {domain}Keys = {
+export const {domain}QueryOptions = {
   all: ['{domain}s'] as const,
-  list: (filters: {Entity}Filters) => queryOptions({
-    queryKey: [...{domain}Keys.all, 'list', filters] as const,
-    queryFn: () => fetch{Entity}s(filters),
-  }),
-  detail: (id: string) => queryOptions({
-    queryKey: [...{domain}Keys.all, 'detail', id] as const,
-    queryFn: () => fetch{Entity}(id),
-    enabled: !!id,
-  }),
+  list: (params: Get{Entity}sRequest) =>
+    queryOptions({
+      queryKey: [...{domain}QueryOptions.all, 'list', params] as const,
+      queryFn: () => fetch{Entity}s(params),
+    }),
+  detail: (params: Get{Entity}Request) =>
+    queryOptions({
+      queryKey: [...{domain}QueryOptions.all, 'detail', params] as const,
+      queryFn: () => fetch{Entity}(params),
+    }),
 };
 ```
 
@@ -68,11 +98,27 @@ export const {domain}Keys = {
 ```typescript
 // features/{domain}/api/use-{entity}s-query.ts
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { {domain}Keys } from './query-keys';
-import type { {Entity}Filters } from '@/types/{domain}.types';
+import type { Get{Entity}sRequest, Get{Entity}sResponse } from '@/types/generated/{domain}.generated';
+import { {domain}QueryOptions } from './query-options';
 
-export function use{Entity}sQuery(filters: {Entity}Filters) {
-  return useSuspenseQuery({domain}Keys.list(filters));
+type {Entity}ListItem = {
+  id: string;
+  displayName: string;
+  statusLabel: string;
+};
+
+const to{Entity}ListItem = (data: Get{Entity}sResponse): {Entity}ListItem[] =>
+  data.items.map((item) => ({
+    id: item.id,
+    displayName: item.name,
+    statusLabel: {ENTITY}_STATUS_LABELS[item.status],
+  }));
+
+export function use{Entity}sQuery(params: Get{Entity}sRequest) {
+  return useSuspenseQuery({
+    ...{domain}QueryOptions.list(params),
+    select: to{Entity}ListItem,
+  });
 }
 ```
 
@@ -81,10 +127,11 @@ export function use{Entity}sQuery(filters: {Entity}Filters) {
 ```typescript
 // features/{domain}/api/use-{entity}-query.ts
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { {domain}Keys } from './query-keys';
+import type { Get{Entity}Request } from '@/types/generated/{domain}.generated';
+import { {domain}QueryOptions } from './query-options';
 
-export function use{Entity}Query(id: string) {
-  return useSuspenseQuery({domain}Keys.detail(id));
+export function use{Entity}Query(params: Get{Entity}Request) {
+  return useSuspenseQuery({domain}QueryOptions.detail(params));
 }
 ```
 
@@ -92,83 +139,36 @@ export function use{Entity}Query(id: string) {
 
 ---
 
-## 3. New Transform (Data Transformation)
+## 3. Endpoint-Specific Helper Co-location
 
-### Pure Transform Function — to-{entity}-list-item.ts
-
-A pure function that transforms data from a single query to fit the UI. Pass it to the `select` option in a custom hook.
+If `transform`, `helper`, or screen-specific derived types are used by only one endpoint, keep them private within that endpoint's hook file. Promote to `types/`, `constants/`, `lib/` only when reused in two or more places.
 
 ```typescript
-// features/{domain}/transforms/to-{entity}-list-item.ts
-import type { {Entity}, PaginatedResponse } from '@/types/{domain}.types';
+// features/{domain}/api/use-{entity}s-query.ts
+import { useQuery } from '@tanstack/react-query';
+import type { Get{Entity}sRequest, Get{Entity}sResponse } from '@/types/generated/{domain}.generated';
+import { {domain}QueryOptions } from './query-options';
 
-export interface {Entity}ListItem {
+type {Entity}Row = {
   id: string;
   displayName: string;
-  statusLabel: string;
-}
+  badgeTone: 'default' | 'warning';
+};
 
-export const to{Entity}ListItem = (data: PaginatedResponse<{Entity}>): {Entity}ListItem[] =>
+const to{Entity}Row = (data: Get{Entity}sResponse): {Entity}Row[] =>
   data.items.map((item) => ({
     id: item.id,
     displayName: item.name,
-    statusLabel: {ENTITY}_STATUS_LABELS[item.status],
+    badgeTone: item.status === 'pending' ? 'warning' : 'default',
   }));
-```
 
-```typescript
-// features/{domain}/api/use-{entity}s-query.ts — Pass transform function via select
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { {domain}Keys } from './query-keys';
-import { to{Entity}ListItem } from '@/features/{domain}/transforms/to-{entity}-list-item';
-import type { {Entity}Filters } from '@/types/{domain}.types';
-
-export function use{Entity}ListItemsQuery(filters: {Entity}Filters) {
-  return useSuspenseQuery({
-    ...{domain}Keys.list(filters),
-    select: to{Entity}ListItem,
+export function use{Entity}RowsQuery(params: Get{Entity}sRequest) {
+  return useQuery({
+    ...{domain}QueryOptions.list(params),
+    select: to{Entity}Row,
   });
 }
 ```
-
-### Orchestration Hook — use-adapted-{entity}-dashboard.ts
-
-When composing 2 or more data sources, place pure transform functions in `transforms/` and composition hooks in `hooks/` with the `use-adapted-xxx.ts` naming convention.
-
-```typescript
-// features/{domain}/transforms/to-{entity}-dashboard.ts — Pure transform function
-import type { {Entity}, {Entity}Stats } from '@/types/{domain}.types';
-
-export function to{Entity}Dashboard(
-  items: {Entity}[],
-  stats: {Entity}Stats,
-) {
-  return {
-    totalCount: items.length,
-    totalRevenue: stats.totalRevenue,
-    pendingCount: items.filter((item) => item.status === 'pending').length,
-  };
-}
-```
-
-```typescript
-// features/{domain}/hooks/use-adapted-{entity}-dashboard.ts — Orchestration hook
-import { use{Entity}sQuery } from '@/features/{domain}/api/use-{entity}s-query';
-import { use{Entity}StatsQuery } from '@/features/{domain}/api/use-{entity}-stats-query';
-import { to{Entity}Dashboard } from '@/features/{domain}/transforms/to-{entity}-dashboard';
-import type { {Entity}Filters } from '@/types/{domain}.types';
-
-export function useAdapted{Entity}Dashboard(filters: {Entity}Filters) {
-  const { data: items } = use{Entity}sQuery(filters);
-  const { data: stats } = use{Entity}StatsQuery();
-
-  const dashboard = to{Entity}Dashboard(items?.items ?? [], stats!);
-
-  return { items: items?.items ?? [], dashboard };
-}
-```
-
-> **Note**: Pure transform functions (`to-xxx.ts`) can be unit tested without React. Orchestration hooks (`use-adapted-xxx.ts`) are integration tested with `renderHook`.
 
 ---
 
@@ -178,18 +178,18 @@ export function useAdapted{Entity}Dashboard(filters: {Entity}Filters) {
 // features/{domain}/api/use-create-{entity}-mutation.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { {domain}Keys } from './query-keys';
-import type { Create{Entity}Dto, {Entity} } from '@/types/{domain}.types';
+import { {domain}QueryOptions } from './query-options';
+import type { Create{Entity}Request, Create{Entity}Response } from '@/types/generated/{domain}.generated';
 
 export function useCreate{Entity}Mutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Create{Entity}Dto) =>
-      apiClient.post<{Entity}>('/{domain}s', data),
+    mutationFn: (data: Create{Entity}Request) =>
+      apiClient.post<Create{Entity}Response>('/{domain}s', data),
     meta: { successMessage: '{Entity}이(가) 생성되었습니다.' },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: {domain}Keys.all });
+      queryClient.invalidateQueries({ queryKey: {domain}QueryOptions.all });
     },
   });
 }
@@ -199,18 +199,18 @@ export function useCreate{Entity}Mutation() {
 // features/{domain}/api/use-update-{entity}-mutation.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { {domain}Keys } from './query-keys';
-import type { Update{Entity}Dto, {Entity} } from '@/types/{domain}.types';
+import { {domain}QueryOptions } from './query-options';
+import type { Update{Entity}Request, Update{Entity}Response } from '@/types/generated/{domain}.generated';
 
 export function useUpdate{Entity}Mutation(id: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Update{Entity}Dto) =>
-      apiClient.put<{Entity}>(`/{domain}s/${id}`, data),
+    mutationFn: (data: Update{Entity}Request) =>
+      apiClient.put<Update{Entity}Response>(`/{domain}s/${id}`, data),
     meta: { successMessage: '{Entity}이(가) 수정되었습니다.' },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: {domain}Keys.all });
+      queryClient.invalidateQueries({ queryKey: {domain}QueryOptions.all });
     },
   });
 }
@@ -220,7 +220,7 @@ export function useUpdate{Entity}Mutation(id: string) {
 // features/{domain}/api/use-delete-{entity}-mutation.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { {domain}Keys } from './query-keys';
+import { {domain}QueryOptions } from './query-options';
 
 export function useDelete{Entity}Mutation() {
   const queryClient = useQueryClient();
@@ -229,7 +229,7 @@ export function useDelete{Entity}Mutation() {
     mutationFn: (id: string) => apiClient.delete(`/{domain}s/${id}`),
     meta: { successMessage: '{Entity}이(가) 삭제되었습니다.' },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: {domain}Keys.all });
+      queryClient.invalidateQueries({ queryKey: {domain}QueryOptions.all });
     },
   });
 }
@@ -257,14 +257,14 @@ import { PageLayout } from "@/components/layout/page-layout";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "{Entity} 관리" },
-    { name: "description", content: "{Entity} 목록을 관리합니다" },
+    { title: "{Entity} Management" },
+    { name: "description", content: "Manage the {Entity} list" },
   ];
 }
 
 export default function {Entity}sPage() {
   return (
-    <PageLayout title="{Entity} 관리">
+    <PageLayout title="{Entity} Management">
       <{Entity}List />
     </PageLayout>
   );
@@ -273,8 +273,8 @@ export default function {Entity}sPage() {
 export function ErrorBoundary() {
   return (
     <div className="flex flex-col items-center gap-400 p-600">
-      <h2 className="text-heading-md text-text-1">문제가 발생했습니다</h2>
-      <p className="text-body-md text-text-3">잠시 후 다시 시도해주세요.</p>
+      <h2 className="text-heading-md text-text-1">Something went wrong</h2>
+      <p className="text-body-md text-text-3">Please try again later.</p>
     </div>
   );
 }
@@ -296,7 +296,7 @@ export function meta({ params }: Route.MetaArgs) {
 export default function {Entity}DetailPage() {
   const { id } = useParams();
   return (
-    <PageLayout title="{Entity} 상세">
+    <PageLayout title="{Entity} Detail">
       <{Entity}Detail {domain}Id={id!} />
     </PageLayout>
   );
@@ -460,7 +460,7 @@ export function {Entity}List() {
 
 ---
 
-## 8. New UI Component (with Storybook)
+## 8. New UI Component
 
 ### Component
 
@@ -494,52 +494,4 @@ const sizeStyles = {
 } as const;
 ```
 
-### Storybook
-
-```typescript
-// components/ui/{component}/{Component}.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { {Component} } from './{Component}';
-
-const meta = {
-  title: 'UI/{Component}',
-  component: {Component},
-  tags: ['autodocs'],
-  argTypes: {
-    variant: { control: 'select', options: ['default', 'accent'] },
-    size: { control: 'select', options: ['sm', 'md', 'lg'] },
-  },
-} satisfies Meta<typeof {Component}>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Default: Story = {
-  args: {
-    children: '기본 컴포넌트',
-  },
-};
-
-export const Accent: Story = {
-  args: {
-    variant: 'accent',
-    children: '강조 컴포넌트',
-  },
-};
-```
-
-### Test
-
-```typescript
-// components/ui/{component}/{Component}.test.tsx
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import { {Component} } from './{Component}';
-
-describe('{Component}', () => {
-  it('renders children', () => {
-    render(<{Component}>테스트 내용</{Component}>);
-    expect(screen.getByText('테스트 내용')).toBeInTheDocument();
-  });
-});
-```
+> **Note**: UI components currently do not generate Storybook files (`.stories.tsx`) or per-component test files (`.test.tsx`) in the default structure. These can be added after separate agreement if needed.

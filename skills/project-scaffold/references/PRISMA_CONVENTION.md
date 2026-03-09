@@ -5,7 +5,7 @@
 
 ## Technology Stack
 
-| Item | Version/Setting |
+| Item | Version/Configuration |
 |------|----------|
 | Prisma ORM | >= 5.8 (supports `$extends`, `relationJoins`) |
 | Database | MySQL (default) |
@@ -46,7 +46,7 @@ model Order {
 
 ### Schema Formatting Automation
 
-- [SHOULD] Use `prisma-case-format` to automatically generate `@map()`/`@@map()` annotations.
+- [SHOULD] Use `prisma-case-format` to auto-generate `@map()`/`@@map()` annotations.
 
 ```yaml
 # .prisma-case-format
@@ -66,16 +66,16 @@ npx prisma-case-format --file prisma/schema.prisma && npx prisma format
 - [MUST] Model names must be PascalCase singular + `@@map("snake_case")`. Note: Plural forms and snake_case model names are prohibited.
 - [MUST] Field names must be camelCase + `@map("snake_case")`. (Can be auto-generated with `prisma-case-format`)
 
-### ID Strategy (Refer to DATABASE_CONVENTION.md)
+### ID Strategy (See DATABASE_CONVENTION.md)
 
 - [MUST] PK: `@id @default(uuid()) @db.Char(36)`. Note: Auto Increment PK and omitting `@db.Char(36)` are prohibited.
 - [MUST] All models must have a `_no` column: `BigInt @unique @default(autoincrement()) @map("_no")`
 
 ### Field Definition
 
-- [MUST] Specify `@db.*` native types for all fields. `BigInt` is the only exception (always BIGINT).
+- [MUST] Specify `@db.*` native types for all fields. Only `BigInt` is an exception (always BIGINT).
 
-| Prisma Type | `@db.*` | MySQL Type | Usage |
+| Prisma Type | `@db.*` | MySQL Type | Purpose |
 |------------|---------|-----------|------|
 | `String` | `@db.Char(36)` | CHAR(36) | UUID |
 | `String` | `@db.VarChar(n)` | VARCHAR(n) | Variable-length string |
@@ -89,20 +89,20 @@ npx prisma-case-format --file prisma/schema.prisma && npx prisma format
 - [MUST] Nullable fields must use the `?` suffix (Prisma auto-generates `T | null`).
 - [SHOULD] `Decimal` return values are `Prisma.Decimal` objects. Use `Number()`, `toNumber()`, or methods like `.mul()`, `.plus()`.
 
-### Common Fields (Refer to DATABASE_CONVENTION.md)
+### Common Fields (See DATABASE_CONVENTION.md)
 
 - [MUST] All models must include `id`, `no`(_no), `createdAt`, `updatedAt`, `deletedAt?`. Since Prisma does not support inheritance, these must be repeated in each model.
-- [MUST] Place common fields at the top and domain fields at the bottom of the model.
+- [MUST] Common fields are placed at the top, domain fields at the bottom.
 
 ```prisma
 model Order {
-  // --- Common Fields ---
+  // --- Common fields ---
   id        String    @id @default(uuid()) @db.Char(36)
   no        BigInt    @unique @default(autoincrement()) @map("_no")
   createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
   deletedAt DateTime? @map("deleted_at") @db.DateTime(0)
-  // --- Domain Fields ---
+  // --- Domain fields ---
   orderNumber String      @map("order_number") @db.VarChar(100)
   totalAmount Decimal     @map("total_amount") @db.Decimal(15, 2)
   status      OrderStatus @default(pending)
@@ -110,7 +110,7 @@ model Order {
 }
 ```
 
-### Relation Definition
+### Relationship Definition
 
 **1:1**: [MUST] The side holding the FK must have `@relation(fields, references)` + `@unique`. Note: Omitting `@unique` causes it to be interpreted as 1:N.
 
@@ -160,25 +160,25 @@ model PostTag {
 
 ### Enum
 
-- [MUST] Use Prisma `enum`. Restricts values at the schema level + automatically reflects TypeScript types.
+- [MUST] Use Prisma `enum`. Restricts values at the schema level + auto-reflects as TypeScript types.
 - [MUST] Enum values must be lowercase snake_case. Note: UPPER_SNAKE_CASE and PascalCase are prohibited.
 - [MUST] Enums must be placed before model definitions.
 
 ### Index
 
 - [MUST] `@@index()` on FK columns.
-- [SHOULD] Use composite indexes for column combinations that are frequently queried together: `@@index([userId, status])`.
-- [SHOULD] Use `@@unique()` for composite unique constraints. Enables composite key usage in `findUnique()`.
+- [SHOULD] Composite index on column combinations frequently queried together: `@@index([userId, status])`.
+- [SHOULD] Composite unique constraints use `@@unique()`. Composite keys can be used with `findUnique()`.
 
 ## Prisma Client Usage Patterns
 
 ### CRUD
 
 - [MUST] `@id`/`@unique` fields → `findUnique` (DataLoader batching applied). Non-unique conditions → `findFirst`.
-- [SHOULD] API responses: `findUnique` + null check + domain error. Internal logic: `findUniqueOrThrow`.
-- [SHOULD] Use Nested Write when creating related records together (ensures atomicity via implicit transaction).
-- [SHOULD] Use `createMany` for bulk inserts (leverage `skipDuplicates: true`). Nested Write is not supported.
-- [MUST] Use `update` when existence is certain. Use `upsert` when existence is uncertain. Note: The find→branch pattern has race condition risks.
+- [SHOULD] API response: `findUnique` + null check + domain error. Internal logic: `findUniqueOrThrow`.
+- [SHOULD] When creating related records together, use Nested Write (atomicity guaranteed via implicit transaction).
+- [SHOULD] For bulk inserts, use `createMany` (leverage `skipDuplicates: true`). Nested Write is not supported.
+- [MUST] If existence is certain → `update`. If existence is uncertain → `upsert`. Note: The find→branch pattern risks race conditions.
 
 ```typescript
 // upsert example
@@ -191,14 +191,14 @@ await prisma.userProfile.upsert({
 
 ### Filtering/Sorting
 
-- [SHOULD] Composite filters: Use `AND`, `OR`, `NOT` explicitly. When the same field is listed multiple times, only the last value applies.
+- [SHOULD] Composite filters: Explicitly use `AND`, `OR`, `NOT`. When the same field is listed multiple times, only the last value is applied.
 - [SHOULD] Relation filters: Use `some`, `every`, `none`.
-- [SHOULD] For multi-column sorting, specify priority using arrays. Sorting by relation `_count` is supported.
+- [SHOULD] For multi-column sorting, specify priority with an array. Sorting by relation `_count` is possible.
 
 ### Pagination
 
-- [MAY] Offset-based: Use `skip`/`take` + `$transaction` to ensure count/findMany consistency.
-- [SHOULD] For large datasets: Use Cursor-based. The cursor field should be `_no`(BigInt). Note: UUID cursors are not suitable.
+- [MAY] Offset-based: `skip`/`take` + ensure count/findMany consistency with `$transaction`.
+- [SHOULD] Large-scale data: Cursor-based. The cursor field should be `_no`(BigInt). Note: UUID cursors are unsuitable.
 
 ```typescript
 const orders = await prisma.order.findMany({
@@ -220,23 +220,23 @@ const orders = await prisma.order.findMany({
 
 ### Soft Delete
 
-- [SHOULD] Implement using `$extends` (Client Extensions). The deprecated `$use` middleware is prohibited.
+- [SHOULD] Implement with `$extends` (Client Extensions). The deprecated `$use` middleware is prohibited.
   - `delete` → `update(deletedAt)`, `findMany`/`findFirst` → automatically add `deletedAt: null`.
   - Note: When delegating `findUnique` to `findFirst`, DataLoader batching is not applied.
 - [MUST] Manage with `deletedAt DateTime?`. Using `deleted Boolean` is prohibited.
 
 ### Raw Query
 
-- [MUST] Use `$queryRaw` with Tagged Template Literals (automatic parameterization, prevents SQL Injection).
-- [MUST NOT] Using `$queryRawUnsafe` with user input directly is prohibited. For dynamic table names, validate against an allowlist before use.
-- [SHOULD] Prefer Prisma Client API. Use Raw Query only for GROUP BY+HAVING, window functions, CTEs, UNION, etc.
+- [MUST] Use `$queryRaw` with Tagged Template Literal (auto-parameterization, prevents SQL Injection).
+- [MUST NOT] Using `$queryRawUnsafe` with user input is prohibited. For dynamic table names, etc., validate against an allowlist before use.
+- [SHOULD] Prefer Prisma Client API. Raw Query should only be used for GROUP BY+HAVING, window functions, CTE, UNION, etc.
 
 ## Performance Optimization
 
-- [MUST NOT] Do not query relations individually inside loops (N+1 problem).
-- [MUST] When relation data is needed, load it at once using `include` or `select`.
-- [SHOULD] Prisma 5.8+: Use `relationLoadStrategy: "join"` (single SQL JOIN, requires `previewFeatures = ["relationJoins"]`).
-- [SHOULD] Use `select` to query only the required fields. `select` and `include` cannot be used simultaneously.
+- [MUST NOT] Querying relations individually inside loops is prohibited (N+1 problem).
+- [MUST] When relation data is needed, load it at once with `include` or `select`.
+- [SHOULD] Prisma 5.8+: `relationLoadStrategy: "join"` (single SQL JOIN, requires `previewFeatures = ["relationJoins"]`).
+- [SHOULD] Use `select` to query only necessary fields. `select` and `include` cannot be used simultaneously.
 - [MUST] Manage PrismaClient as a singleton. Creating `new PrismaClient()` per request is prohibited.
 - [SHOULD] Set `connection_limit`/`pool_timeout` in `DATABASE_URL`.
 
@@ -245,7 +245,7 @@ const orders = await prisma.order.findMany({
 - [MUST] `PrismaService`: Extend `PrismaClient` + `OnModuleInit`(`$connect`) + `OnModuleDestroy`(`$disconnect`).
 - [SHOULD] Logging: Development `['query','info','warn','error']`, Production `['error']`.
 - [MUST] `PrismaModule`: Register as a `@Global()` global module.
-- [MUST] Convert `PrismaClientKnownRequestError` to HTTP status codes in the Exception Filter.
+- [MUST] `PrismaClientKnownRequestError` → Convert to HTTP status codes in Exception Filter.
 
 | Prisma Error | Meaning | HTTP |
 |------------|------|------|
@@ -256,12 +256,12 @@ const orders = await prisma.order.findMany({
 
 - [MUST] Call `app.enableShutdownHooks()` in `main.ts`.
 
-## Anti-Patterns
+## Anti-patterns
 
-- [MUST NOT] Do not create `new PrismaClient()` per request (connection exhaustion).
-- [MUST NOT] Do not use N+1 queries inside loops.
-- [MUST NOT] Do not use `Promise.all` inside Interactive Transactions.
-- [MUST NOT] Do not use `tx` callback externally, and do not use the global `prisma` inside the callback.
-- [MUST NOT] Do not omit FK `@@index`.
-- [MUST NOT] Do not directly insert user input into `$queryRawUnsafe`.
-- [MUST NOT] Do not run `prisma migrate dev` in production. Use only `prisma migrate deploy`.
+- [MUST NOT] Creating `new PrismaClient()` per request is prohibited (connection exhaustion).
+- [MUST NOT] N+1 queries inside loops are prohibited.
+- [MUST NOT] `Promise.all` inside Interactive Transaction is prohibited.
+- [MUST NOT] Using `tx` callback externally and using global `prisma` inside callbacks are prohibited.
+- [MUST NOT] Omitting FK `@@index` is prohibited.
+- [MUST NOT] Directly inserting user input into `$queryRawUnsafe` is prohibited.
+- [MUST NOT] Running `prisma migrate dev` in production is prohibited. Use only `prisma migrate deploy`.

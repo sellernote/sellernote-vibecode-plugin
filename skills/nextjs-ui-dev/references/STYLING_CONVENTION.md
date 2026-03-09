@@ -47,7 +47,7 @@ function Card({ className, children }: CardProps) {
   );
 }
 
-// Usage: Allows external customization while maintaining default styles
+// Usage: Customizable from outside while maintaining default styles
 <Card className="p-4"> {/* p-6 is correctly overridden to p-4 */}
   <p>Content</p>
 </Card>
@@ -62,7 +62,7 @@ Follow the decision flow below when applying styles.
 | Question | Answer | Method |
 |----------|--------|--------|
 | Is it a reusable custom component? | Yes | Manage variants with `cva()` + `cn()` |
-| Is it one-time styling? | Yes | Tailwind utility classes |
+| Is it one-off styling? | Yes | Tailwind utility classes |
 
 ### 1st Priority: Managing Variants with cva() + cn()
 
@@ -102,7 +102,7 @@ function StatusBadge({ className, status, ...props }: StatusBadgeProps) {
 
 ### 2nd Priority: Tailwind utility classes
 
-- **Rule**: [MAY] Use Tailwind utility classes for one-time layout/spacing adjustments
+- **Rule**: [MAY] Use Tailwind utility classes for one-off layout/spacing adjustments
 - **Good example**:
 
 ```typescript
@@ -136,7 +136,7 @@ function PageHeader({ title }: { title: string }) {
 
 ### Mobile-first Approach
 
-- **Rule**: [MUST] Write styles mobile-first. Apply mobile styles in the base classes, and add larger screen styles using breakpoint prefixes such as `sm:`, `md:`, `lg:`.
+- **Rule**: [MUST] Write styles mobile-first. Apply mobile styles in the base classes and add larger screen styles using breakpoint prefixes such as `sm:`, `md:`, `lg:`.
 - **Good example**:
 
 ```typescript
@@ -151,7 +151,7 @@ function ResponsiveSection() {
 }
 ```
 
-### Responsive Grids
+### Responsive Grid
 
 - **Rule**: [SHOULD] Use Tailwind's CSS Grid utility classes for grid layouts
 - **Good example**:
@@ -181,7 +181,7 @@ function ProductGrid({ products }: { products: Product[] }) {
 - **Bad example**:
 
 ```css
-/* Hard-coded media query with magic numbers */
+/* Hardcoding media queries with magic numbers */
 @media (min-width: 768px) {
   .desktop-only { display: block; }
 }
@@ -221,7 +221,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used inside a ThemeProvider.");
+  if (!ctx) throw new Error("useTheme must be used inside ThemeProvider.");
   return ctx;
 }
 
@@ -262,7 +262,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 **3. FOUC prevention inline script (root.tsx):**
 
 ```typescript
-// Add to <head> inside the Layout function of app/root.tsx
+// Add to <head> inside the Layout function in app/root.tsx
 <script dangerouslySetInnerHTML={{ __html: `
   (function() {
     var theme = localStorage.getItem('theme') || 'system';
@@ -277,7 +277,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 ### Applying Dark Mode Styles
 
-- **Rule**: [SHOULD] Use Tailwind's `dark:` prefix to apply dark mode styles
+- **Rule**: [SHOULD] Apply dark mode styles using Tailwind's `dark:` prefix
 - **Good example**:
 
 ```typescript
@@ -292,7 +292,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 ### Conditional Styling
 
-Follow the decision flow below when styles depend on conditions or runtime values.
+When styles vary based on conditions or runtime values, follow the decision flow below.
 
 | Situation | Method | Example |
 |-----------|--------|---------|
@@ -351,7 +351,7 @@ import { cn } from "@/lib/cn";
 - **Bad example**:
 
 ```typescript
-// Static values written as inline style — should use Tailwind classes
+// Writing static values as inline style — should use Tailwind classes
 <div style={{ display: "flex", gap: "16px", padding: "24px", backgroundColor: "#ffffff" }}>
   <span style={{ fontSize: "20px", fontWeight: 600, color: "#212121" }}>Title</span>
 </div>
@@ -399,20 +399,20 @@ pnpm add -D prettier-plugin-tailwindcss
 
 ## 6. Tailwind CSS v4 Considerations
 
-This project uses Tailwind CSS v4 from the start. Since AI code generation is likely to produce v3 syntax, familiarize yourself with the following v4-specific behaviors.
+This project uses Tailwind CSS v4 from the start. Since AI code generation is likely to use v3 syntax, be familiar with the following v4-specific behaviors.
 
 ### Key v4 Behaviors
 
 | Item | Behavior |
 |------|----------|
 | `content` configuration | Automatic content detection (`content` array not needed; use CSS `@source` directive for external sources) |
-| `border` default color | `currentColor` — **you must explicitly specify a color class** (e.g., `border border-gray-200`) |
-| Opacity | `bg-opacity-*` removed → use slash syntax `bg-black/50` |
-| `hover:` | Only applies inside `@media (hover: hover)` (touch device support) |
-| `@apply` | Can be used in main CSS; requires `@reference` in separate files. Use `@utility` block for custom utilities |
-| `outline-none` | Only applies `outline-style: none`. For previous behavior, use `outline-hidden` |
-| `ring` | Default width is 1px. For previous 3px behavior, use `ring-3` |
+| `border` default color | `currentColor` — **always specify a color class** (e.g., `border border-gray-200`) |
+| Opacity | `bg-opacity-*` removed → use `bg-black/50` slash syntax |
+| `hover:` | Applied only within `@media (hover: hover)` (touch device support) |
+| `@apply` | Can be used in the main CSS; requires `@reference` in separate files. Use `@utility` blocks for custom utilities |
+| `outline-none` | Only applies `outline-style: none`. Use `outline-hidden` for the previous behavior |
+| `ring` | Default width is 1px. Use `ring-3` for the previous 3px behavior |
 
-> **`border` default color warning**: Using `border` alone will render a border matching the text color. **You must always specify a color class.** The same applies to the `divide` utility.
+> **`border` default color caution**: Using `border` alone will render a border matching the text color. **Always specify a color class.** The same applies to the `divide` utility.
 
-> **AI-generated code warning**: AI may generate v3 classes (`shadow-sm`, `rounded-md`, `bg-opacity-50`, etc.). Always verify v4 syntax during code review.
+> **AI-generated code caution**: AI may generate v3 classes (`shadow-sm`, `rounded-md`, `bg-opacity-50`, etc.). Always verify that code uses v4 syntax during code review.

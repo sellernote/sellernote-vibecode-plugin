@@ -3,17 +3,17 @@
 > This document defines the rules applied to NestJS projects.
 > Parent rules: BACKEND_CONVENTION.md
 
-## Technology Stack
+## Tech Stack
 
-| Item             | Version/Setting    |
-| ---------------- | ------------------ |
-| Test Framework   | Jest (NestJS default) |
+| Item              | Version/Setting    |
+| ----------------- | ------------------ |
+| Test Framework    | Jest (NestJS default) |
 
 ## Project Structure
 
 ### Directory Layout
 
-- **Rule**: [MUST] Follow a Feature-based module structure.
+- **Rule**: [MUST] Follow a feature-based module structure.
 
 ```
 src/
@@ -63,27 +63,27 @@ src/
 
 - **Rule**: [MUST] File names follow the `[name].[type].ts` pattern.
 
-| Type              | Pattern                         | Example                        |
-| ----------------- | ------------------------------- | ------------------------------ |
-| Module            | `[name].module.ts`              | `order.module.ts`              |
-| Controller        | `[name].controller.ts`          | `order.controller.ts`          |
-| Controller (split)| `[feature]-[name].controller.ts`| `order-crud.controller.ts`     |
-| Service           | `[name].service.ts`             | `order.service.ts`             |
-| Service (split)   | `[feature]-[name].service.ts`   | `order-fulfillment.service.ts` |
-| Repository        | `[name].repository.ts`          | `order.repository.ts`          |
-| Entity            | `[name].entity.ts`              | `order.entity.ts`              |
-| DTO               | `[action]-[name].dto.ts`        | `create-order.dto.ts`          |
-| Guard             | `[name].guard.ts`               | `jwt-auth.guard.ts`            |
-| Interceptor       | `[name].interceptor.ts`         | `logging.interceptor.ts`       |
-| Pipe              | `[name].pipe.ts`                | `parse-int.pipe.ts`            |
-| Filter            | `[name].filter.ts`              | `http-exception.filter.ts`     |
-| Test              | `[name].[type].spec.ts`         | `order.service.spec.ts`        |
+| Type                  | Pattern                          | Example                          |
+| --------------------- | -------------------------------- | -------------------------------- |
+| Module                | `[name].module.ts`               | `order.module.ts`                |
+| Controller            | `[name].controller.ts`           | `order.controller.ts`            |
+| Controller (split)    | `[feature]-[name].controller.ts` | `order-crud.controller.ts`       |
+| Service               | `[name].service.ts`              | `order.service.ts`               |
+| Service (split)       | `[feature]-[name].service.ts`    | `order-fulfillment.service.ts`   |
+| Repository            | `[name].repository.ts`           | `order.repository.ts`            |
+| Entity                | `[name].entity.ts`               | `order.entity.ts`                |
+| DTO                   | `[action]-[name].dto.ts`         | `create-order.dto.ts`            |
+| Guard                 | `[name].guard.ts`                | `jwt-auth.guard.ts`              |
+| Interceptor           | `[name].interceptor.ts`          | `logging.interceptor.ts`         |
+| Pipe                  | `[name].pipe.ts`                 | `parse-int.pipe.ts`              |
+| Filter                | `[name].filter.ts`               | `http-exception.filter.ts`       |
+| Test                  | `[name].[type].spec.ts`          | `order.service.spec.ts`          |
 
 ## Domain Model Interface
 
 ### Domain Model Interface Definition
 
-- **Rule**: [MUST] Define a Domain Model Interface for each domain model. Include only the model's own data fields, excluding relation fields.
+- **Rule**: [MUST] Define a Domain Model Interface for each domain model. Include only the model's own data fields and exclude relation fields.
 - **Good example**:
   ```typescript
   // modules/order/interfaces/order.model.interface.ts
@@ -132,7 +132,7 @@ src/
 
 ### Implementation in Entity
 
-- **Rule**: [MUST] Entity `implements` the Domain Model Interface.
+- **Rule**: [MUST] Entity implements the Domain Model Interface using `implements`.
 - **Good example**:
 
   ```typescript
@@ -152,7 +152,7 @@ src/
     @Column({ type: "char", length: 36 })
     userId: string;
 
-    // Relations are not included in the Interface -- defined only in the Entity
+    // Relations are not included in the Interface -- defined only in Entity
     @ManyToOne(() => User, (user) => user.orders)
     @JoinColumn({ name: "user_id" })
     user: Relation<User>;
@@ -161,7 +161,7 @@ src/
 
 ### Directory Structure
 
-- **Rule**: [MUST] Domain Model Interface files are placed in the `modules/{feature}/interfaces/` directory following the `{feature}.model.interface.ts` pattern.
+- **Rule**: [MUST] Domain Model Interface files are placed in the `modules/{feature}/interfaces/` directory with the `{feature}.model.interface.ts` pattern.
 
 ```
 modules/order/
@@ -201,9 +201,9 @@ modules/order/
 - **Rule**: [MUST] Use the `@SellernoteApiDecimal` decorator for Swagger documentation of monetary amount DTO fields.
   > [MUST NOT] Do not use `@SellernoteApiNumber` for monetary amounts.
 
-### Monetary Amount Calculation Library
+### Monetary Amount Arithmetic Library
 
-- **Rule**: [MUST] Use the `big.js` library for monetary amount calculations.
+- **Rule**: [MUST] Use the `big.js` library for monetary amount arithmetic.
 - **Good example**:
 
   ```typescript
@@ -280,7 +280,7 @@ modules/order/
 
 - **Rule**: [MUST] Repositories are mapped 1:1 with Entities and placed in the `repositories/` directory.
 
-### Module Registration (When Split)
+### Module Registration (When Splitting)
 
 - **Rule**: [MUST] All split Controllers, Services, and Repositories must be registered in the corresponding Feature Module's `@Module()` decorator.
 - **Good example**:
@@ -300,7 +300,7 @@ modules/order/
   export class OrderModule {}
   ```
 
-## Module Composition
+## Module Configuration
 
 ### Feature Module
 
@@ -330,7 +330,7 @@ modules/order/
 
 ### Global Module
 
-- **Rule**: [MAY] Modules used throughout the entire app may use the `@Global()` decorator. However, do not overuse it.
+- **Rule**: [MAY] Modules used across the entire app may use the `@Global()` decorator. However, do not overuse it.
 - **Good example**:
   ```typescript
   @Global()
@@ -353,7 +353,7 @@ modules/order/
 
 ### Constructor Injection
 
-- **Rule**: [MUST] Use Constructor Injection for dependency injection.
+- **Rule**: [MUST] Dependency injection uses the Constructor Injection approach.
 - **Good example**:
   ```typescript
   @Injectable()
@@ -429,13 +429,13 @@ modules/order/
 
 ### Role Distinction
 
-- **Rule**: [MUST] Guard, Interceptor, and Pipe must each be used according to their designated roles.
+- **Rule**: [MUST] Guard, Interceptor, and Pipe must be used according to their designated roles.
 
-| Component       | Role                                        | When to Use                                                  |
-| --------------- | ------------------------------------------- | ------------------------------------------------------------ |
-| **Guard**       | Authentication/Authorization decision       | Checks access permissions before the request reaches the handler |
-| **Interceptor** | Request/Response transformation, logging, caching | Adds logic before and after handler execution (AOP)          |
-| **Pipe**        | Input data transformation and validation    | When data is bound to handler parameters                     |
+| Component       | Role                                        | When to Use                                                        |
+| --------------- | ------------------------------------------- | ------------------------------------------------------------------ |
+| **Guard**       | Authentication/authorization decisions      | Check access permissions before the request reaches the handler    |
+| **Interceptor** | Request/response transformation, logging, caching | Add logic before and after handler execution (AOP)           |
+| **Pipe**        | Input data transformation and validation    | When data is bound to handler parameters                           |
 
 ### Guard Usage
 
@@ -455,7 +455,7 @@ modules/order/
 
 ### Interceptor Usage
 
-- **Rule**: [SHOULD] Cross-cutting concerns such as response transformation, logging, and timeouts are handled by Interceptors.
+- **Rule**: [SHOULD] Cross-cutting concerns such as response transformation, logging, and timeouts are handled with Interceptors.
 - **Good example**:
   ```typescript
   @Injectable()
@@ -655,10 +655,10 @@ modules/order/
   ```typescript
   @Injectable()
   export class OrderService {
-    constructor(private readonly mailService: MailService) {} // Injection through DI
+    constructor(private readonly mailService: MailService) {} // Injection via DI
   }
   ```
-  > [MUST NOT] The pattern `private readonly mailService = new MailService()` is prohibited.
+  > [MUST NOT] The `private readonly mailService = new MailService()` pattern is prohibited.
 
 ### Excessive Global Modules
 

@@ -1,6 +1,6 @@
 # Backend Convention
 
-> This document defines common rules that apply to the entire backend.
+> This document defines common rules that apply across the entire backend.
 > For rules specific to a particular framework, refer to the documents in the subdirectories.
 >
 > - [API Spec Convention](api-spec/API_SPEC_CONVENTION.md)
@@ -66,7 +66,7 @@ Architecture rules follow the [Architecture Convention](architecture/ARCHITECTUR
     updatedAt: Date;
   }
   ```
-> [MUST NOT] Do not use abbreviations like `oid`, `stat`, `amt`, `crtDt`.
+> [MUST NOT] Do not use abbreviations such as `oid`, `stat`, `amt`, `crtDt`.
 
 ### Common Fields
 
@@ -76,12 +76,12 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 
 ### Test Pyramid
 
-- **Rule**: [MUST] Tests are prioritized in the order of unit tests > integration tests > E2E tests.
+- **Rule**: [MUST] Tests are prioritized in the following order: Unit Tests > Integration Tests > E2E Tests.
 
 ```
         /  E2E  \          ← Few in number, core scenarios
-       /  Integration  \         ← Service + Repository integration
-      /  Unit Tests  \     ← Most numerous, focused on Service logic
+       / Integration \     ← Service + Repository integration
+      /  Unit Tests   \    ← Most numerous, focused on Service logic
      ──────────────────
 ```
 
@@ -109,7 +109,7 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
   });
   ```
 
-## Anti-patterns
+## Anti-Patterns
 
 ### God Service
 
@@ -126,7 +126,7 @@ Common field rules follow the required common fields in DATABASE_CONVENTION.md.
 
 ### Excessive Branching Within an Endpoint
 
-- **Rule**: [SHOULD NOT] Do not perform completely different logic based on query parameters within a single API endpoint.
+- **Rule**: [SHOULD NOT] A single API endpoint should not perform completely different logic based on query parameters.
 
 ### Swallowing Errors
 

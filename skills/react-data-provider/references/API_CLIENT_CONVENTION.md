@@ -26,8 +26,8 @@
 ### Token Refresh Flow
 
 - **Rule**: [MUST] On a 401 response, refresh the Access Token using the Refresh Token and retry the original request. On refresh failure, redirect to the login page.
-- **Rule**: [MUST] When multiple requests receive 401 simultaneously, only the first one performs the refresh, while the rest wait in a queue and retry with the new token.
-- **Rule**: [MUST] If a retried request after refresh returns 401 again, prevent an infinite loop and immediately process a logout.
+- **Rule**: [MUST] When multiple requests receive 401 simultaneously, only the first performs the refresh, while the rest wait in a queue and retry with the new token.
+- **Rule**: [MUST] If a retried request after refresh returns 401 again, prevent infinite loops and immediately perform logout.
 
 ### Cross-Tab Token Synchronization
 
