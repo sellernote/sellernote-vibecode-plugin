@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Axios Instance Configuration
+## 1. Axios Instance Setup
 
 ```typescript
 // app/lib/api-client.ts
@@ -69,7 +69,7 @@ function processRefreshQueue(error: Error | null, token: string | null) {
 }
 
 async function refreshAccessToken(): Promise<string> {
-  // Refresh Token is automatically attached as an httpOnly cookie
+  // Refresh Token is automatically attached via httpOnly cookie
   const response = await axios.post(
     `${BASE_URL}/auth/refresh`,
     {},
@@ -105,7 +105,7 @@ apiClient.interceptors.response.use(
     };
 
     if (status === 401) {
-      // If a retried request after refresh also returns 401 → prevent infinite loop, log out immediately
+      // If a retried request after refresh also returns 401 → prevent infinite loop, immediately log out
       if (originalRequest._retried) {
         forceLogout();
         throw new ApiError(401, '세션이 만료되었습니다. 다시 로그인해주세요.', 'SESSION_EXPIRED');
@@ -129,7 +129,7 @@ apiClient.interceptors.response.use(
         const newToken = await refreshAccessToken();
         processRefreshQueue(null, newToken);
         originalRequest.headers!.Authorization = `Bearer ${newToken}`;
-        return apiClient(originalRequest); // Retry original request (once only)
+        return apiClient(originalRequest); // Retry original request (only once)
       } catch (refreshError) {
         processRefreshQueue(refreshError as Error, null);
         forceLogout();

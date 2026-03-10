@@ -1,112 +1,172 @@
 ---
 name: react-dev
-description: React 19 컴포넌트, 훅, 성능 최적화 개발 가이드. 순수 React 패턴에 초점을 맞추며, Sellernote React 컨벤션을 따릅니다. React 컴포넌트 개발, Custom Hook 설계, Context API, Error Boundary, 성능 최적화, React 19 기능(use, useActionState, useOptimistic) 작업 시 사용합니다. "React 컴포넌트 만들어줘", "훅 만들어줘", "성능 최적화해줘", "Error Boundary 추가해줘", "Context 설계해줘", "create a React component", "design a custom hook", "optimize React performance" 등의 요청에 활용됩니다. Next.js/MUI 관련 작업은 nextjs-ui-dev skill을 사용하세요.
+description: React 19 component, hook, and performance optimization development guide following Sellernote React conventions. Covers pure React patterns without framework-specific concerns. Use when developing React components, designing Custom Hooks, working with Context API, Error Boundaries, performance optimization, or React 19 features (use, useActionState, useOptimistic, useEffectEvent, Activity). Triggers on requests like "create a React component", "design a custom hook", "optimize React performance", "add Error Boundary", "design Context", "implement compound component", "set up Suspense boundaries". For Next.js/MUI-related work, use the nextjs-ui-dev skill instead. For React Router v7 SPA work, use the react-dev-orchestration skill.
 ---
 
 # React Dev
 
-React 19 컴포넌트, 훅, 성능 최적화 개발을 Sellernote React 컨벤션에 맞게 진행합니다.
+Develop React 19 components, hooks, and performance optimizations following Sellernote React conventions.
 
 ## Convention Loading
 
-작업 시작 전 반드시 다음 참조 파일을 읽습니다:
+Read these reference files before starting work:
 
-1. **항상 먼저 읽기** (핵심 규칙):
-   - `references/REACT_CONVENTION.md` - React 컴포넌트 패턴, Hooks, React 19 기능, 성능 최적화, Error Boundary, Context API, TypeScript 연동, 안티패턴
+1. **Always read first** (core rules):
+   - `references/REACT_CONVENTION.md` — Component patterns, Hooks, React 19 features, performance, Error Boundary, Suspense, Context API, TypeScript integration, anti-patterns
 
-2. **필요 시 읽기**:
-   - `references/FRONTEND_CONVENTION.md` - 프론트엔드 공통 규칙, 기술 스택
-   - `references/TYPESCRIPT_CONVENTION.md` - TypeScript 코딩 규칙, 타입 시스템
-   - `references/COMMON_CONVENTION.md` - 네이밍 규칙, 에러 처리
+2. **Read as needed**:
+   - `references/FRONTEND_CONVENTION.md` — Frontend-wide rules, tech stack, file/folder naming, import rules, accessibility, performance standards, safe browser storage
+   - `references/TYPESCRIPT_CONVENTION.md` — TypeScript coding rules, type system, enum vs union, import/export, linter/formatter, anti-patterns
+   - `references/COMMON_CONVENTION.md` — Naming conventions, git conventions, error handling, logging
+
+## Tech Stack
+
+| Item | Version/Config |
+|------|---------------|
+| React | 19.2+ |
+| TypeScript | 5.x, strict mode |
+| React Compiler | v1.0 — must be enabled |
+| Error Boundary | react-error-boundary |
+| Virtualization | @tanstack/react-virtual |
+| Client State | Zustand |
+| Server State | TanStack Query v5 |
+| URL State | nuqs 2.8+ |
+| Form/Validation | React Hook Form + Zod |
 
 ## Workflow
 
-### Step 1: 작업 분류
+### Step 1: Classify the Task
 
-요청된 작업을 아래 유형 중 하나로 분류합니다:
+| Type | Convention Sections | Key Rules |
+|------|-------------------|-----------|
+| Component | §2 (Component Patterns) + §10 (TypeScript Integration) | Compound Components, Controlled/Uncontrolled, conditional rendering, key, children composition, Dialog/Overlay rendering |
+| Hook | §3 (Hooks Rules) | Basic rules, useState patterns, useEffect, useRef, Custom Hook design |
+| React 19 Feature | §4 (React 19 Features) | use(), React Compiler, Actions, useOptimistic, useEffectEvent, Activity, ref as prop, Metadata |
+| Event Handling | §5 (Event Handling) | Handler naming (onXxx/handleXxx), event types, synthetic events |
+| Performance | §6 (Performance Optimization) | Re-render prevention, State Colocation, Lazy Init, virtualization |
+| Error Boundary | §7 (Error Boundary) | react-error-boundary, recovery strategy, placement strategy |
+| Suspense | §8 (Suspense Strategy) | Suspense + ErrorBoundary pairing, per-section boundaries, useSuspenseQuery |
+| Context/State | §9 (Context API) | Context vs Zustand selection, Provider pattern, Context separation |
 
-| 유형 | 해당 컨벤션 섹션 | 핵심 규칙 |
-|------|------------------|-----------|
-| 컴포넌트 | 섹션 2 (컴포넌트 패턴) + 섹션 9 (TypeScript 연동) | Compound Components, Controlled/Uncontrolled, 조건부 렌더링, key, children 합성 |
-| Hook | 섹션 3 (Hooks 규칙) | 기본 규칙, useState 패턴, useEffect, useRef, useMemo/useCallback, Custom Hook 설계 |
-| React 19 기능 | 섹션 4 (React 19 기능) | use(), React Compiler, Actions, useOptimistic, ref prop, Metadata |
-| 이벤트 처리 | 섹션 5 (이벤트 처리) | 핸들러 네이밍(onXxx/handleXxx), 이벤트 타입, 합성 이벤트 |
-| 성능 최적화 | 섹션 6 (성능 최적화) | 리렌더링 방지, State Colocation, Lazy Init, 가상화 |
-| Error Boundary | 섹션 7 (Error Boundary) | react-error-boundary, 복구 전략, 배치 전략 |
-| Context/상태 | 섹션 8 (Context API) | Context vs Zustand 선택, Provider 패턴, Context 분리 |
+### Step 2: Check Patterns
 
-### Step 2: 패턴 확인
+Read the relevant section's rules and good/bad examples. Rule severity:
+- **[MUST]** — Mandatory, no exceptions
+- **[SHOULD]** — Follow unless there is a specific documented reason not to
+- **[MAY]** — Optional, use as appropriate
 
-해당 섹션의 규칙과 좋은 예시/나쁜 예시를 확인합니다. 특히:
+### Step 3: Implement
 
-- **[MUST]** 규칙은 반드시 준수
-- **[SHOULD]** 규칙은 특별한 사유가 없는 한 준수
-- **[MAY]** 규칙은 상황에 따라 선택
+Follow the convention's good examples. Key checklists per task type:
 
-### Step 3: 구현
+#### Components
+- Use Compound Component pattern for logically related component groups
+- Form inputs must be controlled components
+- Never use a number directly on the left side of `&&` — convert to boolean
+- Use unique ID (not array index) for list `key`
+- Use `children` composition for layout/wrapper components
+- Extend `ComponentPropsWithoutRef`/`ComponentPropsWithRef` for HTML wrapper components
+- Use discriminated union types for variant props
+- Use `React.ReactNode` for `children` type by default
+- Dialog/Overlay: always render the shell, control open/close via `open` prop; never use `{open && <Dialog />}`
+- Use `key={id}` to reset internal state when target changes (e.g., Edit Dialog)
+- Component file name must match primary component name (PascalCase)
+- Do not place unrelated domain components in a single file
+- Extract sub-UI into separate components instead of `renderXxx` functions
+- Do not define functions inline in JSX props — extract as named handlers
 
-컨벤션의 좋은 예시를 따라 구현합니다. 주요 체크리스트:
+#### Hooks
+- Call hooks only at the top level (never inside conditionals/loops)
+- Use functional updates for state depending on previous value: `setCount(prev => prev + 1)`
+- `useEffect` is only for external system synchronization (not for event responses or derived state)
+- Return cleanup functions from subscription/timer Effects
+- React 19: pass `ref` directly as a prop, no `forwardRef`
+- React Compiler enabled: do not write manual `useMemo`/`useCallback` by default
+- Custom Hooks: `use` prefix, single concern, return object or `as const` tuple
+- Pure helper functions that don't depend on Hook state go outside the Hook function
+- Hook file naming: kebab-case with `use-` prefix (e.g., `use-auth.ts`)
 
-**컴포넌트 작성 시:**
-- [ ] 연관 컴포넌트 그룹은 Compound Component 패턴 적용
-- [ ] 폼 입력은 제어 컴포넌트(Controlled)로 작성
-- [ ] 조건부 렌더링 시 `&&` 연산자 좌측에 number 직접 사용 금지 (boolean 변환)
-- [ ] 리스트 `key`에 인덱스 대신 고유 ID 사용
-- [ ] 레이아웃/래퍼는 `children` 합성 패턴 사용
-- [ ] HTML 래핑 컴포넌트는 `ComponentPropsWithoutRef`/`ComponentPropsWithRef` 확장
-- [ ] 변형(variant)이 있으면 Discriminated Union 타입 사용
-- [ ] `children` 타입은 기본 `React.ReactNode` 사용
+#### React 19 Features
+- `use()`: consume Promise/Context; must be inside `<Suspense>`; never create Promise in render
+- `useActionState`: manage form submission state; action receives previous state as first arg
+- `useFormStatus`: must be called in a child component inside `<form>`
+- `useOptimistic`: update optimistic state only inside a Transition or Action
+- `useEffectEvent` (stable 19.2+): wrap callbacks used inside Effects that should not be in the dependency array (logging, analytics); call only inside Effects
+- `Activity` (stable 19.2+): preserve state for hidden UI (tab switching, back navigation cache)
+- `"use no memo"`: emergency escape hatch only when Compiler causes behavioral issues; leave a comment explaining cause and removal conditions
 
-**Hook 작성 시:**
-- [ ] Hook은 반드시 최상위에서 호출 (조건문/반복문 내부 금지)
-- [ ] 이전 상태 의존 업데이트는 함수형 업데이트 사용: `setCount(prev => prev + 1)`
-- [ ] `useEffect`는 외부 시스템 동기화에만 사용 (이벤트 응답/파생 상태에 사용 금지)
-- [ ] 구독/타이머 Effect에 cleanup 함수 반환 필수
-- [ ] React 19: `forwardRef` 대신 ref를 직접 prop으로 수신
-- [ ] React Compiler 활성화 시 수동 `useMemo`/`useCallback` 작성 금지
-- [ ] Custom Hook: `use` 접두사, 단일 관심사, 반환값은 객체 또는 `as const` 튜플
+#### React Compiler + ESLint
+- Use latest `eslint-plugin-react-hooks` with `react-hooks/recommended` or `recommended-latest` preset (Flat Config)
+- Enforce `rules-of-hooks`, `immutability`, `purity`, `refs`, `set-state-in-render` as `error` in CI
+- Treat Compiler solely as a performance optimization — code must be logically correct with Compiler off
 
-**React 19 기능 사용 시:**
-- [ ] `use()`: Promise/Context 소비, 반드시 `<Suspense>` 내부에서 사용
-- [ ] `use()`: 렌더 함수 내에서 Promise 직접 생성 금지
-- [ ] `useActionState`: 폼 제출 상태 관리
-- [ ] `useFormStatus`: 반드시 `<form>` 내부의 자식 컴포넌트에서 호출
-- [ ] `useOptimistic`: Transition/Action 내부에서만 낙관적 업데이트
+#### Performance
+- Define constant objects/arrays outside the render function
+- Place state close to the component that uses it (State Colocation)
+- `useState` expensive initial value: pass function reference `useState(fn)`, not `useState(fn())`
+- Virtualize lists with hundreds+ items using `@tanstack/react-virtual`
 
-**성능 최적화 시:**
-- [ ] 렌더 함수 외부에 상수 객체/배열 정의 (매 렌더링 새 참조 방지)
-- [ ] 상태는 실제 사용하는 컴포넌트 가까이 배치 (State Colocation)
-- [ ] `useState` 초기값이 비용이 큰 연산이면 함수 참조 전달: `useState(fn)` (not `useState(fn())`)
-- [ ] 수백 개 이상 리스트는 `@tanstack/react-virtual` 가상화 적용
+#### Error Boundary
+- Use `react-error-boundary` library
+- All fallback UIs must provide a recovery mechanism (retry button)
+- Use `resetKeys` for automatic retry on dependent data change
+- Place 1 global boundary at root + additional boundaries per independent UI section
 
-**Error Boundary:**
-- [ ] `react-error-boundary` 라이브러리 사용
-- [ ] 모든 Error Boundary fallback에 복구 수단 (다시 시도 버튼) 제공
-- [ ] `resetKeys`로 의존 데이터 변경 시 자동 재시도
-- [ ] 루트에 전역 경계 1개 + 독립 UI 섹션마다 추가 경계
+#### Suspense
+- Pair `Suspense` + `ErrorBoundary` for declarative loading/error handling with `useSuspenseQuery`
+- Place Suspense boundaries per independently-loadable UI unit, not one for the entire page
+- Feature components consume hook data without loading/error branching — boundaries handle it
 
-**Context API:**
-- [ ] 전역 클라이언트 상태(자주 업데이트)는 Zustand, 변경 빈도 낮은 설정은 Context
-- [ ] Provider value에 `useMemo`/`useCallback`으로 참조 안정화 (React Compiler 미사용 시)
-- [ ] 하나의 거대한 Context 대신 관심사별 분리
+#### Context API
+- Zustand for frequently-updating global UI state; Context for low-frequency config (theme, locale) and Compound Component internals
+- Separate Provider into its own component; React Compiler auto-stabilizes Provider value
+- Split Contexts by concern and change frequency, not one monolithic Context
 
-### Step 4: 안티패턴 검증
+### Step 4: Anti-Pattern Verification
 
-구현 완료 후, 아래 안티패턴에 해당하는 코드가 없는지 확인합니다:
+After implementation, verify none of these anti-patterns exist:
 
-| 안티패턴 | 올바른 방법 |
-|----------|-------------|
-| props/state에서 파생 가능한 값을 별도 state로 관리 | 렌더링 중 직접 계산 |
-| `useEffect`로 파생 상태 동기화 | 렌더링 중 직접 계산 |
-| `useEffect`를 이벤트 핸들러로 사용 | 이벤트 핸들러 함수에서 직접 처리 |
-| 컴포넌트 리셋에 `useEffect` + 개별 state 초기화 | `key` prop으로 리셋 |
-| `useState`에 렌더링 무관 값 저장 | `useRef` 사용 |
-| `&&` 좌측에 number 직접 사용 | `boolean` 변환 후 사용 |
-| 리스트 `key`에 배열 인덱스 사용 | 고유 ID 사용 |
+| Anti-pattern | Correct Approach |
+|-------------|-----------------|
+| Separate state for values derivable from props/state | Compute during rendering |
+| `useEffect` to sync derived state | Compute during rendering |
+| `useEffect` as event handler | Handle directly in event handler function |
+| `useEffect` + individual state resets for component reset | Use `key` prop to reset |
+| `useState` for values irrelevant to rendering | Use `useRef` |
+| Number directly on left side of `&&` | Convert to boolean first |
+| Array index as list `key` | Use unique ID |
+| `renderXxx` functions inside components | Extract as separate components |
+| Inline functions in JSX props | Extract as named handler functions |
+| Lying about `useEffect` dependencies | Include all reactive values; never `eslint-disable` deps |
+| Side effects in render phase (API calls, localStorage, DOM manipulation) | Use `useEffect` or event handlers |
+| Conditional rendering of Dialog/Overlay shell | Always render shell, control via `open` prop |
+| Manual `useMemo`/`useCallback` with Compiler enabled | Let Compiler handle optimization |
+- Data fetching in `useEffect` — use TanStack Query instead
+- Props drilling beyond 3 levels — use composition or Context
+- Native `localStorage`/`sessionStorage` access — use `safeLocalStorage`/`safeSessionStorage` wrappers
+- `any` type — use `unknown` with type narrowing
+- `as` type assertions to bypass errors — use runtime validation (e.g., Zod)
+
+## File/Folder Naming
+
+| Target | Rule | Example |
+|--------|------|---------|
+| Component files | PascalCase | `UserProfile.tsx` |
+| Hook files | kebab-case with `use-` prefix | `use-auth.ts` |
+| Utility files | kebab-case | `format-date.ts` |
+| Directories | kebab-case | `user-profile/` |
+
+## Import Rules
+
+- Use `@/` absolute paths for internal project modules; relative paths allowed for same folder/subfolders
+- Import order: 1) React/external libs → 2) Internal `@/` modules → 3) Relative `./` → 4) Types (`import type`)
+- Use `import type` for type-only imports
+- No `index.ts` barrel files in frontend apps; import from specific file paths
 
 ## Cross-Skill References
 
-- **Next.js + MUI UI 개발**: `nextjs-ui-dev` skill 사용
-- **코드 리뷰**: `convention-code-review` skill 사용
-- **컨벤션 리팩토링**: `convention-refactor` skill 사용
-- **상태 관리 심화**: `nextjs-data-provider` skill의 Zustand/TanStack Query 패턴 참조
+- **Next.js + MUI UI development**: use `nextjs-ui-dev` skill
+- **React Router v7 SPA orchestration**: use `react-dev-orchestration` skill
+- **Code review**: use `convention-code-review` skill
+- **Convention refactoring**: use `convention-refactor` skill
+- **State management details**: see `nextjs-data-provider` or `react-data-provider` skill for Zustand/TanStack Query patterns

@@ -1,257 +1,448 @@
 ---
 name: react-data-provider
-description: React SPA 데이터 페칭 및 상태 관리 가이드. TanStack Query를 통한 서버 상태 관리, Zustand를 통한 클라이언트 상태 관리, API 클라이언트 설정, 쿼리 키 팩토리, 옵티미스틱 업데이트, 캐시 무효화 등을 Sellernote 컨벤션에 맞게 진행합니다. "데이터 페칭", "API 연동", "상태 관리", "TanStack Query", "Zustand", "쿼리 훅 만들어줘", "스토어 만들어줘", "API 호출", "캐시 전략", "optimistic update" 등의 요청에 사용합니다. Next.js 프로젝트는 nextjs-data-provider skill을 사용하세요.
+description: Guide for data fetching and state management in React SPA projects. Covers TanStack Query for server state, Zustand for global UI state, nuqs for URL state, Axios API client setup, query option factories, custom query/mutation hooks, optimistic updates, cache invalidation, and global error handling — all following Sellernote conventions. Use this skill when working on "data fetching", "API integration", "state management", "TanStack Query", "Zustand", "create a query hook", "create a store", "API call", "cache strategy", "optimistic update", "URL state", "nuqs", "search params", "pagination", "filter state", or any data/state-related work in a React SPA project. For Next.js projects, use the nextjs-data-provider skill instead.
 ---
 
 # React Data Provider
 
-React SPA(Vite + React Router) 프로젝트에서 데이터 페칭과 상태 관리를 Sellernote 컨벤션에 맞게 구현합니다.
+Implement data fetching and state management in React SPA (React Router v7 Framework Mode, `ssr: false`) projects following Sellernote conventions.
 
-> **React-only 프로젝트 특성**: Server Components, Server Actions, revalidatePath/Tag가 없습니다. 모든 데이터 페칭은 클라이언트 사이드에서 TanStack Query를 통해 이루어지며, 뮤테이션은 useMutation + REST API 호출로 처리합니다.
+> **React-only SPA characteristics**: No Server Components, Server Actions, or revalidatePath/Tag. All runtime data fetching is client-side via TanStack Query. Mutations use `useMutation` + REST API. The framework runs on Vite with React Router v7 in SPA mode.
 
 ## Convention Loading
 
-작업 시작 전 반드시 다음 참조 파일을 읽습니다:
+Read the following reference files before starting work:
 
-1. **항상 먼저 읽기** (핵심 규칙):
-   - `references/STATE_CONVENTION.md` - 상태 분류, TanStack Query 패턴, Zustand 패턴
-   - `references/FRONTEND_CONVENTION.md` - 컴포넌트 설계, import 규칙
+1. **Always read first** (core rules):
+   - `references/STATE_CONVENTION.md` — State classification, TanStack Query patterns, Zustand patterns, nuqs URL state
+   - `references/FRONTEND_CONVENTION.md` — Component design, import rules, tech stack
 
-2. **필요 시 읽기**:
-   - `references/API_CLIENT_CONVENTION.md` - API 클라이언트 공통 규칙, 토큰 관리, 에러 처리
-   - `references/API_CLIENT_AXIOS_CONVENTION.md` - Axios 구현, 인터셉터, 리프레시 토큰 플로우
-   - `references/REACT_CONVENTION.md` - React 19 패턴, Hooks 규칙, 성능 최적화
-   - `references/REACT_ROUTER_CONVENTION.md` - React Router 7 Framework Mode, route modules, loader
-   - `references/TYPESCRIPT_CONVENTION.md` - 타입 시스템, async/await, import 순서
-   - `references/COMMON_CONVENTION.md` - 네이밍, 에러 처리, 로깅
+2. **Read when needed**:
+   - `references/API_CLIENT_CONVENTION.md` — API client common rules, token management, ApiError class
+   - `references/API_CLIENT_AXIOS_CONVENTION.md` — Axios instance setup, interceptors, token refresh flow
+   - `references/REACT_CONVENTION.md` — React 19 patterns, Hooks rules, Suspense, React Compiler
+   - `references/REACT_ROUTER_CONVENTION.md` — React Router 7 Framework Mode, route modules, clientLoader prefetch
+   - `references/TYPESCRIPT_CONVENTION.md` — Type system, async/await, import ordering
+   - `references/COMMON_CONVENTION.md` — Naming, error handling, logging
+
+## Tech Stack
+
+| Area | Technology | Notes |
+|------|-----------|-------|
+| Framework | React Router v7 (Framework Mode, `ssr: false`) | Vite-based SPA |
+| UI Library | React 19.2+ | React Compiler enabled |
+| Server State | TanStack Query v5 | `useSuspenseQuery` as default |
+| Client State | Zustand | Last resort — feature-scoped stores |
+| URL State | nuqs 2.8+ | Filters, sorting, pagination |
+| Form | React Hook Form + Zod | Not managed in global store |
+| HTTP Client | Axios | Via `app/lib/api-client.ts` |
 
 ## Workflow
 
-### Step 1: 상태 유형 분류
+### Step 1: Classify State Type
 
-모든 상태는 반드시 아래 4가지 중 하나로 분류합니다:
+Classify every piece of state into one of these 4 types and use the corresponding tool:
 
-| 상태 유형 | 도구 | 사용 시점 |
-|-----------|------|-----------|
-| Server state | TanStack Query | API에서 가져온 데이터 (상품 목록, 사용자 프로필, 주문 내역) |
-| Client state | Zustand | 공유 UI 상태, 사용자 설정 (사이드바 열림/닫힘, 테마, 알림) |
-| Local state | useState | 단일 컴포넌트 상태 (모달 열림, 입력값, 토글) |
-| URL state | useSearchParams (react-router-dom) | 페이지네이션, 필터, 정렬 |
+| State Type | Tool | When to Use |
+|-----------|------|-------------|
+| Server State | TanStack Query | Data from API (product list, user profile, order history) |
+| URL State | nuqs (`useQueryStates`) | Pagination, filters, sorting, tabs |
+| Local State | `useState` / `useReducer` | Single-component state (modal open, input value, toggle) |
+| Global UI State | Zustand (last resort) | Pure UI state shared across multiple pages (sidebar, toast queue, theme) |
 
-핵심 규칙:
-- [MUST] 서버 데이터는 TanStack Query로만 관리
-- [MUST NOT] 서버 상태를 Zustand에 복제
-- [MUST NOT] 로컬 상태(예: `isDeleteModalOpen`)를 Zustand에 저장
+Critical rules:
+- Server data is managed ONLY via TanStack Query — never copy it into Zustand
+- State used only within a single component stays in `useState` — never put it in a global store
+- URL-reflected state (filters, pagination, sorting) uses nuqs — not Zustand or useState
+- Form state uses React Hook Form — not Zustand
+- Before adding Zustand state, verify: "Does this really need to be global across multiple pages?"
 
-### Step 2: 페칭 전략 결정
+### Step 2: Determine Fetching Strategy
 
-React SPA에서는 모든 데이터 페칭이 클라이언트 사이드입니다:
+| Scenario | Method |
+|----------|--------|
+| List/detail data | TanStack Query `useSuspenseQuery` (default) or `useQuery` (when `enabled` needed) |
+| Search/filter/pagination | TanStack Query + nuqs URL state |
+| Create/update/delete | TanStack Query `useMutation` + REST API |
+| Real-time polling | TanStack Query `refetchInterval` |
+| Infinite scroll | TanStack Query `useInfiniteQuery` |
+| Route-level prefetch | `clientLoader` + `queryClient.ensureQueryData()` (optional) |
+| Form submission | React Hook Form + TanStack Query `useMutation` |
 
-| 시나리오 | 방법 |
-|----------|------|
-| 목록/상세 데이터 조회 | TanStack Query `useQuery` |
-| 검색/필터/페이지네이션 | TanStack Query + URL state (useSearchParams) |
-| 생성/수정/삭제 | TanStack Query `useMutation` + REST API |
-| 실시간 데이터 (폴링) | TanStack Query `refetchInterval` |
-| 무한 스크롤 | TanStack Query `useInfiniteQuery` |
+### Step 3: API Client Setup
 
-### Step 3: API 클라이언트 설정
+Place the Axios-based API client in `app/lib/api-client.ts`. Follow `references/API_CLIENT_CONVENTION.md` and `references/API_CLIENT_AXIOS_CONVENTION.md` for the full implementation.
 
-[MUST] `lib/api.ts`에 fetch wrapper를 설정합니다:
+Key rules:
+- BASE_URL from `import.meta.env.VITE_API_URL`
+- Access Token stored in a module-scoped memory variable (never in localStorage)
+- Refresh Token managed as `httpOnly` cookie (set by backend)
+- Request interceptor injects `Authorization: Bearer` header
+- Response interceptor transforms errors to `ApiError` class and handles 401 token refresh with queue
 
 ```typescript
-// lib/api.ts
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// app/lib/api-client.ts
+import axios from 'axios';
+import { ApiError } from './api-error';
 
-interface RequestOptions extends Omit<RequestInit, 'body'> {
-  body?: unknown;
-}
+const BASE_URL = import.meta.env.VITE_API_URL;
 
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { body, headers, ...rest } = options;
+let accessToken: string | null = null;
+export function setAccessToken(token: string | null) { accessToken = token; }
+export function getAccessToken(): string | null { return accessToken; }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    ...rest,
-  });
+export const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
 
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+// Request interceptor — attach token
+apiClient.interceptors.request.use((config) => {
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
+  return config;
+});
 
-  return response.json();
-}
+// Response interceptor — see API_CLIENT_AXIOS_CONVENTION.md for full 401 refresh + queue logic
+```
 
-export const api = {
-  get: <T>(endpoint: string) => request<T>(endpoint),
-  post: <T>(endpoint: string, body: unknown) => request<T>(endpoint, { method: 'POST', body }),
-  put: <T>(endpoint: string, body: unknown) => request<T>(endpoint, { method: 'PUT', body }),
-  patch: <T>(endpoint: string, body: unknown) => request<T>(endpoint, { method: 'PATCH', body }),
-  delete: <T>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' }),
+### Step 4: TanStack Query (Server State)
+
+#### 4a: Query Option Factory
+
+Place query factories in `features/{domain}/api/query-options.ts`. Use `queryOptions()` from TanStack Query. Keep `queryFn` as a pure API call — no `select` or view-specific transforms here.
+
+```typescript
+// features/order/api/query-options.ts
+import { queryOptions } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
+import type { GetOrdersRequest, GetOrdersResponse } from '@/types/generated/order.generated';
+
+const fetchOrders = (params: GetOrdersRequest): Promise<GetOrdersResponse> =>
+  apiClient.get('/orders', { params });
+
+export const orderQueries = {
+  all: ['orders'] as const,
+  list: (params: GetOrdersRequest) =>
+    queryOptions({
+      queryKey: [...orderQueries.all, 'list', params] as const,
+      queryFn: () => fetchOrders(params),
+    }),
+  detail: (params: { id: string }) =>
+    queryOptions({
+      queryKey: [...orderQueries.all, 'detail', params.id] as const,
+      queryFn: () => apiClient.get<Order>(`/orders/${params.id}`),
+    }),
 };
 ```
 
-### Step 4: TanStack Query (서버 상태)
+#### 4b: Custom Query Hooks
 
-#### 4a: 쿼리 키 팩토리
+Place per-endpoint hooks in `features/{domain}/api/use-{name}-query.ts`. Use `useSuspenseQuery` as the default; use `useQuery` only when conditional fetching (`enabled`) is needed.
 
-[MUST] `@lukemorales/query-key-factory`를 사용합니다. `queries/queryKeys.ts`에 배치:
-
-```typescript
-import { createQueryKeys, mergeQueryKeys } from '@lukemorales/query-key-factory';
-
-export const productKeys = createQueryKeys('products', {
-  all: null,
-  list: (filters: ProductFilters) => ({ queryKey: [filters] }),
-  detail: (id: string) => ({ queryKey: [id] }),
-});
-
-export const queryKeys = mergeQueryKeys(productKeys);
-```
-
-#### 4b: 커스텀 쿼리 훅
-
-[MUST] `queries/` 디렉토리에 도메인별 파일로 배치. `useQuery`/`useMutation`을 커스텀 훅으로 캡슐화하고 컴포넌트에서 직접 호출하지 않습니다:
+View-specific transforms belong in the hook file (not in `query-options.ts`):
 
 ```typescript
-// queries/useProducts.ts
-import { useQuery } from '@tanstack/react-query';
-import { productKeys } from './queryKeys';
-import { api } from '@/lib/api';
+// features/order/api/use-orders-query.ts
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { orderQueries } from './query-options';
 
-export function useProducts(filters: ProductFilters) {
-  return useQuery({
-    ...productKeys.list(filters),
-    queryFn: () => api.get<ProductListResponse>(`/products?${toSearchParams(filters)}`),
-    staleTime: 5 * 60 * 1000,
+type OrderListItem = { id: string; title: string; statusLabel: string };
+
+const toOrderListItem = (data: GetOrdersResponse): OrderListItem[] =>
+  data.orders.map((order) => ({
+    id: order.id,
+    title: order.title,
+    statusLabel: ORDER_STATUS_LABEL[order.status],
+  }));
+
+export function useOrdersQuery(params: GetOrdersRequest) {
+  return useSuspenseQuery({
+    ...orderQueries.list(params),
+    select: toOrderListItem,
   });
 }
 ```
 
-#### 4c: 옵티미스틱 업데이트 + 롤백
-
-UX 중요 뮤테이션에 적용합니다:
+For conditional fetching:
 
 ```typescript
-// queries/useUpdateProduct.ts
-export function useUpdateProduct() {
+// features/order/api/use-user-orders-query.ts
+export function useUserOrdersQuery(userId: string | undefined) {
+  return useQuery({
+    ...orderQueries.list({ userId: userId! }),
+    enabled: !!userId,
+  });
+}
+```
+
+#### 4c: Mutation Hooks + Cache Invalidation
+
+Always invalidate related queries after a successful mutation. Use `meta.successMessage` to trigger global success toasts.
+
+```typescript
+// features/order/api/use-update-order-mutation.ts
+export function useUpdateOrderMutation(orderId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: UpdateProductInput) =>
-      api.put<Product>(`/products/${data.id}`, data),
-    onMutate: async (updatedProduct) => {
-      const detailKey = productKeys.detail(updatedProduct.id).queryKey;
-      await queryClient.cancelQueries({ queryKey: detailKey });
-      const previousProduct = queryClient.getQueryData(detailKey);
-      queryClient.setQueryData(detailKey, (old: Product) => ({
-        ...old,
-        ...updatedProduct,
-      }));
-      return { previousProduct };
+    mutationFn: (data: UpdateOrderDto) => apiClient.put(`/orders/${orderId}`, data),
+    meta: { successMessage: 'Order updated.' },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orderQueries.all });
     },
-    onError: (_err, updatedProduct, context) => {
-      if (context?.previousProduct) {
+  });
+}
+```
+
+#### 4d: Optimistic Updates
+
+Apply for UX-critical mutations. Follow the cancel → snapshot → optimistic set → rollback on error → invalidate on settled pattern:
+
+```typescript
+export function useUpdateOrderMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: UpdateOrderInput) => apiClient.put<Order>(`/orders/${data.id}`, data),
+    onMutate: async (updatedOrder) => {
+      const queryKey = orderQueries.detail({ id: updatedOrder.id }).queryKey;
+      await queryClient.cancelQueries({ queryKey });
+      const previousOrder = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: Order) => ({ ...old, ...updatedOrder }));
+      return { previousOrder };
+    },
+    onError: (_err, updatedOrder, context) => {
+      if (context?.previousOrder) {
         queryClient.setQueryData(
-          productKeys.detail(updatedProduct.id).queryKey,
-          context.previousProduct,
+          orderQueries.detail({ id: updatedOrder.id }).queryKey,
+          context.previousOrder,
         );
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all.queryKey });
+    onSettled: (_data, _error, updatedOrder) => {
+      queryClient.invalidateQueries({ queryKey: orderQueries.detail({ id: updatedOrder.id }).queryKey });
     },
   });
 }
 ```
 
-핵심 규칙:
-- [MUST] 뮤테이션 성공 시 관련 쿼리 invalidate
-- [MUST] 옵티미스틱 업데이트 시 `onError`에서 롤백 구현
-- [MUST] `setQueryData` 전에 `cancelQueries` 호출 (레이스 컨디션 방지)
+#### 4e: Global Error/Success Handling
 
-### Step 5: Zustand (클라이언트 UI 상태)
-
-#### 5a: Slice 패턴
-
-[MUST] `store/slices/`에 도메인별 slice 파일을 생성, `StateCreator` 타입 사용:
+Configure `QueryCache` and `MutationCache` on the `QueryClient`:
 
 ```typescript
-// store/slices/uiSlice.ts
-import type { StateCreator } from 'zustand';
+// app/lib/query-client.ts
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
+import { ApiError } from '@/lib/api-error';
 
-export interface UISlice {
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+  queryCache: new QueryCache({
+    onError: (error) => {
+      if (error instanceof ApiError && error.isUnauthorized()) {
+        window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+      }
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : 'An unknown error occurred.';
+      toast.error(message);
+    },
+    onSuccess: (_data, _variables, _context, mutation) => {
+      const successMessage = (mutation.options.meta as { successMessage?: string })?.successMessage;
+      if (successMessage) toast.success(successMessage);
+    },
+  }),
+});
+```
+
+#### 4f: Cache Strategy Guidelines
+
+| Data Type | staleTime | gcTime | Examples |
+|-----------|-----------|--------|----------|
+| Frequently changing | 30s–1min | 5min | Real-time inventory, notification count |
+| Normal | 5min (default) | 10min | Product list, order history |
+| Rarely changing | 30min–1hr | 2hr | Category list, announcements |
+| Never changing | Infinity | 24hr | Country codes, reference dates |
+
+### Step 5: URL State with nuqs
+
+Use nuqs for filters, sorting, and pagination. Do NOT use Zustand or useState for these.
+
+#### Parser Definition
+
+```typescript
+import { parseAsInteger, parseAsStringLiteral, useQueryStates } from 'nuqs';
+
+const searchParamsParsers = {
+  page: parseAsInteger.withDefault(1),
+  size: parseAsInteger.withDefault(20),
+  status: parseAsStringLiteral(['all', 'pending', 'confirmed'] as const).withDefault('all'),
+};
+```
+
+#### Integration with TanStack Query
+
+```typescript
+function OrderList() {
+  const [{ page, size, status }, setParams] = useQueryStates(searchParamsParsers);
+  const { data, isPending } = useOrdersQuery({ page, size, status });
+
+  return (
+    <div>
+      <DataTable data={data?.orders ?? []} columns={ORDER_COLUMNS} />
+      <Pagination
+        currentPage={page}
+        totalPages={data?.totalPages ?? 1}
+        onPageChange={(nextPage) => setParams({ page: nextPage })}
+      />
+    </div>
+  );
+}
+```
+
+#### Search Input Pattern
+
+Use uncontrolled input + `form onSubmit` — not local state + useEffect sync:
+
+```tsx
+const [{ search: appliedSearch }, setParams] = useQueryStates({
+  search: parseAsString.withDefault(''),
+});
+
+const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  const formData = new FormData(e.currentTarget);
+  void setParams({ search: (formData.get('search') as string) || '', page: 1 });
+};
+
+<form onSubmit={handleSearchSubmit}>
+  <input key={appliedSearch} name="search" defaultValue={appliedSearch} />
+  <button type="submit">Search</button>
+</form>
+```
+
+### Step 6: Zustand (Global UI State — Last Resort)
+
+Only use Zustand for pure UI state shared across multiple pages. Create **independent feature-scoped stores** in `features/{domain}/store/`.
+
+#### Feature-Scoped Store
+
+```typescript
+// features/ui/store/ui-store.ts
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+
+interface UIStore {
   isSidebarOpen: boolean;
   notifications: Notification[];
   toggleSidebar: () => void;
   addNotification: (notification: Notification) => void;
 }
 
-export const createUISlice: StateCreator<UISlice & UserSlice, [], [], UISlice> = (set) => ({
-  isSidebarOpen: true,
-  notifications: [],
-  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  addNotification: (notification) =>
-    set((state) => ({ notifications: [...state.notifications, notification] })),
-});
-```
-
-#### 5b: Store with Partialize
-
-[MUST] `devtools`(최외곽) + `persist` + `partialize`로 일시적 데이터 제외:
-
-```typescript
-// store/index.ts
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-
-type StoreState = UserSlice & UISlice;
-
-export const useStore = create<StoreState>()(
+export const useUIStore = create<UIStore>()(
   devtools(
     persist(
-      (...a) => ({
-        ...createUserSlice(...a),
-        ...createUISlice(...a),
+      (set) => ({
+        isSidebarOpen: true,
+        notifications: [],
+        toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+        addNotification: (notification) =>
+          set((state) => ({ notifications: [...state.notifications, notification] })),
       }),
       {
-        name: 'app-store',
-        partialize: (state) => ({
-          user: state.user,
-          isSidebarOpen: state.isSidebarOpen,
-        }),
+        name: 'ui-store',
+        partialize: (state) => ({ isSidebarOpen: state.isSidebarOpen }),
       },
     ),
-    { name: 'AppStore' },
+    { name: 'UIStore' },
   ),
 );
 ```
 
-#### 5c: 셀렉터
+#### Selector Rules
 
-[MUST] 개별 셀렉터를 export. 전체 스토어를 구조분해하지 않습니다:
+Always use individual selectors to prevent unnecessary re-renders:
 
 ```typescript
-// store/selectors.ts
-export const useUser = () => useStore((state) => state.user);
-export const useIsSidebarOpen = () => useStore((state) => state.isSidebarOpen);
+// Good — individual selector
+const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
+
+// Good — useShallow for multiple values
+import { useShallow } from 'zustand/react/shallow';
+const { isSidebarOpen, notifications } = useUIStore(
+  useShallow((s) => ({ isSidebarOpen: s.isSidebarOpen, notifications: s.notifications })),
+);
+
+// Bad — subscribes to entire store
+const { isSidebarOpen } = useUIStore();
 ```
 
-### Step 6: 검증
+### Step 7: Route-Level Prefetching (Optional)
 
-1. 모든 API 호출이 TanStack Query 커스텀 훅을 통해 이루어지는지 확인
-2. 서버 데이터가 Zustand에 복제되지 않았는지 확인
-3. 쿼리 키가 `@lukemorales/query-key-factory`를 사용하는지 확인
-4. 뮤테이션이 성공 시 관련 쿼리를 invalidate하는지 확인
-5. Zustand가 slice 패턴 + `devtools` + `persist` + `partialize`를 사용하는지 확인
-6. API 클라이언트가 `lib/api.ts`에 설정되어 있는지 확인
+Prevent data waterfalls on route entry using `clientLoader` + `ensureQueryData`:
+
+```typescript
+// app/routes/dashboard/orders.tsx
+import type { Route } from './+types/orders';
+import { orderQueries } from '@/features/order/api/query-options';
+import { queryClient } from '@/lib/query-client';
+
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  const url = new URL(request.url);
+  const filters = Object.fromEntries(url.searchParams);
+  await queryClient.ensureQueryData(orderQueries.list(filters));
+  return null;
+}
+
+export default function OrdersPage() {
+  return (
+    <PageLayout title="Order Management">
+      <OrderFilter />
+      <OrderList />
+    </PageLayout>
+  );
+}
+```
+
+### Step 8: Verification
+
+1. All API calls go through TanStack Query custom hooks (never direct fetch/axios in components)
+2. Server data is NOT duplicated in Zustand
+3. Query factories use `queryOptions()` in `features/{domain}/api/query-options.ts`
+4. Mutations invalidate related queries on success
+5. `queryFn` in query-options is a pure API call — no `select` or view transforms
+6. View transforms are co-located in the per-endpoint hook file
+7. Zustand stores are feature-scoped in `features/{domain}/store/` with `devtools` + `persist` + `partialize`
+8. URL state (filters, pagination, sorting) uses nuqs, not Zustand/useState
+9. API client is in `app/lib/api-client.ts` using Axios with proper interceptors
+10. Global error handling is configured via `QueryCache`/`MutationCache`
+
+## Anti-Patterns
+
+| Anti-Pattern | Correct Approach |
+|-------------|-----------------|
+| `useEffect` + `fetch` for server data | TanStack Query `useQuery`/`useSuspenseQuery` |
+| Copying TanStack Query data into Zustand via `useEffect` | Use the TanStack Query hook directly in each component |
+| Storing local state (modal open, input value) in Zustand | `useState` within the component |
+| Using `useState` for filters/pagination | nuqs `useQueryStates` |
+| Calling `fetch`/`axios` directly from components | Call through `apiClient` via custom hooks |
+| Putting `select`/transforms in `query-options.ts` | Co-locate transforms in the per-endpoint hook file |
+| Single mega-store with all Zustand state | Feature-scoped independent stores |
+| Subscribing to entire Zustand store without selector | Individual selectors or `useShallow` |
+| Storing Access Token in localStorage | Module-scoped memory variable |
 
 ## Cross-Skill References
 
-- **React 컴포넌트 패턴**: `react-dev` skill 사용
-- **UI 컴포넌트, 스타일링, 폼, 테스트**: `react-ui-dev` skill 사용
-- **전체 기능 오케스트레이션**: `react-dev-orchestration` skill 사용
-- **코드 리뷰**: `convention-code-review` skill 사용
+- **React component patterns**: Use `react-dev` skill
+- **UI components, styling, forms, testing**: Use `react-ui-dev` skill
+- **Full feature orchestration**: Use `react-dev-orchestration` skill
+- **Code review**: Use `convention-code-review` skill

@@ -113,7 +113,7 @@
 
 ### Instance Selection
 
-- [SHOULD] Select instance types that match the workload characteristics.
+- [SHOULD] Select instance types that match workload characteristics.
 
 | Workload | Recommended Instance Family |
 |----------|-----------------------------|
@@ -121,13 +121,13 @@
 | Compute-intensive | c6i, c7g |
 | Memory-intensive | r6i, r7g |
 
-### Reserved / Savings Plans / Spot Usage
+### Reserved / Savings Plans / Spot Utilization
 
-- [SHOULD] Apply Savings Plans or Reserved Instances to stably running production workloads.
+- [SHOULD] Apply Savings Plans or Reserved Instances to stable production workloads.
 - [MAY] Use Spot Instances for interruption-tolerant workloads such as batch jobs and development environments.
 
 | Purchase Option | Discount Rate | Suitable Workloads |
-|-----------------|---------------|-------------------|
+|-----------------|---------------|--------------------|
 | On-Demand | Base price | Short-term testing, unpredictable workloads |
 | Savings Plans | ~72% | Stable production workloads |
 | Spot | ~90% | Batch processing, dev/test, fault-tolerant workloads |
@@ -139,7 +139,7 @@
 
 ## Anti-Patterns
 
-- [MUST NOT] Do not use the AWS root account for routine operations. Set up MFA on the root account and use it only in emergencies.
+- [MUST NOT] Do not use the AWS root account for routine tasks. Set up MFA on the root account and use it only in emergencies.
 - [MUST NOT] Do not use wildcard policies such as `Action: "*"`, `Resource: "*"`.
 - [MUST NOT] Do not create resources without specifying a region.
 - [MUST NOT] Do not add `0.0.0.0/0` inbound rules to security groups for backend resources such as databases and caches.

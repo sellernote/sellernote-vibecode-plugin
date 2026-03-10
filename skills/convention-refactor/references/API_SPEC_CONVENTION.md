@@ -8,30 +8,30 @@
 ### RESTful URL Design
 
 - **Rule**: [MUST] Use plural nouns representing resources in URLs. Do not use verbs.
-- **Good Example**:
+- **Good example**:
   ```
-  GET    /api/v1/orders          # 주문 목록 조회
-  GET    /api/v1/orders/:id      # 주문 상세 조회
-  POST   /api/v1/orders          # 주문 생성
-  PATCH  /api/v1/orders/:id      # 주문 수정
-  DELETE /api/v1/orders/:id      # 주문 삭제
+  GET    /api/v1/orders          # Retrieve order list
+  GET    /api/v1/orders/:id      # Retrieve order details
+  POST   /api/v1/orders          # Create order
+  PATCH  /api/v1/orders/:id      # Update order
+  DELETE /api/v1/orders/:id      # Delete order
   ```
-> [MUST NOT] Verb-based URLs such as `/api/v1/getOrders`, `/api/v1/createOrder` are prohibited.
+> [MUST NOT] Verb-based URLs like `/api/v1/getOrders`, `/api/v1/createOrder` are prohibited.
 
 ### URL Patterns
 
 - **Rule**: [MUST] URLs must use lowercase letters and hyphens (kebab-case).
-- **Good Example**:
+- **Good example**:
   ```
   /api/v1/order-items
   /api/v1/shipment-trackings
   ```
-> [MUST NOT] camelCase(`/orderItems`), snake_case(`/order_items`), PascalCase(`/OrderItems`) are prohibited.
+> [MUST NOT] camelCase (`/orderItems`), snake_case (`/order_items`), PascalCase (`/OrderItems`) are prohibited.
 
-### Expressing Resource Relationships
+### Representing Resource Relationships
 
-- **Rule**: [SHOULD] Sub-resources should be expressed using nested URLs. However, nesting should be limited to 2 levels.
-- **Good Example**:
+- **Rule**: [SHOULD] Sub-resources are represented using nested URLs. However, nesting should be limited to 2 levels.
+- **Good example**:
   ```
   GET /api/v1/orders/:orderId/items
   GET /api/v1/orders/:orderId/items/:itemId
@@ -43,11 +43,11 @@
 
 | HTTP Method | Purpose | Idempotent | Request Body |
 |------------|------|--------|----------|
-| GET | Resource retrieval | O | X |
-| POST | Resource creation | X | O |
-| PUT | Full resource replacement | O | O |
-| PATCH | Partial resource modification | X | O |
-| DELETE | Resource deletion | O | X |
+| GET | Retrieve resource | O | X |
+| POST | Create resource | X | O |
+| PUT | Replace entire resource | O | O |
+| PATCH | Partially update resource | X | O |
+| DELETE | Delete resource | O | X |
 
 ### API Versioning
 
@@ -60,13 +60,13 @@
 - **Rule**: [MUST] All API responses must follow the common structure below.
 
 ```json
-// 성공 응답
+// Success response
 { "success": true, "data": { ... }, "error": null }
 
-// 에러 응답
+// Error response
 {
   "success": false, "data": null,
-  "error": { "code": "ORDER_NOT_FOUND", "message": "주문을 찾을 수 없습니다.", "details": [] }
+  "error": { "code": "ORDER_NOT_FOUND", "message": "Order not found.", "details": [] }
 }
 ```
 
@@ -85,20 +85,20 @@
 }
 ```
 
-- **Rule**: [SHOULD] Default pagination values are `page=1`, `size=20`. Maximum `size` is limited to 100.
+- **Rule**: [SHOULD] Pagination defaults are `page=1`, `size=20`. Maximum `size` is limited to 100.
 
 ### Date/Time Format
 
-- **Rule**: [MUST] Use ISO 8601 format (UTC) for dates and times. (e.g., `2025-01-15T09:30:00Z`)
+- **Rule**: [MUST] Dates and times must use ISO 8601 format (UTC). (e.g., `2025-01-15T09:30:00Z`)
 
 ### Request/Response Body Naming
 
 - **Rule**: [MUST] JSON field names must use camelCase.
-- **Good Example**:
+- **Good example**:
   ```json
   { "orderId": 123, "orderDate": "2025-01-15T09:30:00Z", "totalAmount": 50000 }
   ```
-> [MUST NOT] Naming such as `order_id`, `OrderDate`, `Total_Amount` is prohibited.
+> [MUST NOT] Naming like `order_id`, `OrderDate`, `Total_Amount` is prohibited.
 
 ## HTTP Status Codes
 
@@ -108,9 +108,9 @@
 
 | Status Code | Purpose | When to Use |
 |----------|------|----------|
-| 200 OK | General success | Successful retrieval or modification |
+| 200 OK | General success | Successful retrieval or update |
 | 201 Created | Resource creation success | When a resource is created via POST |
-| 204 No Content | Success with no body | Successful DELETE |
+| 204 No Content | Success with no body | When DELETE succeeds |
 
 ### Client Errors (4xx)
 
@@ -134,18 +134,18 @@
 
 ### Error Response Details
 
-- **Rule**: [MUST] Error responses must include a machine-readable error code (code) and a human-readable message (message).
-- **Rule**: [MUST NOT] Do not expose sensitive information such as stack traces or internal system information in error responses.
-- **Good Example**:
+- **Rule**: [MUST] Error responses must include a machine-readable error code (`code`) and a human-readable message (`message`).
+- **Rule**: [MUST NOT] Do not expose sensitive information such as stack traces or internal system details in error responses.
+- **Good example**:
   ```json
   {
     "success": false, "data": null,
     "error": {
       "code": "VALIDATION_FAILED",
-      "message": "입력 데이터가 유효하지 않습니다.",
+      "message": "Input data is invalid.",
       "details": [
-        { "field": "email", "message": "올바른 이메일 형식이 아닙니다." },
-        { "field": "password", "message": "비밀번호는 8자 이상이어야 합니다." }
+        { "field": "email", "message": "Not a valid email format." },
+        { "field": "password", "message": "Password must be at least 8 characters." }
       ]
     }
   }
@@ -161,55 +161,55 @@
 
 | Change Type | Example |
 |----------|------|
-| Endpoint deletion or renaming | Deleting `GET /api/v1/orders` |
+| Endpoint deletion or renaming | Deletion of `GET /api/v1/orders` |
 | Response field deletion or renaming | `totalAmount` -> `total` |
 | Field type change | `id: number` -> `id: string` |
-| Adding a new required request field | Adding required parameter `warehouseId` |
+| Addition of new required request field | Addition of `warehouseId` as a required parameter |
 | Field semantic change | `amount`: pre-tax -> post-tax |
 | Status code change | 200 -> 201 |
 | Error code change | `ORDER_NOT_FOUND` -> `NOT_FOUND` |
-| Authentication requirement change | Public API -> authentication required |
+| Authentication requirement change | Public API -> Authentication required |
 
 **Non-Breaking Change**
 
 | Change Type | Example |
 |----------|------|
-| Adding a new optional request field | Adding `memo?: string` |
-| Adding a new response field | Adding `estimatedDeliveryDate` |
-| Adding a new endpoint | Adding `GET /api/v1/orders/summary` |
-| Adding a new enum value | Adding `returned` to `OrderStatus` |
-| Relaxing validation | `maxLength(50)` -> `maxLength(100)` |
+| Addition of new optional request field | Addition of `memo?: string` |
+| Addition of new response field | Addition of `estimatedDeliveryDate` |
+| Addition of new endpoint | Addition of `GET /api/v1/orders/summary` |
+| Addition of new enum value | Addition of `returned` to `OrderStatus` |
+| Relaxation of validation | `maxLength(50)` -> `maxLength(100)` |
 
 ### Backward Compatibility Rules
 
 **Server-Side Rules**
 
 - **Rule**: [MUST] Do not delete or rename existing response fields.
-- **Rule**: [MUST] Do not add new required request fields to existing endpoints. New fields must always be added as optional.
-- **Rule**: [MUST] Do not change the type or semantics of a field. If a change is needed, add a new field instead.
+- **Rule**: [MUST] Do not add new required request fields to existing endpoints. New fields must be added as optional.
+- **Rule**: [MUST] Do not change the type or meaning of fields. If a change is needed, add a new field.
 
 **Client-Side Rules**
 
 - **Rule**: [SHOULD] Ignore unknown fields included in responses.
-- **Rule**: [SHOULD] Handle unknown enum values with a default value or ignore them.
+- **Rule**: [SHOULD] Handle unknown enum values with default values or ignore them.
 
 ### Deprecation Policy
 
 - **Rule**: [MUST] API Deprecation must follow the Announce -> Sunset -> Remove lifecycle.
 - **Rule**: [MUST] The minimum Sunset period for internal APIs is 4 weeks.
-- **Rule**: [SHOULD] Include the `Sunset` header (RFC 8594) in Deprecated API responses.
-- **Good Example**:
+- **Rule**: [SHOULD] Include a `Sunset` header (RFC 8594) in deprecated API responses.
+- **Good example**:
   ```typescript
   @Get('/orders/legacy')
-  @ApiOperation({ summary: '주문 목록 조회 (Deprecated)', deprecated: true })
+  @ApiOperation({ summary: 'Retrieve order list (Deprecated)', deprecated: true })
   @Header('Sunset', 'Sat, 01 Mar 2026 00:00:00 GMT')
   async getLegacyOrders() { return this.orderService.getOrders(); }
   ```
 
 ### Migration Guide
 
-- **Rule**: [MUST] Write migration documentation when upgrading to a version that includes breaking changes.
-- **Good Example**:
+- **Rule**: [MUST] Write a migration document when upgrading to a version that includes breaking changes.
+- **Good example**:
   ```typescript
   @Controller({ path: 'orders', version: '2' })
   export class OrderV2Controller {
@@ -224,7 +224,7 @@
 - **Rule**: [MUST] Use flat query parameters for equality comparison filters.
 - **Rule**: [MUST] Use `From`/`To` suffixes for range filters.
 - **Rule**: [SHOULD] Separate multiple values with commas (`,`).
-- **Good Example**:
+- **Good example**:
   ```
   GET /api/v1/orders?status=pending,confirmed&createdAtFrom=2026-01-01&createdAtTo=2026-01-31
   ```
@@ -233,7 +233,7 @@
 
 - **Rule**: [MUST] Use the `sort=field:direction` format for sorting. Separate multiple sort criteria with commas (`,`).
 - **Rule**: [MUST] List APIs must always define a default sort order.
-- **Good Example**:
+- **Good example**:
   ```
   GET /api/v1/orders?sort=createdAt:desc,totalAmount:asc
   ```
@@ -241,11 +241,11 @@
 ### Search
 
 - **Rule**: [SHOULD] Use the `search` parameter for full-text search.
-- **Rule**: [MAY] Use the field name as the parameter for field-specific searches.
+- **Rule**: [MAY] Use the field name as a parameter for searching specific fields.
 
-### List Query QueryDto Standard
+### Standard QueryDto for List Retrieval
 
-- **Rule**: [MUST] List query APIs must define a QueryDto based on the structure below.
+- **Rule**: [MUST] List retrieval APIs must define a QueryDto based on the structure below.
 
 ```typescript
 export class GetOrderListQueryDto {
@@ -271,12 +271,12 @@ export class GetOrderListQueryDto {
 ## Bulk Operations
 
 - **Rule**: [MUST] Bulk operations must use the `/bulk` sub-resource pattern.
-- **Rule**: [MUST] The request body must contain an `items` array.
+- **Rule**: [MUST] The request body must include an `items` array.
 - **Rule**: [MUST] The response must include per-item results (`results`) and a summary (`summary`).
-- **Rule**: [MUST] On partial failure, return 200 OK and indicate success/failure for each individual item.
+- **Rule**: [MUST] Return 200 OK for partial failures, and indicate success/failure for each individual item.
 - **Rule**: [MUST] The maximum batch size is limited to 100.
 
-- **Good Example**:
+- **Good example**:
 
   Request:
   ```
@@ -293,7 +293,7 @@ export class GetOrderListQueryDto {
     "data": {
       "results": [
         { "index": 0, "success": true, "data": { "orderId": "ord-101" } },
-        { "index": 1, "success": false, "error": { "code": "PRODUCT_NOT_FOUND", "message": "상품을 찾을 수 없습니다." } }
+        { "index": 1, "success": false, "error": { "code": "PRODUCT_NOT_FOUND", "message": "Product not found." } }
       ],
       "summary": { "total": 2, "succeeded": 1, "failed": 1 }
     },
@@ -301,13 +301,13 @@ export class GetOrderListQueryDto {
   }
   ```
 
-## Async Processing
+## Asynchronous Processing
 
 - **Rule**: [MUST] Use the 202 Accepted pattern for long-running operations.
-- **Rule**: [MUST] Include a `jobId` and status check URL (`statusUrl`) in the async operation response.
-- **Rule**: [MUST] Operation status must be one of `pending | processing | completed | failed | cancelled`.
+- **Rule**: [MUST] Include `jobId` and a status check URL (`statusUrl`) in asynchronous operation responses.
+- **Rule**: [MUST] Job status must be one of `pending | processing | completed | failed | cancelled`.
 
-- **Good Example**:
+- **Good example**:
 
   202 Response:
   ```json
@@ -331,8 +331,8 @@ export class GetOrderListQueryDto {
 
 ### Small Files (10MB or less)
 
-- **Rule**: [SHOULD] Files of 10MB or less should be uploaded directly using `multipart/form-data`.
-- **Good Example**:
+- **Rule**: [SHOULD] Upload files 10MB or less directly using `multipart/form-data`.
+- **Good example**:
   ```typescript
   @Post(':orderId/attachments')
   @UseInterceptors(FileInterceptor('file'))
@@ -343,24 +343,24 @@ export class GetOrderListQueryDto {
 
 ### Large Files
 
-- **Rule**: [MUST] Files exceeding 10MB must use the Presigned URL 3-step pattern.
+- **Rule**: [MUST] Use the Presigned URL 3-step pattern for files exceeding 10MB.
 
 ```
-1. 클라이언트 → 서버: Presigned URL 요청
-2. 클라이언트 → S3: Presigned URL로 직접 업로드
-3. 클라이언트 → 서버: 업로드 완료 확인
+1. Client → Server: Request Presigned URL
+2. Client → S3: Upload directly using Presigned URL
+3. Client → Server: Confirm upload completion
 ```
 
 ### File Validation
 
 - **Rule**: [MUST] Validate file size, MIME type, and Magic Bytes on the server side.
-- **Rule**: [MUST NOT] Do not trust the file type based solely on the `Content-Type` header.
+- **Rule**: [MUST NOT] Do not trust file type based solely on the `Content-Type` header.
 
 | Validation Item | Rule |
 |----------|------|
 | File size | Maximum size limit per endpoint |
-| MIME type | Check against the list of allowed MIME types |
-| Magic Bytes | Verify actual file type using Magic Bytes in the file header |
+| MIME type | Check against allowed MIME type list |
+| Magic Bytes | Verify actual file type using Magic Bytes in file header |
 | Filename | Remove path traversal characters (`../`), replace special characters |
 
 ## Idempotency
@@ -368,10 +368,10 @@ export class GetOrderListQueryDto {
 - **Rule**: [MUST] POST endpoints that create resources must support the `Idempotency-Key` header.
 - **Rule**: [MUST] `Idempotency-Key` values must use UUID v4 format.
 - **Rule**: [SHOULD NOT] Do not require `Idempotency-Key` for GET, DELETE, PUT, or PATCH endpoints.
-- **Rule**: [MUST] The server must store the `Idempotency-Key` and response in Redis with a TTL of 24 hours.
-- **Rule**: [MUST] Return 409 Conflict when a request with the same key but different request parameters is received.
+- **Rule**: [MUST] The server must store `Idempotency-Key` and responses in Redis with a TTL of 24 hours.
+- **Rule**: [MUST] Return 409 Conflict when the same key is resubmitted with different request parameters.
 
-- **Good Example**:
+- **Good example**:
 
   Initial request:
   ```
@@ -382,7 +382,7 @@ export class GetOrderListQueryDto {
   { "orderId": "ord-101", "amount": 50000, "method": "card" }
   ```
 
-  Retry (same key) - Returns the cached response (prevents duplicate creation).
+  Retry (same key) - Returns cached response (prevents duplicate creation).
 
 ## Caching Strategy
 
@@ -398,12 +398,12 @@ export class GetOrderListQueryDto {
 |------------|---------------|-----|------|
 | Static reference data | `public, max-age=86400` | 24 hours | Country codes, currency lists |
 | Catalog | `private, max-age=300` | 5 minutes | Product lists, categories |
-| User-specific data | `private, no-cache` | Always validate | Order history, profile |
-| Real-time data | `no-store` | No cache | Inventory quantity, real-time pricing |
+| Per-user data | `private, no-cache` | Always validate | Order history, profile |
+| Real-time data | `no-store` | No cache | Stock quantity, real-time prices |
 
 ### Optimistic Concurrency Control
 
-- **Rule**: [SHOULD] Modification APIs should use the `If-Match` header with ETag to detect concurrency conflicts.
+- **Rule**: [SHOULD] Update APIs should use the `If-Match` header and ETag to detect concurrency conflicts.
 
 ## Rate Limiting
 
@@ -418,7 +418,7 @@ export class GetOrderListQueryDto {
 
 ### Rate Limit Tiers
 
-- **Rule**: [SHOULD] Apply Rate Limits per user according to the following tiers.
+- **Rule**: [SHOULD] Apply Rate Limits per user based on the following tiers.
 
 | Tier | Limit | Target |
 |------|------|------|
@@ -427,7 +427,7 @@ export class GetOrderListQueryDto {
 | Bulk | 10/min | Bulk operation endpoints |
 | Upload | 20/min | File upload endpoints |
 
-## OpenAPI/Swagger Standards
+## OpenAPI/Swagger Standard
 
 ### Code-First Rules
 
@@ -442,25 +442,25 @@ export class GetOrderListQueryDto {
   }
   ```
 
-- **Rule**: [MUST] Use the `@sellernote/sellernote-nestjs-api-property` decorator for all DTO fields.
+- **Rule**: [MUST] Use `@sellernote/sellernote-nestjs-api-property` decorators for all DTO fields.
 
 ### Endpoint Documentation
 
 - **Rule**: [MUST] Write `@ApiOperation({ summary })` for all endpoints.
 - **Rule**: [MUST] Write `@ApiResponse` for success responses and major error responses.
-- **Good Example**:
+- **Good example**:
   ```typescript
-  @ApiOperation({ summary: '주문 생성' })
-  @ApiResponse({ status: 201, description: '주문 생성 성공', type: OrderResponseDto })
-  @ApiResponse({ status: 400, description: '요청 데이터 검증 실패' })
-  @ApiResponse({ status: 409, description: '중복 주문' })
+  @ApiOperation({ summary: 'Create order' })
+  @ApiResponse({ status: 201, description: 'Order created successfully', type: OrderResponseDto })
+  @ApiResponse({ status: 400, description: 'Request data validation failed' })
+  @ApiResponse({ status: 409, description: 'Duplicate order' })
   @Post()
   async createOrder(@Body() dto: CreateOrderDto): Promise<OrderResponseDto> {
     return this.orderService.createOrder(dto);
   }
   ```
 
-### Schema Definition Standards
+### Schema Definition Standard
 
 - **Rule**: [MUST] Use the `@sellernote/sellernote-nestjs-api-property` library for DTO field definitions.
 - **Rule**: [MUST NOT] Do not use `@ApiProperty()` from `@nestjs/swagger` directly.
@@ -469,46 +469,46 @@ export class GetOrderListQueryDto {
 
 | Decorator | Purpose | Key Options |
 |------------|------|-----------|
-| `SellernoteApiString` | String fields | `maxLength` (required), `minLength`, `isTrim`, `isEmail`, etc. |
-| `SellernoteApiNumber` | Number fields | `min`, `max`, `isInt`, `isPositive`, etc. |
-| `SellernoteApiBoolean` | Boolean fields | Built-in auto-conversion from string/number |
-| `SellernoteApiEnum` | Enum fields | `enum`, `enumName` |
-| `SellernoteApiObject` | Nested object fields | `type: () => ClassName` |
-| `SellernoteApiDate` | Date fields | `minDate`, `maxDate` |
-| `SellernoteApiUUID` | UUID fields | `version` |
+| `SellernoteApiString` | String field | `maxLength` (required), `minLength`, `isTrim`, `isEmail`, etc. |
+| `SellernoteApiNumber` | Number field | `min`, `max`, `isInt`, `isPositive`, etc. |
+| `SellernoteApiBoolean` | Boolean field | Built-in automatic conversion from string/number |
+| `SellernoteApiEnum` | Enum field | `enum`, `enumName` |
+| `SellernoteApiObject` | Nested object field | `type: () => ClassName` |
+| `SellernoteApiDate` | Date field | `minDate`, `maxDate` |
+| `SellernoteApiUUID` | UUID field | `version` |
 | `SellernoteApiLiteral` | String literal union | `literals` |
-| `SellernoteApiDecimal` | Decimal string (monetary amounts, etc.) | `maxDecimalPlaces`, `maxDigits` |
-| `SellernoteApiUnion` | Union types | `types`, `discriminator` |
+| `SellernoteApiDecimal` | Decimal string (amounts, etc.) | `maxDecimalPlaces`, `maxDigits` |
+| `SellernoteApiUnion` | Union type | `types`, `discriminator` |
 
 - **Class decorator**: `@SellernoteApiDto({ isQuery: true })` -- Automatically converts single values to arrays in Query DTOs.
 - **Common options**: All decorators support `description` (required), `isRequired` (required), `isArray`, `isNullable`, `example`.
-- **Reference**: For the full options of each decorator, refer to the [sellernote-nestjs-api-property README](https://github.com/sellernote/sellernote-nestjs-api-property).
+- **Reference**: For the complete options of each decorator, refer to the [sellernote-nestjs-api-property README](https://github.com/sellernote/sellernote-nestjs-api-property).
 
-- **Good Example**:
+- **Good example**:
   ```typescript
   import { SellernoteApiString, SellernoteApiNumber, SellernoteApiEnum } from '@sellernote/sellernote-nestjs-api-property';
 
   export class CreateOrderDto {
-    @SellernoteApiString({ description: '상품 ID', maxLength: 50, isRequired: true, example: 'prod-001' })
+    @SellernoteApiString({ description: 'Product ID', maxLength: 50, isRequired: true, example: 'prod-001' })
     productId: string;
 
-    @SellernoteApiNumber({ description: '주문 수량', isInt: true, min: 1, max: 999, isRequired: true, example: 2 })
+    @SellernoteApiNumber({ description: 'Order quantity', isInt: true, min: 1, max: 999, isRequired: true, example: 2 })
     quantity: number;
 
-    @SellernoteApiEnum({ description: '주문 상태', enum: OrderStatus, enumName: 'OrderStatus', isRequired: true })
+    @SellernoteApiEnum({ description: 'Order status', enum: OrderStatus, enumName: 'OrderStatus', isRequired: true })
     status: OrderStatus;
   }
   ```
 
-### Frontend-Backend Type Sharing
+### Front-Back Type Sharing
 
 - **Rule**: [SHOULD] Automatically generate frontend types from the OpenAPI spec to maintain type consistency.
 
 ```
 NestJS (Code-First)
-  → OpenAPI Spec (JSON/YAML) 자동 생성
-    → openapi-typescript 또는 orval
-      → 프론트엔드 TypeScript 타입/클라이언트 자동 생성
+  → OpenAPI Spec (JSON/YAML) auto-generation
+    → openapi-typescript or orval
+      → Frontend TypeScript types/client auto-generation
 ```
 
 ### API Spec Validation Automation
@@ -530,9 +530,9 @@ steps:
 
 | Type | Pattern | Example |
 |------|------|------|
-| Bulk creation request | `BulkCreate[Domain]Dto` | `BulkCreateOrderDto` |
+| Bulk create request | `BulkCreate[Domain]Dto` | `BulkCreateOrderDto` |
 | Bulk update request | `BulkUpdate[Domain]Dto` | `BulkUpdateOrderDto` |
-| Bulk deletion request | `BulkDelete[Domain]Dto` | `BulkDeleteOrderDto` |
+| Bulk delete request | `BulkDelete[Domain]Dto` | `BulkDeleteOrderDto` |
 | List response | `[Domain]ListResponseDto` | `OrderListResponseDto` |
 | Summary response | `[Domain]SummaryDto` | `OrderSummaryDto` |
 | Filter criteria | `[Domain]FilterDto` | `OrderFilterDto` |
@@ -540,7 +540,7 @@ steps:
 | Job status response | `[Domain]JobStatusDto` | `ReportJobStatusDto` |
 
 - **Rule**: [SHOULD] Use NestJS's `PartialType` and `PickType` when reusing existing DTOs.
-- **Good Example**:
+- **Good example**:
   ```typescript
   import { PartialType, PickType } from '@nestjs/swagger';
 
@@ -559,17 +559,17 @@ steps:
   GET /api/v1/reviews/:reviewId              (O)
   ```
 
-### POST-for-Everything
+### POST for Everything
 
-- **Rule**: Using POST for all APIs is prohibited. Follow the HTTP method mapping rules.
+- **Rule**: Using only POST for all APIs is prohibited. Follow the HTTP method mapping rules.
 
 ### Exposing Sensitive Information in Responses
 
-- **Rule**: Exposing DB auto-increment IDs (`_id`), password hashes, stack traces, etc. in responses is prohibited. Explicitly select fields using ResponseDto.
+- **Rule**: Exposing DB auto-increment IDs (`_id`), password hashes, stack traces, etc. in responses is prohibited. Use ResponseDto to explicitly select fields.
 
 ### Using PUT for Partial Updates
 
-- **Rule**: Use PATCH for partial updates and include only the fields to be modified in the request body.
+- **Rule**: Use PATCH for partial updates, and include only the fields to be modified in the request body.
 
 ### Inconsistent Naming
 

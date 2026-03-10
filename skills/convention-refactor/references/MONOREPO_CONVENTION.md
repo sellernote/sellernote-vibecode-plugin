@@ -11,32 +11,32 @@
 
 ```
 monorepo-root/
-├── apps/                      # 배포 가능한 애플리케이션
-│   ├── web/                   # 웹 프론트엔드 (예: Next.js)
-│   ├── mobile/                # 모바일 앱 (예: React Native)
-│   └── api/                   # 백엔드 API 서버 (예: NestJS)
-├── packages/                  # 공유 라이브러리/패키지
-│   ├── ui/                    # 공유 UI 컴포넌트
-│   ├── utils/                 # 공유 유틸리티 함수
-│   ├── types/                 # 공유 타입 정의
-│   └── config/                # 공유 설정 (ESLint, TypeScript 등)
-├── tooling/                   # 빌드/개발 도구 설정
+├── apps/                      # Deployable applications
+│   ├── web/                   # Web frontend (e.g., Next.js)
+│   ├── mobile/                # Mobile app (e.g., React Native)
+│   └── api/                   # Backend API server (e.g., NestJS)
+├── packages/                  # Shared libraries/packages
+│   ├── ui/                    # Shared UI components
+│   ├── utils/                 # Shared utility functions
+│   ├── types/                 # Shared type definitions
+│   └── config/                # Shared configuration (ESLint, TypeScript, etc.)
+├── tooling/                   # Build/development tool configuration
 │   ├── eslint/
 │   ├── typescript/
 │   └── prettier/
-├── package.json               # 루트 package.json
-├── turbo.json                 # Turborepo 설정 (또는 nx.json)
-└── pnpm-workspace.yaml        # 워크스페이스 설정 (pnpm 사용 시)
+├── package.json               # Root package.json
+├── turbo.json                 # Turborepo configuration (or nx.json)
+└── pnpm-workspace.yaml        # Workspace configuration (when using pnpm)
 ```
 
 ### Workspace Classification Criteria
 
-- [MUST] Place only independently deployable applications in `apps/` and only shared libraries in `packages/`.
+- [MUST] Place only independently deployable applications in `apps/`, and only shared libraries in `packages/`.
 
 ### Package Naming
 
 - [MUST] Use an organization scope for internal packages. (e.g., `@sellernote/ui`, `@sellernote/utils`)
-- **Good Example**:
+- **Good example**:
   ```json
   {
     "name": "@sellernote/ui",
@@ -50,7 +50,7 @@ monorepo-root/
 ### Internal Package References
 
 - [MUST] Use the workspace protocol to reference internal packages.
-- **Good Example**:
+- **Good example**:
   ```json
   {
     "dependencies": {
@@ -74,7 +74,7 @@ monorepo-root/
 ### Task Pipeline Configuration
 
 - [MUST] Explicitly define task dependency relationships in the build tool (Turborepo/Nx).
-- **Good Example** (Turborepo):
+- **Good example** (Turborepo):
   ```json
   {
     "tasks": {
@@ -96,14 +96,14 @@ monorepo-root/
 
 ### Cache Strategy
 
-- [SHOULD] Actively leverage build cache to optimize CI/CD speed.
+- [SHOULD] Actively utilize build caching to optimize CI/CD speed.
 
 ## Shared Configuration Management
 
 ### TypeScript Configuration
 
 - [SHOULD] Place a base `tsconfig.json` at the root and extend it in each workspace.
-- **Good Example**:
+- **Good example**:
   ```json
   // packages/typescript/base.json
   {
@@ -128,13 +128,13 @@ monorepo-root/
 
 ### ESLint / Prettier Configuration
 
-- [SHOULD] Manage lint/format configurations as shared packages and extend them in each workspace.
+- [SHOULD] Manage lint/format configuration as shared packages and extend them in each workspace.
 
 ## Version Control and Deployment
 
 ### CI/CD Pipeline
 
-- [SHOULD] Build/test/deploy only the workspaces that have changed.
+- [SHOULD] Build/test/deploy only the changed workspaces.
 
 ## Tool-Specific Patterns
 
@@ -143,15 +143,15 @@ monorepo-root/
 1. Create a directory under `apps/` or `packages/`.
 2. Define the scoped name and required scripts in `package.json`.
 3. Add the path to the workspace configuration file (e.g., `pnpm-workspace.yaml`).
-4. Add required internal packages as dependencies with `workspace:*`.
+4. Add required internal packages as dependencies using `workspace:*`.
 5. Verify that the build tool's pipeline configuration applies to the new workspace.
 
 ### Shared Package Design Principles
 
 - [SHOULD] Shared packages follow the single responsibility principle. Do not mix code from multiple domains in a single package.
 
-## Anti-Patterns
+## Anti-patterns
 
-- [MUST NOT] Create circular dependencies between workspaces. Extract common logic into a separate package to keep the dependency direction unidirectional.
-- [MUST NOT] Install packages used only by a specific workspace in the root `package.json`.
+- [MUST NOT] Create circular dependencies between workspaces. Extract common logic into a separate package to maintain a unidirectional dependency direction.
+- [MUST NOT] Install packages used only in a specific workspace in the root `package.json`.
 - [MUST NOT] Use undeclared packages by relying on hoisting.

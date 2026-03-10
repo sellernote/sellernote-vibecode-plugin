@@ -3,7 +3,7 @@
 > Defines rules applied to Docker projects.
 > Parent rules: INFRASTRUCTURE_CONVENTION.md
 
-## Tech Stack
+## Technology Stack
 
 | Item | Version/Setting |
 |------|----------|
@@ -48,7 +48,7 @@
 
 ### Layer Caching Optimization
 
-- [SHOULD] Place instructions that change less frequently at the top of the Dockerfile, and those that change more frequently at the bottom.
+- [SHOULD] Place less frequently changed instructions at the top of the Dockerfile and more frequently changed instructions at the bottom.
 - **Good example**:
   ```dockerfile
   COPY package.json pnpm-lock.yaml ./
@@ -59,7 +59,7 @@
 
 ### RUN Instruction Optimization
 
-- [SHOULD] Chain related `RUN` instructions with `&&`, and clean up package manager caches in the same layer.
+- [SHOULD] Chain related `RUN` instructions with `&&` and clean up package manager caches in the same layer.
 - **Good example**:
   ```dockerfile
   RUN apk add --no-cache curl tzdata && \
@@ -83,7 +83,7 @@
 
 ### COPY vs ADD
 
-- [SHOULD] Use `COPY` instead of `ADD` for copying files. (`ADD` has implicit behaviors such as automatic archive extraction)
+- [SHOULD] Use `COPY` instead of `ADD` for copying files. (`ADD` has implicit behaviors such as automatic decompression)
 
 ## Image Naming/Tagging
 
@@ -149,7 +149,7 @@
 
 ### Health Check
 
-- [SHOULD] Define `healthcheck` for dependent services, and use `condition: service_healthy` in `depends_on`.
+- [SHOULD] Define `healthcheck` for dependent services and use `condition: service_healthy` in `depends_on`.
 
 ### Volumes
 
@@ -173,8 +173,8 @@
 
 ### Secret Handling
 
-- [MUST NOT] Do not include secrets in Dockerfile `ENV` or `ARG`. (`ARG` is exposed in image history, `ENV` is accessible inside the container)
-- [SHOULD] Use BuildKit's `--mount=type=secret` when secrets are needed during the build.
+- [MUST NOT] Do not include secrets in `ENV` or `ARG` in the Dockerfile. (`ARG` is exposed in image history, `ENV` is accessible inside the container)
+- [SHOULD] Use BuildKit's `--mount=type=secret` when secrets are needed during build time.
 - **Good example**:
   ```dockerfile
   RUN --mount=type=secret,id=npm_token \
@@ -204,4 +204,4 @@
 - [MUST NOT] Do not run containers without a `USER` directive in the Dockerfile.
 - [MUST NOT] Do not include build tools, debugging tools, or devDependencies in production images.
 - [MUST NOT] Do not use full OS images such as `ubuntu` or `debian` as production base images. (Use `alpine` or `distroless`)
-- [MUST NOT] Do not copy secrets in a Dockerfile and then delete them in a subsequent layer. (The secrets still exist in the previous layer)
+- [MUST NOT] Do not copy secrets in the Dockerfile and then delete them in a subsequent layer. (The secrets still exist in the previous layer)

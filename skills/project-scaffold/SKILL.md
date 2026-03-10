@@ -1,11 +1,11 @@
 ---
 name: project-scaffold
-description: Scaffold new NestJS modules or Next.js pages with Sellernote convention-compliant file structure. Use when creating new feature modules, pages, or project scaffolding. Triggers on tasks involving scaffolding, boilerplate generation, module creation, page structure setup, or initial file structure. Also use when asked to "새 모듈 만들어줘", "scaffold해줘", "새 페이지 구조 잡아줘", "모듈 구조 생성", "보일러플레이트 만들어줘", "새 기능 뼈대 만들어줘", "create new module", "scaffold a feature", "generate module structure", "set up new page", or any task requiring creation of multiple convention-compliant starter files.
+description: Scaffold new NestJS modules (TypeORM or Prisma) or frontend features (React Router 7 Framework Mode or Next.js 15 App Router) with Sellernote convention-compliant file structure. Use when creating new feature modules, pages, or project scaffolding. Triggers on tasks involving scaffolding, boilerplate generation, module creation, feature structure setup, or initial file structure. Also use when asked to "새 모듈 만들어줘", "scaffold해줘", "새 페이지 구조 잡아줘", "모듈 구조 생성", "보일러플레이트 만들어줘", "새 기능 뼈대 만들어줘", "create new module", "scaffold a feature", "generate module structure", "set up new page", "create feature scaffold", or any task requiring creation of multiple convention-compliant starter files.
 ---
 
 # Project Scaffold
 
-Generate convention-compliant file structures for new NestJS modules or Next.js pages.
+Generate convention-compliant file structures for new NestJS modules or frontend features (React Router 7 / Next.js 15).
 
 ## Convention Loading
 
@@ -15,31 +15,36 @@ Before starting, Read the relevant reference files from `references/` within thi
 1. **Always read first**:
    - `references/BACKEND_CONVENTION.md` - 3-layer architecture, naming rules
    - `references/BACKEND_ARCHITECTURE_CONVENTION.md` - Layer responsibilities, dependency direction
-   - `references/NESTJS_CONVENTION.md` - Module structure, DI, decorators
+   - `references/NESTJS_CONVENTION.md` - Module structure, DI, decorators, `@sellernote/sellernote-nestjs-api-property`
 2. **Read when relevant**:
    - `references/API_SPEC_CONVENTION.md` - When scaffold includes API endpoints
    - `references/SECURITY_CONVENTION.md` - When scaffold needs auth/guards
-   - `references/TYPEORM_CONVENTION.md` - When scaffold includes Entity
-   - `references/DATABASE_CONVENTION.md` - When scaffold includes DB modeling
+   - `references/TYPEORM_CONVENTION.md` - When scaffold uses TypeORM (default)
    - `references/PRISMA_CONVENTION.md` - When scaffold uses Prisma instead of TypeORM
+   - `references/DATABASE_CONVENTION.md` - When scaffold includes DB modeling
 
-### For Next.js Page Scaffold
+### For React Router 7 Feature Scaffold (Primary Frontend)
+1. **Always read first**:
+   - `references/FRONTEND_ARCHITECTURE_CONVENTION.md` - Feature directory structure, component classification, data flow
+   - `references/FRONTEND_CONVENTION.md` - Tech stack, naming, import rules, no barrel files
+   - `references/REACT_ROUTER_CONVENTION.md` - React Router 7 Framework Mode, `ssr: false`, code-based routes
+2. **Read when relevant**:
+   - `references/REACT_CONVENTION.md` - React 19 patterns, hooks, performance
+   - `references/STATE_CONVENTION.md` - TanStack Query, nuqs, Zustand (last resort)
+   - `references/STYLING_CONVENTION.md` - Tailwind CSS v4, `cn()`, `cva()`
+   - `references/FORM_CONVENTION.md` - React Hook Form + Zod
+   - `references/API_CLIENT_CONVENTION.md` - API client setup, auth token handling
+   - `references/API_CLIENT_AXIOS_CONVENTION.md` - Axios interceptors
+
+### For Next.js 15 Page Scaffold (Alternative Frontend)
 1. **Always read first**:
    - `references/FRONTEND_ARCHITECTURE_CONVENTION.md` - Component types, dependency direction
    - `references/NEXTJS_CONVENTION.md` - App Router, Server/Client Components
-2. **Read when relevant**:
-   - `references/FRONTEND_CONVENTION.md` - Frontend common rules
-   - `references/REACT_CONVENTION.md` - React 19 patterns, Hooks, performance
-   - `references/REACT_ROUTER_CONVENTION.md` - React Router 7 Framework Mode (for React-only projects)
-   - `references/STATE_CONVENTION.md` - When scaffold includes state management
-   - `references/STYLING_CONVENTION.md` - Tailwind CSS v4, cn(), DS components
-   - `references/FORM_CONVENTION.md` - When scaffold includes forms
-   - `references/API_CLIENT_CONVENTION.md` - When scaffold includes API client setup
-   - `references/API_CLIENT_AXIOS_CONVENTION.md` - When using Axios
+2. **Read when relevant**: Same as React Router 7 section above
 
 ### Common (always read)
-- `references/COMMON_CONVENTION.md` - Naming, error codes
-- `references/TYPESCRIPT_CONVENTION.md` - TS style, imports
+- `references/COMMON_CONVENTION.md` - Naming, error codes, git conventions
+- `references/TYPESCRIPT_CONVENTION.md` - TS strict mode, imports, no `any`
 
 ## Workflow
 
@@ -50,14 +55,17 @@ Ask or infer from context:
 | Scaffold Type | When to Use |
 |---------------|-------------|
 | **NestJS Module** | Backend feature module (API endpoints, business logic, data access) |
-| **Next.js Page** | Frontend page with components, data fetching, state |
-| **Full-stack** | Both backend module and frontend page for one feature |
+| **React Router 7 Feature** | Frontend feature with components, data fetching, route modules (primary) |
+| **Next.js Page** | Frontend page for Next.js App Router projects (alternative) |
+| **Full-stack** | Both backend module and frontend feature for one domain |
 
 Identify the feature name (e.g., `order`, `product`, `shipment`) and confirm with the user.
 
 ### Step 2: NestJS Module Scaffold
 
 Generate the following 11 files under `src/modules/{feature}/`:
+
+> Directory structure uses subdirectories: `controllers/`, `services/`, `repositories/`, `interfaces/`, `entities/`, `dto/`, `mappers/`.
 
 #### 2-1. Domain Model Interface
 
@@ -174,12 +182,12 @@ export class {Feature}Mapper {
 #### 2-8. Repository
 
 ```typescript
-// src/modules/{feature}/{feature}.repository.ts
+// src/modules/{feature}/repositories/{feature}.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { {Feature}Entity } from './entities/{feature}.entity';
+import { {Feature}Entity } from '../entities/{feature}.entity';
 
 @Injectable()
 export class {Feature}Repository {
@@ -196,10 +204,10 @@ export class {Feature}Repository {
 #### 2-9. Service
 
 ```typescript
-// src/modules/{feature}/{feature}.service.ts
+// src/modules/{feature}/services/{feature}.service.ts
 import { Injectable } from '@nestjs/common';
 
-import { {Feature}Repository } from './{feature}.repository';
+import { {Feature}Repository } from '../repositories/{feature}.repository';
 
 @Injectable()
 export class {Feature}Service {
@@ -214,14 +222,14 @@ export class {Feature}Service {
 #### 2-10. Controller
 
 ```typescript
-// src/modules/{feature}/{feature}.controller.ts
+// src/modules/{feature}/controllers/{feature}.controller.ts
 import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-import { {Feature}Service } from './{feature}.service';
-import { Create{Feature}Dto } from './dto/create-{feature}.dto';
-import { Update{Feature}Dto } from './dto/update-{feature}.dto';
-import { Get{Feature}ListQueryDto } from './dto/get-{feature}-list-query.dto';
+import { {Feature}Service } from '../services/{feature}.service';
+import { Create{Feature}Dto } from '../dto/create-{feature}.dto';
+import { Update{Feature}Dto } from '../dto/update-{feature}.dto';
+import { Get{Feature}ListQueryDto } from '../dto/get-{feature}-list-query.dto';
 
 @ApiTags('{feature}')
 @Controller('{feature}')
@@ -242,9 +250,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { {Feature}Entity } from './entities/{feature}.entity';
-import { {Feature}Controller } from './{feature}.controller';
-import { {Feature}Service } from './{feature}.service';
-import { {Feature}Repository } from './{feature}.repository';
+import { {Feature}Controller } from './controllers/{feature}.controller';
+import { {Feature}Service } from './services/{feature}.service';
+import { {Feature}Repository } from './repositories/{feature}.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([{Feature}Entity])],
@@ -255,38 +263,201 @@ import { {Feature}Repository } from './{feature}.repository';
 export class {Feature}Module {}
 ```
 
-### Step 3: Next.js Page Scaffold
+### Step 3: React Router 7 Feature Scaffold (Primary Frontend)
 
-Generate the following files:
+Generate the following files under `app/features/{feature}/`:
 
-#### 3-1. Page (Server Component)
+> React Router 7 Framework Mode with `ssr: false`. Uses `features/{domain}/` co-location pattern. No barrel files (`index.ts`).
+
+#### 3-1. Query Options
+
+```typescript
+// app/features/{feature}/api/query-options.ts
+import { queryOptions } from '@tanstack/react-query';
+
+import { apiClient } from '@/lib/api-client';
+import type { {Feature}, {Feature}ListResponse } from '../types/{feature}-types';
+
+export const {feature}QueryOptions = {
+  list: (params?: Record<string, unknown>) =>
+    queryOptions({
+      queryKey: ['{feature}', 'list', params],
+      queryFn: () => apiClient.get<{Feature}ListResponse>('/api/{feature}', { params }),
+    }),
+
+  detail: (id: string) =>
+    queryOptions({
+      queryKey: ['{feature}', 'detail', id],
+      queryFn: () => apiClient.get<{Feature}>(`/api/{feature}/${id}`),
+    }),
+};
+```
+
+#### 3-2. Query Hooks (Endpoint Hook Files)
+
+```typescript
+// app/features/{feature}/api/use-{feature}-list.ts
+import { useSuspenseQuery } from '@tanstack/react-query';
+
+import { {feature}QueryOptions } from './query-options';
+
+export function use{Feature}List(params?: Record<string, unknown>) {
+  return useSuspenseQuery({feature}QueryOptions.list(params));
+}
+```
+
+```typescript
+// app/features/{feature}/api/use-{feature}-detail.ts
+import { useSuspenseQuery } from '@tanstack/react-query';
+
+import { {feature}QueryOptions } from './query-options';
+
+export function use{Feature}Detail(id: string) {
+  return useSuspenseQuery({feature}QueryOptions.detail(id));
+}
+```
+
+```typescript
+// app/features/{feature}/api/use-create-{feature}.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+import { apiClient } from '@/lib/api-client';
+
+export function useCreate{Feature}() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      apiClient.post('/api/{feature}', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['{feature}'] });
+    },
+  });
+}
+```
+
+#### 3-3. Feature Components
+
+```typescript
+// app/features/{feature}/components/{Feature}List.tsx
+import { use{Feature}List } from '../api/use-{feature}-list';
+
+export function {Feature}List() {
+  const { data } = use{Feature}List();
+
+  // TODO: Implement list UI
+  return <div>TODO: {Feature} List</div>;
+}
+```
+
+```typescript
+// app/features/{feature}/components/{Feature}Detail.tsx
+import { use{Feature}Detail } from '../api/use-{feature}-detail';
+
+interface {Feature}DetailProps {
+  id: string;
+}
+
+export function {Feature}Detail({ id }: {Feature}DetailProps) {
+  const { data } = use{Feature}Detail(id);
+
+  // TODO: Implement detail UI
+  return <div>TODO: {Feature} Detail</div>;
+}
+```
+
+#### 3-4. Types
+
+```typescript
+// app/features/{feature}/types/{feature}-types.ts
+export interface {Feature} {
+  id: string;
+  // TODO: Add type fields matching API response
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface {Feature}ListResponse {
+  list: {Feature}[];
+  total: number;
+}
+```
+
+#### 3-5. Route Modules
+
+```typescript
+// app/routes/{feature}/list.tsx
+import { Suspense } from 'react';
+
+import { {Feature}List } from '@/features/{feature}/components/{Feature}List';
+
+export default function {Feature}ListRoute() {
+  return (
+    <Suspense fallback={<div className="h-[400px] w-full animate-pulse rounded-lg bg-gray-100" />}>
+      <{Feature}List />
+    </Suspense>
+  );
+}
+```
+
+```typescript
+// app/routes/{feature}/detail.tsx
+import { Suspense } from 'react';
+import { useParams } from 'react-router';
+
+import { {Feature}Detail } from '@/features/{feature}/components/{Feature}Detail';
+
+export default function {Feature}DetailRoute() {
+  const { id } = useParams<{ id: string }>();
+
+  return (
+    <Suspense fallback={<div className="h-[400px] w-full animate-pulse rounded-lg bg-gray-100" />}>
+      <{Feature}Detail id={id!} />
+    </Suspense>
+  );
+}
+```
+
+#### 3-6. Route Registration
+
+```typescript
+// Add to app/routes.ts
+import { type RouteConfig, route } from '@react-router/dev/routes';
+
+export default [
+  // ... existing routes
+  route('{feature}', './routes/{feature}/list.tsx'),
+  route('{feature}/:id', './routes/{feature}/detail.tsx'),
+] satisfies RouteConfig;
+```
+
+### Step 3-Alt: Next.js 15 Page Scaffold (Alternative Frontend)
+
+Use this scaffold when the project uses Next.js 15 App Router instead of React Router 7.
+
+#### 3-Alt-1. Page (Server Component)
 
 ```typescript
 // app/(group)/{feature}/page.tsx
-import { {Feature}List } from '@/components/feature/{Feature}/{Feature}List';
+import { {Feature}List } from '@/features/{feature}/components/{Feature}List';
 
 export default function {Feature}Page() {
   return <{Feature}List />;
 }
 ```
 
-#### 3-2. Loading
+#### 3-Alt-2. Loading
 
 ```typescript
 // app/(group)/{feature}/loading.tsx
-import { Skeleton, Stack } from '@mui/material';
-
 export default function {Feature}Loading() {
   return (
-    <Stack spacing={2}>
-      <Skeleton variant="rectangular" height={40} />
-      <Skeleton variant="rectangular" height={400} />
-    </Stack>
+    <div className="h-[400px] w-full animate-pulse rounded-lg bg-gray-100" />
   );
 }
 ```
 
-#### 3-3. Error
+#### 3-Alt-3. Error
 
 ```typescript
 // app/(group)/{feature}/error.tsx
@@ -301,126 +472,30 @@ export default function {Feature}Error({
 }) {
   return (
     <div>
-      <h2>오류가 발생했습니다</h2>
-      <button onClick={reset}>다시 시도</button>
+      <h2>An error occurred</h2>
+      <button onClick={reset}>Retry</button>
     </div>
   );
 }
 ```
 
-#### 3-4. Detail Page
+#### 3-Alt-4. Detail Page
 
 ```typescript
 // app/(group)/{feature}/[id]/page.tsx
-import { {Feature}Detail } from '@/components/feature/{Feature}/{Feature}Detail';
+import { {Feature}Detail } from '@/features/{feature}/components/{Feature}Detail';
 
-export default function {Feature}DetailPage({
+export default async function {Feature}DetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <{Feature}Detail id={params.id} />;
+  const { id } = await params;
+  return <{Feature}Detail id={id} />;
 }
 ```
 
-#### 3-5. Feature Component (List)
-
-```typescript
-// components/feature/{Feature}/{Feature}List.tsx
-'use client';
-
-import { use{Feature}ListQuery } from '@/queries/use{Feature}ListQuery';
-
-export function {Feature}List() {
-  const { data, isLoading } = use{Feature}ListQuery();
-
-  // TODO: Implement list UI using data
-  return <div>TODO: {Feature} List</div>;
-}
-```
-
-#### 3-6. Feature Component (Detail)
-
-```typescript
-// components/feature/{Feature}/{Feature}Detail.tsx
-'use client';
-
-import { use{Feature}Query } from '@/queries/use{Feature}Query';
-
-interface {Feature}DetailProps {
-  id: string;
-}
-
-export function {Feature}Detail({ id }: {Feature}DetailProps) {
-  const { data, isLoading } = use{Feature}Query(id);
-
-  // TODO: Implement detail UI using data
-  return <div>TODO: {Feature} Detail</div>;
-}
-```
-
-#### 3-7. Query Hooks
-
-```typescript
-// queries/use{Feature}ListQuery.ts
-import { useQuery } from '@tanstack/react-query';
-
-import { {feature}Keys } from './queryKeys/{feature}Keys';
-
-export function use{Feature}ListQuery(params?: Record<string, unknown>) {
-  return useQuery({
-    queryKey: {feature}Keys.list(params),
-    queryFn: async () => {
-      // TODO: Implement API call
-    },
-  });
-}
-```
-
-```typescript
-// queries/use{Feature}Query.ts
-import { useQuery } from '@tanstack/react-query';
-
-import { {feature}Keys } from './queryKeys/{feature}Keys';
-
-export function use{Feature}Query(id: string) {
-  return useQuery({
-    queryKey: {feature}Keys.detail(id),
-    queryFn: async () => {
-      // TODO: Implement API call
-    },
-    enabled: !!id,
-  });
-}
-```
-
-```typescript
-// queries/queryKeys/{feature}Keys.ts
-export const {feature}Keys = {
-  all: ['{feature}'] as const,
-  lists: () => [...{feature}Keys.all, 'list'] as const,
-  list: (params?: Record<string, unknown>) => [...{feature}Keys.lists(), params] as const,
-  details: () => [...{feature}Keys.all, 'detail'] as const,
-  detail: (id: string) => [...{feature}Keys.details(), id] as const,
-};
-```
-
-#### 3-8. Types
-
-```typescript
-// types/{Feature}.types.ts
-export interface {Feature} {
-  id: string;
-  // TODO: Add type fields matching API response
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface {Feature}ListResponse {
-  list: {Feature}[];
-  total: number;
-}
-```
+> Feature components (`{Feature}List`, `{Feature}Detail`) and API layer (`query-options.ts`, endpoint hooks) follow the same `features/{domain}/` pattern as React Router 7 scaffold above.
 
 ### Step 4: Post-Scaffold Summary
 
@@ -430,33 +505,42 @@ After generating files, present:
 2. **TODO markers** that need user attention (fields, business logic)
 3. **Next steps**:
    - For NestJS: "Register `{Feature}Module` in `AppModule` imports"
+   - For React Router 7: "Add routes to `app/routes.ts`"
    - For Next.js: "Add route to navigation/sidebar if needed"
 4. **Recommended skills** for detailed implementation:
    - `nestjs-api-dev` for API endpoint details
-   - `typeorm-dev` for Entity column definitions and migrations
-   - `nextjs-data-provider` for query hooks and server actions
-   - `nextjs-ui-dev` for component UI implementation
+   - `typeorm-dev` or `prisma-dev` for ORM work
+   - `react-data-provider` or `nextjs-data-provider` for query hooks and data layer
+   - `react-ui-dev` or `nextjs-ui-dev` for component UI implementation
 
 ## Key Rules Summary
 
 | Rule | Detail |
 |------|--------|
-| MUST | Use `@sellernote/sellernote-nestjs-api-property` for all DTO decorators |
-| MUST | Entity extends custom `BaseEntity` (not TypeORM's) |
-| MUST | Domain Model Interface in `interfaces/` directory |
+| MUST | Use `@sellernote/sellernote-nestjs-api-property` for all DTO decorators (never `@ApiProperty` directly) |
+| MUST | Entity extends custom `BaseEntity` (UUID PK + `_no` BIGINT AUTO_INCREMENT) |
+| MUST | Domain Model Interface (`I{Feature}Model`) in `interfaces/` directory |
 | MUST | Mapper uses `I{Feature}Model` type, not Entity directly |
-| MUST | Money fields as `string` type with `@SellernoteApiDecimal` |
-| MUST | `page.tsx` is Server Component -- no business logic |
-| MUST | Feature components in `components/feature/` with `'use client'` |
-| MUST | Query key factory pattern (`{feature}Keys`) |
-| MUST | `@/` absolute import paths in Next.js |
+| MUST | Money fields as `string` type with `@SellernoteApiDecimal`; use `big.js` for calculations |
+| MUST | Enum columns use `type: 'varchar'` (never `type: 'enum'`) |
+| MUST | NestJS module uses subdirectories: `controllers/`, `services/`, `repositories/` |
+| MUST | Frontend uses `features/{domain}/` co-location with `api/`, `components/`, `types/` |
+| MUST | `query-options.ts` centralizes `queryKey` + `queryFn`; endpoint hooks in separate files |
+| MUST | `useSuspenseQuery` as default; `useQuery` only when `enabled` option is needed |
+| MUST | `@/` absolute import paths; no barrel files (`index.ts`) |
+| MUST | Route modules are composition-only (no business logic) |
+| MUST | State priority: TanStack Query (server) → nuqs (URL) → useState (local) → Zustand (last resort) |
+| MUST | File naming: PascalCase components, kebab-case hooks/utils/directories |
 | MUST | TODO markers at every point requiring user customization |
 
 ## Cross-Skill References
 
 - **NestJS API implementation details**: Use the `nestjs-api-dev` skill
 - **Entity/TypeORM work**: Use the `typeorm-dev` skill
+- **Entity/Prisma work**: Use the `prisma-dev` skill
+- **React Router 7 data layer**: Use the `react-data-provider` skill
+- **React Router 7 UI components**: Use the `react-ui-dev` skill
+- **React Router 7 feature orchestration**: Use the `react-dev-orchestration` skill
 - **Next.js data layer**: Use the `nextjs-data-provider` skill
 - **Next.js UI components**: Use the `nextjs-ui-dev` skill
-- **Full feature orchestration**: Use the `nextjs-dev-orchestration` skill
-- **Entity/Prisma work**: Use the `prisma-dev` skill
+- **Next.js feature orchestration**: Use the `nextjs-dev-orchestration` skill

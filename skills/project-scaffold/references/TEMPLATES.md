@@ -1,9 +1,9 @@
 # Frontend Template Collection
 
 > A collection of standard boilerplates that AI agents copy and use when creating new features.
-> All templates follow the rules of ARCHITECTURE_CONVENTION.md and STATE_CONVENTION.md.
+> All templates follow the rules in ARCHITECTURE_CONVENTION.md and STATE_CONVENTION.md.
 >
-> **Usage**: Copy a template and replace the placeholders `{domain}` (kebab-case), `{Domain}`/`{Entity}`/`{Component}` (PascalCase), `{entity}`/`{component}` (kebab-case) with actual names.
+> **Usage**: Copy the template and replace the placeholders `{domain}` (kebab-case), `{Domain}`/`{Entity}`/`{Component}` (PascalCase), `{entity}`/`{component}` (kebab-case) with actual names.
 
 ---
 
@@ -21,7 +21,7 @@ app/features/{domain}/
 │   ├── use-{entity}s-query.ts
 │   ├── use-{entity}-query.ts
 │   └── use-update-{entity}-mutation.ts
-├── hooks/                   # [Optional] Feature-specific hooks (UI/permissions/form helpers)
+├── hooks/                   # [Optional] Feature-specific hooks (UI/permission/form helpers)
 ├── store/                   # [Optional] Feature-specific Zustand store (create when needed)
 ├── schemas/                 # [Optional] Feature-specific Zod schemas (create when needed)
 ├── constants/               # [Optional] Feature-specific constants (create when needed)
@@ -29,22 +29,22 @@ app/features/{domain}/
 └── utils/                   # [Optional] Feature-specific pure utils/helpers (create when needed)
 ```
 
-### Feature Common Module (`features/_common/{domain}`)
+### Feature Common Modules (`features/_common/{domain}`)
 
 Domain-contextual code reused across two or more Features is placed in `features/_common/{domain}/`.
 
 ```text
 app/features/_common/
 └── {domain}/
-    ├── components/          # [Recommended] Components shared across Features
+    ├── components/          # [Recommended] Shared components across Features
     │   └── {component}/
     │       └── {Component}.tsx
-    ├── api/                 # [Optional] API / TanStack Query hooks shared across Features
-    ├── hooks/               # [Optional] Hooks shared across Features
-    ├── schemas/             # [Optional] Zod schemas shared across Features
-    ├── constants/           # [Optional] Constants shared across Features
-    ├── types/               # [Optional] Types shared across Features
-    └── utils/               # [Optional] Pure utils/helpers shared across Features
+    ├── api/                 # [Optional] Shared API / TanStack Query hooks across Features
+    ├── hooks/               # [Optional] Shared hooks across Features
+    ├── schemas/             # [Optional] Shared Zod schemas across Features
+    ├── constants/           # [Optional] Shared constants across Features
+    ├── types/               # [Optional] Shared types across Features
+    └── utils/               # [Optional] Shared pure utils/helpers across Features
 ```
 
 - Only place code with domain context in `features/_common/{domain}/`. (e.g., PO picker, settlement table)
@@ -78,16 +78,16 @@ const fetch{Entity}s = (params: Get{Entity}sRequest): Promise<Get{Entity}sRespon
 const fetch{Entity} = (params: Get{Entity}Request): Promise<Get{Entity}Response> =>
   apiClient.get(`/{domain}s/${params.id}`);
 
-export const {domain}QueryOptions = {
+export const {domain}Queries = {
   all: ['{domain}s'] as const,
   list: (params: Get{Entity}sRequest) =>
     queryOptions({
-      queryKey: [...{domain}QueryOptions.all, 'list', params] as const,
+      queryKey: [...{domain}Queries.all, 'list', params] as const,
       queryFn: () => fetch{Entity}s(params),
     }),
   detail: (params: Get{Entity}Request) =>
     queryOptions({
-      queryKey: [...{domain}QueryOptions.all, 'detail', params] as const,
+      queryKey: [...{domain}Queries.all, 'detail', params] as const,
       queryFn: () => fetch{Entity}(params),
     }),
 };
@@ -99,7 +99,7 @@ export const {domain}QueryOptions = {
 // features/{domain}/api/use-{entity}s-query.ts
 import { useSuspenseQuery } from '@tanstack/react-query';
 import type { Get{Entity}sRequest, Get{Entity}sResponse } from '@/types/generated/{domain}.generated';
-import { {domain}QueryOptions } from './query-options';
+import { {domain}Queries } from './query-options';
 
 type {Entity}ListItem = {
   id: string;
@@ -116,7 +116,7 @@ const to{Entity}ListItem = (data: Get{Entity}sResponse): {Entity}ListItem[] =>
 
 export function use{Entity}sQuery(params: Get{Entity}sRequest) {
   return useSuspenseQuery({
-    ...{domain}QueryOptions.list(params),
+    ...{domain}Queries.list(params),
     select: to{Entity}ListItem,
   });
 }
@@ -128,10 +128,10 @@ export function use{Entity}sQuery(params: Get{Entity}sRequest) {
 // features/{domain}/api/use-{entity}-query.ts
 import { useSuspenseQuery } from '@tanstack/react-query';
 import type { Get{Entity}Request } from '@/types/generated/{domain}.generated';
-import { {domain}QueryOptions } from './query-options';
+import { {domain}Queries } from './query-options';
 
 export function use{Entity}Query(params: Get{Entity}Request) {
-  return useSuspenseQuery({domain}QueryOptions.detail(params));
+  return useSuspenseQuery({domain}Queries.detail(params));
 }
 ```
 
@@ -139,15 +139,15 @@ export function use{Entity}Query(params: Get{Entity}Request) {
 
 ---
 
-## 3. Endpoint-Specific Helper Colocation
+## 3. Endpoint-Specific Helper Co-location
 
-If `transform`, `helper`, or screen-specific derived types are used by only one endpoint, keep them private within that endpoint hook file. Promote to `types/`, `constants/`, `lib/` only when reused in two or more places.
+If `transform`, `helper`, or screen-specific derived types are used by only one endpoint, keep them private within that endpoint's hook file. Promote to `types/`, `constants/`, `lib/` only when reused in two or more places.
 
 ```typescript
 // features/{domain}/api/use-{entity}s-query.ts
 import { useQuery } from '@tanstack/react-query';
 import type { Get{Entity}sRequest, Get{Entity}sResponse } from '@/types/generated/{domain}.generated';
-import { {domain}QueryOptions } from './query-options';
+import { {domain}Queries } from './query-options';
 
 type {Entity}Row = {
   id: string;
@@ -164,7 +164,7 @@ const to{Entity}Row = (data: Get{Entity}sResponse): {Entity}Row[] =>
 
 export function use{Entity}RowsQuery(params: Get{Entity}sRequest) {
   return useQuery({
-    ...{domain}QueryOptions.list(params),
+    ...{domain}Queries.list(params),
     select: to{Entity}Row,
   });
 }
@@ -178,7 +178,7 @@ export function use{Entity}RowsQuery(params: Get{Entity}sRequest) {
 // features/{domain}/api/use-create-{entity}-mutation.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { {domain}QueryOptions } from './query-options';
+import { {domain}Queries } from './query-options';
 import type { Create{Entity}Request, Create{Entity}Response } from '@/types/generated/{domain}.generated';
 
 export function useCreate{Entity}Mutation() {
@@ -189,7 +189,7 @@ export function useCreate{Entity}Mutation() {
       apiClient.post<Create{Entity}Response>('/{domain}s', data),
     meta: { successMessage: '{Entity}이(가) 생성되었습니다.' },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: {domain}QueryOptions.all });
+      queryClient.invalidateQueries({ queryKey: {domain}Queries.all });
     },
   });
 }
@@ -199,7 +199,7 @@ export function useCreate{Entity}Mutation() {
 // features/{domain}/api/use-update-{entity}-mutation.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { {domain}QueryOptions } from './query-options';
+import { {domain}Queries } from './query-options';
 import type { Update{Entity}Request, Update{Entity}Response } from '@/types/generated/{domain}.generated';
 
 export function useUpdate{Entity}Mutation(id: string) {
@@ -210,7 +210,7 @@ export function useUpdate{Entity}Mutation(id: string) {
       apiClient.put<Update{Entity}Response>(`/{domain}s/${id}`, data),
     meta: { successMessage: '{Entity}이(가) 수정되었습니다.' },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: {domain}QueryOptions.all });
+      queryClient.invalidateQueries({ queryKey: {domain}Queries.all });
     },
   });
 }
@@ -220,7 +220,7 @@ export function useUpdate{Entity}Mutation(id: string) {
 // features/{domain}/api/use-delete-{entity}-mutation.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { {domain}QueryOptions } from './query-options';
+import { {domain}Queries } from './query-options';
 
 export function useDelete{Entity}Mutation() {
   const queryClient = useQueryClient();
@@ -229,7 +229,7 @@ export function useDelete{Entity}Mutation() {
     mutationFn: (id: string) => apiClient.delete(`/{domain}s/${id}`),
     meta: { successMessage: '{Entity}이(가) 삭제되었습니다.' },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: {domain}QueryOptions.all });
+      queryClient.invalidateQueries({ queryKey: {domain}Queries.all });
     },
   });
 }
@@ -355,11 +355,11 @@ export function {Entity}CreateForm() {
         control={control}
         render={({ field }) => (
           <div className="flex flex-col gap-1">
-            <label htmlFor="name" className="text-sm font-medium text-gray-700">Name <span aria-hidden="true">*</span></label>
+            <label htmlFor="name" className="text-sm font-medium text-gray-700">이름 <span aria-hidden="true">*</span></label>
             <input
               id="name"
               className="rounded border border-gray-300 px-3 py-2 text-sm"
-              placeholder="Enter a name"
+              placeholder="이름을 입력하세요"
               {...field}
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? "name-error" : undefined}
@@ -374,11 +374,11 @@ export function {Entity}CreateForm() {
         control={control}
         render={({ field }) => (
           <div className="flex flex-col gap-1">
-            <label htmlFor="description" className="text-sm font-medium text-gray-700">Description</label>
+            <label htmlFor="description" className="text-sm font-medium text-gray-700">설명</label>
             <input
               id="description"
               className="rounded border border-gray-300 px-3 py-2 text-sm"
-              placeholder="Enter a description (optional)"
+              placeholder="설명을 입력하세요 (선택)"
               {...field}
               aria-invalid={!!errors.description}
               aria-describedby={errors.description ? "description-error" : undefined}
@@ -393,16 +393,16 @@ export function {Entity}CreateForm() {
         control={control}
         render={({ field }) => (
           <div className="flex flex-col gap-1">
-            <label htmlFor="status" className="text-sm font-medium text-gray-700">Status</label>
+            <label htmlFor="status" className="text-sm font-medium text-gray-700">상태</label>
             <select
               id="status"
               className="rounded border border-gray-300 px-3 py-2 text-sm"
               {...field}
               aria-invalid={!!errors.status}
             >
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="draft">초안</option>
+              <option value="active">활성</option>
+              <option value="inactive">비활성</option>
             </select>
             {errors.status && <p className="text-xs text-red-600">{errors.status.message}</p>}
           </div>
@@ -414,7 +414,7 @@ export function {Entity}CreateForm() {
         className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         disabled={createMutation.isPending || isSubmitting}
       >
-        Create
+        생성
       </button>
     </form>
   );
@@ -494,4 +494,4 @@ const sizeStyles = {
 } as const;
 ```
 
-> **Note**: UI components currently do not generate Storybook files (`.stories.tsx`) or per-component test files (`.test.tsx`) in the base structure. These can be added after separate agreement if needed.
+> **Note**: UI components currently do not generate Storybook files (`.stories.tsx`) or per-component test files (`.test.tsx`) in the default structure. These can be added after separate agreement if needed.

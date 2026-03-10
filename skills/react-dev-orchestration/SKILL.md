@@ -1,188 +1,317 @@
 ---
 name: react-dev-orchestration
-description: React SPA 전체 기능 개발 오케스트레이션. 데이터 레이어와 UI 레이어를 조율하여 완전한 기능을 구현합니다. 새 페이지, 새 기능, end-to-end 구현 등의 요청에 사용합니다. "새 페이지 만들어줘", "기능 개발해줘", "새 기능 추가해줘", "페이지 구현해줘", "develop new feature", "create new page", "build a feature" 등 데이터 레이어(쿼리, 뮤테이션, 스토어)와 UI 레이어(컴포넌트, 폼, 스토리)를 함께 만들어야 하는 작업에 사용합니다. Next.js 프로젝트는 nextjs-dev-orchestration skill을 사용하세요.
+description: Orchestrates full feature development for React Router 7 Framework Mode (ssr:false) SPA projects. Coordinates data layer and UI layer to implement complete features. Use for requests like "create a new page", "develop a feature", "add a new feature", "implement a page", "develop new feature", "create new page", "build a feature" — any task that requires building both the data layer (queries, mutations, stores) and the UI layer (Feature components, UI components, route modules) together. Do NOT use for Next.js projects — use the nextjs-dev-orchestration skill instead.
 ---
 
 # React Dev Orchestration
 
-React SPA(Vite + React Router) 프로젝트에서 전체 기능 개발을 요구사항 분석부터 통합 검증까지 오케스트레이션합니다.
+Orchestrates end-to-end feature development in React Router 7 Framework Mode (`ssr: false`) SPA projects — from requirements analysis through integration verification.
 
-> **React-only 프로젝트 특성**: Server/Client 분리가 없고, 모든 코드가 클라이언트에서 실행됩니다. App Router 파일 규칙(page.tsx, layout.tsx, loading.tsx, error.tsx) 대신 React Router의 코드 기반 라우팅을 사용합니다.
+> **Project characteristics**: React Router 7 Framework Mode with `ssr: false`. No runtime server — all code runs client-side. Routes are defined code-based in `app/routes.ts`, not with `createBrowserRouter`. TanStack Query handles all runtime data fetching. Server Components and Server Actions are not used.
 
 ## Convention Loading
 
-작업 시작 전 반드시 다음 참조 파일을 읽습니다:
+Read these reference files before starting work:
 
-1. **항상**: `references/FRONTEND_ARCHITECTURE_CONVENTION.md`, `references/FRONTEND_CONVENTION.md`
-2. **필요 시 읽기**: `references/REACT_CONVENTION.md`, `references/REACT_ROUTER_CONVENTION.md`
-
-> **참고**: 아키텍처 컨벤션의 Next.js 전용 내용(`app/` 디렉토리, Route Groups, Server Components, `'use client'`)은 React-only 프로젝트에 해당하지 않습니다. 컴포넌트 4분류 체계(UI/Feature/Layout/Page), 의존성 방향, 코로케이션, import 규칙 등 프레임워크 무관 규칙에 집중합니다.
+1. **Always**: `references/FRONTEND_ARCHITECTURE_CONVENTION.md`, `references/FRONTEND_CONVENTION.md`
+2. **As needed**: `references/REACT_CONVENTION.md`, `references/REACT_ROUTER_CONVENTION.md`
 
 ## Orchestration Workflow
 
-### Step 1: 요구사항 분석
+### Step 1: Requirements Analysis
 
-1. 기능 범위 파악 (페이지, CRUD 기능, 대시보드 섹션, 폼 등)
-2. 데이터 엔티티와 사용자 인터랙션 목록 작성
-3. 라우트 구조 결정 (URL 경로, 중첩 라우트, 동적 세그먼트)
-4. 인증/권한 요구사항 확인
+1. Identify feature scope (page, CRUD, dashboard section, form, etc.)
+2. List data entities and user interactions
+3. Determine route structure (URL paths, nested routes, dynamic segments, layout groups)
+4. Confirm authentication/authorization requirements (AuthGuard, RoleGuard needed?)
 
-### Step 2: 컴포넌트 트리 설계
+### Step 2: Component Tree Design
 
-**Page -> Feature -> UI** 의존성 방향을 따라 계층 설계합니다.
-
-```
-pages/FeatureNamePage.tsx        <- React Router route element, Feature 컴포넌트 조합
-
-components/feature/FeatureName/
-  FeatureName.tsx                <- 비즈니스 로직, hooks/store/queries 사용
-  FeatureNameForm.tsx            <- 폼 처리
-  index.ts
-
-components/ui/
-  (Feature 컴포넌트가 사용하는 재사용 UI 컴포넌트)
-```
-
-Sellernote 규칙:
-- `pages/` 디렉토리에는 페이지 컴포넌트만 배치 — 비즈니스 로직 없음
-- Page 컴포넌트는 Feature/UI 컴포넌트를 조합만 담당
-- Feature 컴포넌트는 `components/feature/`에 배치하며 모든 비즈니스 로직 포함
-- UI 컴포넌트는 `components/ui/`에 배치하며 props에만 의존 (store/queries 금지)
-
-### Step 3: 데이터 레이어 계획
-
-| 카테고리 | 식별 항목 |
-|----------|-----------|
-| Queries | 목록 쿼리(GET), 상세 쿼리(GET by ID), 검색/필터 쿼리 |
-| Mutations | 생성, 수정, 삭제 — useMutation + REST API |
-| Client State | UI 상태(필터, 모달, 선택) — Zustand stores |
-| Server State | TanStack Query 훅 (클라이언트 사이드 데이터 페칭/캐싱) |
-| Types | 공유 TypeScript 인터페이스 + Zod 스키마 |
-
-각 쿼리/뮤테이션에 대해 API 엔드포인트, 쿼리 키 구조, 캐시 무효화 전략을 기록합니다.
-
-### Step 4: react-data-provider 스킬 위임
-
-`react-data-provider` 스킬을 사용하여 데이터 레이어를 구현합니다:
+Design the hierarchy following the **Page -> Feature -> UI** dependency direction.
 
 ```
-react-data-provider 스킬로 [기능명] 데이터 레이어 구현:
-
-1. 필요한 쿼리:
-   - [각 쿼리의 엔드포인트, 파라미터, 쿼리 키]
-
-2. 필요한 뮤테이션:
-   - [각 뮤테이션의 API 엔드포인트, 파라미터, 캐시 무효화 대상]
-
-3. Zustand store:
-   - [클라이언트 상태 slice와 state shape, actions]
-
-4. Types/Schemas:
-   - [공유 타입과 Zod 유효성 검사 스키마]
-
-생성할 파일:
-- queries/use{Feature}Query.ts
-- queries/use{Feature}ListQuery.ts
-- queries/use{Feature}Mutation.ts
-- store/slices/{feature}Slice.ts
-- types/{Feature}.types.ts
-- schemas/{feature}Schema.ts
+app/
+├── routes/
+│   └── dashboard/
+│       └── orders.tsx              <- Route module (Feature component composition only)
+│
+├── features/order/
+│   ├── components/
+│   │   ├── order-list/
+│   │   │   └── OrderList.tsx       <- Feature component (business logic, hooks/store/queries)
+│   │   └── order-filter/
+│   │       └── OrderFilter.tsx
+│   ├── api/                        <- TanStack Query hooks + query options
+│   │   ├── query-options.ts
+│   │   ├── use-orders-query.ts
+│   │   └── use-update-order-mutation.ts
+│   ├── store/                      <- Feature-specific Zustand store (optional)
+│   ├── schemas/                    <- Feature-specific Zod schemas (optional)
+│   └── types/                      <- Feature-specific types (optional)
+│
+├── components/
+│   ├── ui/                         <- Props-only UI components (no store/queries)
+│   └── layout/                     <- Layout components (Header, Sidebar)
 ```
 
-데이터 레이어 구현이 완료된 후 다음 단계로 진행합니다.
+Sellernote rules:
+- Route modules in `routes/` only compose Feature/UI components — no business logic
+- Feature components in `features/{domain}/components/` contain all business logic
+- UI components in `components/ui/` depend only on props — store/queries forbidden
+- Cross-feature sharing goes in `features/_common/{domain}/` (not direct Feature-to-Feature imports)
+- No `index.ts` barrel files — use specific file path imports
 
-### Step 5: UI 레이어 계획
+### Step 3: Data Layer Plan
 
-| 컴포넌트 유형 | 위치 | 예시 |
-|---------------|------|------|
-| UI 컴포넌트 | `components/ui/` | DataTable, StatusBadge, ConfirmDialog |
-| Feature 컴포넌트 | `components/feature/` | OrderList, OrderForm, OrderDetail |
-| Layout 컴포넌트 | `components/layout/` | PageLayout, SectionHeader |
+| Category | Identify |
+|----------|----------|
+| Queries | List query (GET), detail query (GET by ID), search/filter queries |
+| Mutations | Create, update, delete — `useMutation` + REST API |
+| Client State | UI state (filters, modals, selections) — Zustand stores |
+| Server State | TanStack Query hooks (client-side data fetching/caching) |
+| URL State | Filters, sorting, pagination — nuqs (`useQueryStates`) |
+| Types | Auto-generated API types from shared + feature-specific form/view types |
 
-각 컴포넌트에 대해: props interface, 사용할 데이터 훅, Storybook 요구사항을 기록합니다.
+For each query/mutation, record: API endpoint, query key structure, cache invalidation strategy.
 
-### Step 6: react-ui-dev 스킬 위임
+#### API File Structure
 
-`react-ui-dev` 스킬을 사용하여 UI 레이어를 구현합니다:
-
-```
-react-ui-dev 스킬로 [기능명] UI 레이어 구현:
-
-1. UI 컴포넌트:
-   - [각 컴포넌트의 props interface와 Storybook 요구사항]
-
-2. Feature 컴포넌트:
-   - [각 컴포넌트가 사용하는 데이터 훅/스토어]
-
-3. Form 컴포넌트 (있다면):
-   - [폼 필드, Zod 스키마 참조, 제출 뮤테이션]
-
-4. 사용 가능한 데이터 훅 (데이터 레이어에서 구현 완료):
-   - [구현된 쿼리/뮤테이션/스토어 훅 목록]
-
-생성할 파일:
-- components/ui/{Component}/{Component}.tsx
-- components/ui/{Component}/{Component}.stories.tsx
-- components/ui/{Component}/index.ts
-- components/feature/{Feature}/{Feature}.tsx
-- components/feature/{Feature}/{Feature}.test.tsx
-- components/feature/{Feature}/index.ts
-```
-
-### Step 7: 라우팅 설정
-
-데이터와 UI 레이어 구현이 완료되면, React Router로 라우팅을 구성합니다.
+Within `features/{domain}/api/`:
+- `query-options.ts` — query keys + `queryOptions()` factories + `queryFn` definitions. No `select` or screen-specific transforms here.
+- Endpoint hook files (`use-xxx-query.ts`, `use-xxx-mutation.ts`) — `useQuery`/`useMutation` with endpoint-specific transforms co-located privately in the file.
 
 ```typescript
-// routes/index.tsx
-import { createBrowserRouter } from 'react-router-dom';
-import { RootLayout } from '@/components/layout/RootLayout';
+// features/order/api/query-options.ts
+import { queryOptions } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
+import type { GetOrdersRequest, GetOrdersResponse } from '@/types/generated/order.generated';
 
-export const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <RootLayout />,
-    errorElement: <ErrorPage />,
-    children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'orders', element: <OrdersPage /> },
-      { path: 'orders/:id', element: <OrderDetailPage /> },
-    ],
-  },
-]);
+const fetchOrders = (params: GetOrdersRequest): Promise<GetOrdersResponse> =>
+  apiClient.get('/orders', { params });
+
+export const orderQueries = {
+  all: ['orders'] as const,
+  list: (params: GetOrdersRequest) => queryOptions({
+    queryKey: [...orderQueries.all, 'list', params] as const,
+    queryFn: () => fetchOrders(params),
+  }),
+};
 ```
 
-React Router 규칙:
-- `createBrowserRouter`로 라우터 생성 (object-based route 정의)
-- 중첩 라우트로 레이아웃 공유
-- `errorElement`로 라우트별 에러 처리
-- `loader`는 TanStack Query의 `ensureQueryData`와 연동 가능 (선택)
-- 인증 가드는 레이아웃 컴포넌트 또는 라우트 `loader`에서 처리
+```typescript
+// features/order/api/use-orders-query.ts — endpoint-specific transform co-located
+import { useQuery } from '@tanstack/react-query';
+import { orderQueries } from './query-options';
 
-### Step 8: 통합 검증
+type OrderListItem = { id: string; displayTotal: string; statusLabel: string };
 
-완성된 기능을 다음 체크리스트로 검증합니다:
+const toOrderListItems = (data: GetOrdersResponse): OrderListItem[] =>
+  data.orders.map((o) => ({
+    id: o.id,
+    displayTotal: formatCurrency(o.total),
+    statusLabel: ORDER_STATUS_LABELS[o.status],
+  }));
 
-- [ ] `pages/` 디렉토리에는 페이지 컴포넌트만 있고, 비즈니스 로직은 `components/feature/`에 배치
-- [ ] 의존성 방향: Page -> Feature -> UI (역방향 import 없음)
-- [ ] 모든 import가 `@/` 절대 경로 사용
-- [ ] 데이터 레이어 완성: 쿼리 훅, 뮤테이션 훅, Zustand store, Zod 스키마
-- [ ] UI 레이어 완성: UI 컴포넌트에 Storybook, Feature 컴포넌트에 테스트
-- [ ] React Router 라우트 설정 완료
-- [ ] 에러 처리: ErrorBoundary 배치, API 에러 핸들링
+export function useOrdersQuery(params: GetOrdersRequest) {
+  return useQuery({ ...orderQueries.list(params), select: toOrderListItems });
+}
+```
+
+### Step 4: Delegate to react-data-provider Skill
+
+Use the `react-data-provider` skill to implement the data layer:
+
+```
+react-data-provider skill — implement [FeatureName] data layer:
+
+1. Queries:
+   - [endpoint, params, query key for each query]
+
+2. Mutations:
+   - [API endpoint, params, cache invalidation targets for each mutation]
+
+3. Zustand store (if needed):
+   - [client UI state shape and actions]
+
+4. Types/Schemas:
+   - [shared types to import, feature-specific Zod schemas]
+
+Files to create:
+- features/{domain}/api/query-options.ts
+- features/{domain}/api/use-{feature}-query.ts
+- features/{domain}/api/use-{feature}-list-query.ts
+- features/{domain}/api/use-{action}-{feature}-mutation.ts
+- features/{domain}/store/{feature}-filter-store.ts (if needed)
+- features/{domain}/schemas/{feature}-create-schema.ts (if needed)
+```
+
+Proceed to the next step after the data layer is complete.
+
+### Step 5: UI Layer Plan
+
+| Component Type | Location | Examples |
+|----------------|----------|----------|
+| UI Component | `components/ui/` | DataTable, StatusBadge, ConfirmDialog |
+| Feature Component | `features/{domain}/components/` | OrderList, OrderForm, OrderDetail |
+| Shared Feature Component | `features/_common/{domain}/components/` | POPickerDialog, InstallmentTable |
+| Layout Component | `components/layout/` | PageLayout, SectionHeader |
+
+For each component: props interface, data hooks it consumes, any Storybook requirements.
+
+### Step 6: Delegate to react-ui-dev Skill
+
+Use the `react-ui-dev` skill to implement the UI layer:
+
+```
+react-ui-dev skill — implement [FeatureName] UI layer:
+
+1. UI Components:
+   - [props interface and Storybook requirements for each]
+
+2. Feature Components:
+   - [data hooks/stores each component consumes]
+
+3. Form Components (if any):
+   - [form fields, Zod schema reference, submit mutation]
+
+4. Available data hooks (already implemented):
+   - [list of implemented query/mutation/store hooks]
+
+Files to create:
+- features/{domain}/components/{component-name}/{Component}.tsx
+- components/ui/{component-name}/{Component}.tsx (if new UI components needed)
+```
+
+### Step 7: Route Configuration
+
+After data and UI layers are complete, configure routes in `app/routes.ts`.
+
+```typescript
+// app/routes.ts
+import { type RouteConfig, route, index, layout } from "@react-router/dev/routes";
+
+export default [
+  // Public routes
+  index("./routes/home.tsx"),
+
+  // Auth guard — wraps protected routes
+  layout("./routes/guards/auth-guard.tsx", [
+    layout("./routes/dashboard/layout.tsx", [
+      index("./routes/dashboard/home.tsx"),
+      route("orders", "./routes/dashboard/orders.tsx"),
+      route("orders/:id", "./routes/dashboard/order-detail.tsx"),
+    ]),
+  ]),
+
+  route("*", "./routes/not-found.tsx"),
+] satisfies RouteConfig;
+```
+
+Route module structure:
+
+```typescript
+// app/routes/dashboard/orders.tsx
+import type { Route } from "./+types/orders";
+import { OrderList } from "@/features/order/components/order-list/OrderList";
+import { OrderFilter } from "@/features/order/components/order-filter/OrderFilter";
+import { PageLayout } from "@/components/layout/page-layout/PageLayout";
+
+export function meta({}: Route.MetaArgs) {
+  return [{ title: "Order Management" }];
+}
+
+export default function OrdersPage() {
+  return (
+    <PageLayout title="Order Management">
+      <OrderFilter />
+      <OrderList />
+    </PageLayout>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  return <div><h2>Something went wrong</h2></div>;
+}
+```
+
+Key routing rules:
+- Define routes in `app/routes.ts` using `route()`, `index()`, `layout()`, `prefix()`
+- Route modules export `default` (required), `ErrorBoundary`, `meta`, `links`, `handle` (optional)
+- Import `Route` type from auto-generated `./+types/` for type safety
+- Use `layout()` for AuthGuard/GuestGuard/RoleGuard wrappers
+- `clientLoader` is allowed only for `ensureQueryData()` prefetching — not as primary data fetching
+- Do not use `action`, `headers`, or `loader` (except root route in SPA mode)
+
+### Step 8: Integration Verification
+
+Verify the completed feature against this checklist:
+
+- [ ] Route modules in `routes/` only compose Feature components — no business logic
+- [ ] Dependency direction: Page -> Feature -> UI (no reverse imports)
+- [ ] No direct Feature-to-Feature imports (shared code in `features/_common/{domain}/`)
+- [ ] All imports use `@/` absolute paths (relative only for same folder)
+- [ ] No `index.ts` barrel files — specific file path imports only
+- [ ] Data layer complete: query-options.ts, endpoint hook files, Zustand store (if needed), Zod schemas (if needed)
+- [ ] API types imported from shared auto-generated types (not redefined in Features)
+- [ ] Transforms co-located in endpoint hook files (not in query-options.ts or components)
+- [ ] UI components complete with props-only design (no store/queries)
+- [ ] Routes defined in `app/routes.ts` with proper layout nesting
+- [ ] ErrorBoundary exported in route modules
+- [ ] SSR-safe: no browser API access in component rendering path
+- [ ] URL state (filters, sort, pagination) managed with nuqs
+
+## File Placement Decision Tree
+
+```
+New file needed
+|
++-- Domain-specific (order, auth, user, etc.)?
+|  +-- YES -> features/{domain}/
+|     +-- API/TanStack Query hook? -> features/{domain}/api/
+|     +-- Component with business logic? -> features/{domain}/components/{name}/
+|     +-- Zustand store? -> features/{domain}/store/
+|     +-- Zod schema? -> features/{domain}/schemas/
+|     +-- Feature type? -> features/{domain}/types/
+|     +-- Pure utility? -> features/{domain}/utils/
+|
++-- Shared by 2+ Features + has domain context?
+|  +-- YES -> features/_common/{domain}/
+|
++-- General-purpose (domain-agnostic)?
+   +-- Props-only UI component? -> components/ui/
+   +-- Page structure? -> components/layout/
+   +-- General hook? -> hooks/
+   +-- Utility function? -> lib/
+   +-- Shared type? -> types/
+```
+
+## State Management Selection
+
+```
+State needed
+|
++-- Server data (API response)? -> TanStack Query (useQuery/useMutation)
+|     * Do NOT copy to Zustand
++-- Should be in URL (filter, sort, pagination)? -> nuqs
++-- Single component only? -> useState / useReducer
++-- UI state shared across components? -> Zustand
+```
 
 ## Key Rules Summary
 
-| 규칙 | 상세 |
-|------|------|
-| MUST | `pages/`에는 페이지 컴포넌트만; 비즈니스 로직은 `components/`, `hooks/`, `store/`, `queries/`에 배치 |
-| MUST | 의존성 방향: Page -> Feature -> UI (역방향 금지) |
-| MUST | `@/` 절대 import 경로 |
-| MUST NOT | Page 컴포넌트에 비즈니스 로직 직접 작성 |
-| MUST NOT | UI 컴포넌트에서 store, queries, hooks import |
+| Rule | Detail |
+|------|--------|
+| Route modules | Compose Feature/UI components only. No business logic, no data fetching. |
+| Dependency direction | Page -> Feature -> UI. Reverse forbidden. Feature -> Feature forbidden. |
+| Imports | `@/` absolute paths. No barrel files. Specific file paths only. |
+| API file structure | `query-options.ts` (keys + queryFn) + endpoint hook files (useQuery + transforms) |
+| Transforms | Co-locate in endpoint hook files. Not in query-options.ts or components. |
+| SSR safety | No browser APIs in rendering path. Use `useEffect` or event handlers. |
+| Routing | `app/routes.ts` with `route()`/`layout()`/`index()`. Not `createBrowserRouter`. |
 
 ## Cross-Skill References
 
-- **데이터 레이어** (TanStack Query, Zustand): `react-data-provider` skill 사용
-- **UI 레이어** (DS 컴포넌트, 폼, Storybook, 테스트): `react-ui-dev` skill 사용
-- **React 패턴** (컴포넌트, Hooks, 성능 최적화): `react-dev` skill 사용
+- **Data layer** (TanStack Query, Zustand, nuqs): `react-data-provider` skill
+- **UI layer** (components, forms, Storybook, tests): `react-ui-dev` skill
+- **React patterns** (hooks, composition, performance): `react-dev` skill

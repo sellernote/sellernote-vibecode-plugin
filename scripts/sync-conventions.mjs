@@ -10,7 +10,7 @@
  */
 
 import { execSync, spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -75,6 +75,58 @@ function translateAsync(content, srcLabel) {
       resolve(null);
     });
     proc.stdin.write(content, 'utf-8');
+    proc.stdin.end();
+  });
+}
+
+function updateSkillWithCreator(skillName) {
+  const skillDir = join('skills', skillName);
+  const prompt = [
+    `Use the skill-creator skill (at .agents/skills/skill-creator/) to update an existing skill.`,
+    `Read the skill-creator SKILL.md first and follow its Step 4 (Edit the Skill) guidelines.`,
+    ``,
+    `Target skill to update: ${skillDir}/`,
+    ``,
+    `The reference documents in ${skillDir}/references/ have just been updated and translated to English.`,
+    `Read ALL reference .md files in ${skillDir}/references/ to understand the latest Sellernote development conventions,`,
+    `then read the current ${skillDir}/SKILL.md and update it to accurately reflect these conventions.`,
+    `Write the updated content directly to ${skillDir}/SKILL.md.`,
+    ``,
+    `Key requirements:`,
+    `- Keep the same skill name and overall purpose`,
+    `- Update YAML frontmatter description to comprehensively describe when to trigger`,
+    `- Update the body to reference and reflect the updated convention documents`,
+    `- Follow skill-creator best practices: concise, progressive disclosure, imperative form`,
+    `- Keep SKILL.md under 500 lines`,
+    `- Only include Sellernote-specific conventions (omit general knowledge Claude already has)`,
+    `- All prose in SKILL.md must be in English`,
+    `- These skills are used by multiple AI development agents, not limited to any specific IDE`,
+  ].join('\n');
+
+  return new Promise((resolve) => {
+    const proc = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: PROJECT_DIR,
+    });
+
+    let errOutput = '';
+
+    proc.stderr.on('data', (chunk) => { errOutput += chunk; });
+
+    proc.on('error', (err) => {
+      process.stdout.write(`  WARNING: Failed to spawn claude for ${skillName}: ${err.message}\n`);
+      resolve(false);
+    });
+
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve(true);
+      } else {
+        process.stdout.write(`  WARNING: Skill update failed for ${skillName} (exit ${code}): ${errOutput.slice(0, 300)}\n`);
+        resolve(false);
+      }
+    });
+
     proc.stdin.end();
   });
 }
@@ -300,4 +352,26 @@ await Promise.all(
   })
 );
 
-console.log('\nDone! All conventions synced and translated.');
+// Step 3: Update SKILL.md files using skill-creator skill (claude invokes it directly)
+console.log('\nUpdating SKILL.md files using skill-creator skill (parallel)...\n');
+
+const updateResults = await Promise.all(
+  Object.keys(SKILL_MAP).map(async (skillName) => {
+    const skillMdPath = join(SKILLS_DIR, skillName, 'SKILL.md');
+    if (!existsSync(skillMdPath)) {
+      process.stdout.write(`  Skipping ${skillName}: SKILL.md not found\n`);
+      return { skillName, success: false };
+    }
+
+    process.stdout.write(`  Updating: ${skillName}\n`);
+    const success = await updateSkillWithCreator(skillName);
+    if (success) {
+      process.stdout.write(`  ✓ Updated: ${skillName}\n`);
+    }
+    return { skillName, success };
+  })
+);
+
+const successCount = updateResults.filter(r => r.success).length;
+console.log(`\nSkill updates: ${successCount}/${updateResults.length} succeeded`);
+console.log('\nDone! All conventions synced, translated, and skills updated.');

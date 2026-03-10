@@ -7,7 +7,7 @@
 
 ### Environment Definition
 
-- [MUST] Operate the following 3 environments as standard.
+- [MUST] Operate the following 3 environments as the standard.
 
 | Environment | Purpose | Characteristics |
 |------|------|------|
@@ -19,10 +19,10 @@
 
 - [SHOULD] Keep the infrastructure configuration (network, service stack, runtime version) of staging and production environments as identical as possible.
 
-### Environment Identifiers
+### Environment Identifier
 
 - [MUST] Include environment identifiers (`dev`, `staging`, `production`) in all resource names and tags.
-- **Good examples**:
+- **Good example**:
   ```
   dev-sellernote-api-server
   staging-sellernote-rds
@@ -34,8 +34,8 @@
 ### .env File Rules
 
 - [MUST] Never include `.env` files in version control (Git).
-- [MUST] Provide a `.env.example` file to document the required environment variable list and format.
-- **Good examples**:
+- [MUST] Provide a `.env.example` file to document the list of required environment variables and their format.
+- **Good example**:
   ```bash
   # .env.example
   DATABASE_URL=postgresql://user:password@host:5432/dbname
@@ -47,7 +47,7 @@
 
 - [MUST] Write environment variables in `UPPER_SNAKE_CASE`.
 - [SHOULD] Use service/domain prefixes for grouping.
-- **Good examples**:
+- **Good example**:
   ```bash
   DATABASE_HOST=localhost
   DATABASE_PORT=5432
@@ -82,16 +82,16 @@
 | Lint/Format | Code style and static analysis | Pipeline aborted |
 | Build | Application build, Docker image creation | Pipeline aborted |
 | Test | Unit tests, integration tests | Pipeline aborted |
-| Security Scan | Dependency vulnerabilities, image scanning | Warning or abort (depending on severity) |
-| Deploy to Staging | Staging environment deployment and verification | Production deployment blocked |
-| Deploy to Production | Production environment deployment | Rollback procedure executed |
+| Security Scan | Dependency vulnerability, image scanning | Warning or abort (depending on severity) |
+| Deploy to Staging | Deploy to staging environment and verify | Production deployment blocked |
+| Deploy to Production | Deploy to production environment | Execute rollback procedure |
 
 ### Immutable Artifacts
 
-- [MUST] Once built, artifacts (Docker images, build outputs) must be deployed identically to all environments without modification.
-- **Good examples**:
+- [MUST] Once built, artifacts (Docker images, build outputs) must not be modified and must be deployed identically across all environments.
+- **Good example**:
   ```
-  Build → Image(v1.2.3) created → staging deployment → production deployment (same image)
+  Build → Create image (v1.2.3) → Deploy to staging → Deploy to production (same image)
   ```
 
 ## Deployment Strategy
@@ -100,22 +100,22 @@
 
 - [SHOULD] Choose a deployment strategy that fits the service characteristics.
 
-| Strategy | Description | Suitable When |
+| Strategy | Description | Suitable For |
 |------|------|------------|
 | Rolling | Replace instances sequentially | General services, minimizing downtime |
-| Blue-Green | Prepare new environment then switch traffic | Critical services requiring immediate rollback |
-| Canary | Route only partial traffic to new version | Large-scale user-facing services, gradual verification |
+| Blue-Green | Prepare a new environment then switch traffic | Core services requiring instant rollback |
+| Canary | Route only partial traffic to the new version | Large-scale user-facing services, gradual verification |
 
 ### Rollback Strategy
 
 - [MUST] All production deployments must have rollback procedures defined in advance.
-- [SHOULD] Rollback should be performed by redeploying the previous version's artifact. Do not revert code and rebuild.
+- [SHOULD] Rollbacks should be performed by redeploying the previous version's artifact. Do not revert code and rebuild.
 
 ## Security Policy
 
-- [MUST] All service accounts, IAM roles, and containers must be granted only the minimum permissions necessary to perform their tasks. (Principle of Least Privilege)
+- [MUST] All service accounts, IAM roles, and containers must be granted only the minimum permissions necessary to perform their duties. (Principle of Least Privilege)
 - [MUST] Backend services such as production databases and caches must be configured to be inaccessible directly from the public internet.
-- [SHOULD] Inter-service communication should be performed through internal networks (VPC, Private Subnet).
+- [SHOULD] Inter-service communication should be conducted through internal networks (VPC, Private Subnet).
 - [SHOULD] Critical secrets (DB passwords, API keys) should be rotated periodically.
 
 ## Monitoring/Alerting
@@ -134,7 +134,7 @@
 
 - [MUST] Application logs must be collected into a centralized logging system.
 - [SHOULD] Logs should be output in a structured format (JSON).
-- **Good examples**:
+- **Good example**:
   ```json
   {"timestamp":"2025-01-15T10:30:00Z","level":"ERROR","service":"api","message":"DB connection failed","error":"timeout"}
   ```
@@ -147,7 +147,7 @@
 |------|-------------------|--------|
 | Error rate | Error rate > 5% over 5 minutes | Critical |
 | Response time | P95 > 3 seconds | Warning |
-| CPU utilization | 5-minute average > 80% | Warning |
+| CPU utilization | Average > 80% over 5 minutes | Warning |
 | Disk utilization | > 85% | Critical |
 | Service health check | 3 consecutive failures | Critical |
 
@@ -156,6 +156,6 @@
 ## Anti-patterns
 
 - [MUST NOT] Do not write secrets directly in source code or configuration files. (e.g., `DATABASE_PASSWORD: "mysecretpassword123"` in `docker-compose.yml`)
-- [MUST NOT] Do not deploy manually by SSH-ing into production environments.
+- [MUST NOT] Do not deploy manually by SSH-ing into the production environment.
 - [MUST NOT] Do not operate production services without monitoring/alerting.
 - [MUST NOT] Do not branch code logic based on environment. Handle environment differences through environment variables and configuration.

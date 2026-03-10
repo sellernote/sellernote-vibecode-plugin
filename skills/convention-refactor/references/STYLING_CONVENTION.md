@@ -17,7 +17,7 @@
 pnpm add clsx tailwind-merge
 ```
 
-**Create utility function:**
+**Creating the utility function:**
 
 ```typescript
 // app/lib/cn.ts
@@ -119,7 +119,7 @@ function PageHeader({ title }: { title: string }) {
 
 ## 3. Responsive Design
 
-### Using Tailwind Breakpoints System
+### Using the Tailwind Breakpoints System
 
 - **Rule**: [MUST] Use Tailwind's breakpoint prefixes for responsive layouts
 
@@ -132,11 +132,11 @@ function PageHeader({ title }: { title: string }) {
 | `xl` | 1280px | Wide |
 | `2xl` | 1536px | Ultra-wide |
 
-> **Note**: Custom breakpoints can be added in `theme.extend.screens` of `tailwind.config.js` to match project-specific requirements.
+> **Note**: Custom breakpoints can be added in `theme.extend.screens` of `tailwind.config.js` to meet project-specific requirements.
 
 ### Mobile-first Approach
 
-- **Rule**: [MUST] Write styles mobile-first. Apply mobile styles in base classes and add larger screen styles with breakpoint prefixes such as `sm:`, `md:`, `lg:`.
+- **Rule**: [MUST] Write styles mobile-first. Apply mobile styles in the base classes and add larger screen styles using breakpoint prefixes such as `sm:`, `md:`, `lg:`.
 - **Good example**:
 
 ```typescript
@@ -168,7 +168,7 @@ function ProductGrid({ products }: { products: Product[] }) {
 }
 ```
 
-### No Direct Media Queries
+### Do Not Write Media Queries Directly
 
 - **Rule**: [MUST NOT] Do not write CSS media queries directly. Use Tailwind breakpoint prefixes.
 - **Good example**:
@@ -181,7 +181,7 @@ function ProductGrid({ products }: { products: Product[] }) {
 - **Bad example**:
 
 ```css
-/* Hardcoded media query with magic numbers */
+/* Hardcoding media queries with magic numbers */
 @media (min-width: 768px) {
   .desktop-only { display: block; }
 }
@@ -277,7 +277,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 ### Applying Dark Mode Styles
 
-- **Rule**: [SHOULD] Apply dark mode styles using Tailwind's `dark:` prefix
+- **Rule**: [SHOULD] Use Tailwind's `dark:` prefix to apply dark mode styles
 - **Good example**:
 
 ```typescript
@@ -292,13 +292,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 ### Conditional Styling
 
-When styles vary based on conditions or runtime values, follow the decision flow below.
+Follow the decision flow below when styles depend on conditions or runtime values.
 
 | Situation | Method | Example |
 |-----------|--------|---------|
-| Classes change based on boolean/enum | `cn()` | `cn("p-4", isActive && "bg-gray-100")` |
-| Component has 2 or more variants | `cva()` + `cn()` | `statusBadgeVariants({ status })` |
-| **Runtime dynamic values** (server responses, user input, etc.) | Inline `style` | `style={{ width: `${percent}%` }}` |
+| Classes vary based on boolean/enum | `cn()` | `cn("p-4", isActive && "bg-gray-100")` |
+| 2 or more component variants | `cva()` + `cn()` | `statusBadgeVariants({ status })` |
+| **Runtime dynamic values** (server response, user input, etc.) | Inline `style` | `style={{ width: `${percent}%` }}` |
 | Passing dynamic values via CSS variables | `style` + Tailwind | `style={{ '--progress': percent }}` + `w-[var(--progress)]` |
 
 **Applying conditional classes with cn():**
@@ -315,7 +315,7 @@ import { cn } from "@/lib/cn";
 
 **Inline style allowed for runtime dynamic values:**
 
-- **Rule**: [MAY] Inline `style` may be used only for **dynamic values determined at runtime** such as server responses and user input
+- **Rule**: [MAY] Inline `style` may be used only for **dynamic values determined at runtime**, such as server responses or user input
 
 ```typescript
 // Runtime dynamic value — inline style allowed
@@ -351,7 +351,7 @@ import { cn } from "@/lib/cn";
 - **Bad example**:
 
 ```typescript
-// Static values written as inline style — should use Tailwind classes
+// Writing static values as inline style — should use Tailwind classes
 <div style={{ display: "flex", gap: "16px", padding: "24px", backgroundColor: "#ffffff" }}>
   <span style={{ fontSize: "20px", fontWeight: 600, color: "#212121" }}>Title</span>
 </div>
@@ -363,7 +363,7 @@ import { cn } from "@/lib/cn";
 
 ### No Manual className String Concatenation
 
-- **Rule**: [MUST NOT] Do not combine className using template literals or string concatenation. Use `cn()`.
+- **Rule**: [MUST NOT] Do not concatenate className using template literals or string concatenation. Use `cn()`.
 - **Good example**:
 
 ```typescript
@@ -379,7 +379,7 @@ import { cn } from "@/lib/cn";
 
 ### Tailwind Class Sorting
 
-- **Rule**: [MUST] Install `prettier-plugin-tailwindcss` to automatically sort Tailwind class order.
+- **Rule**: [MUST] Install `prettier-plugin-tailwindcss` to auto-sort Tailwind class order.
 
 ```bash
 pnpm add -D prettier-plugin-tailwindcss
@@ -393,26 +393,26 @@ pnpm add -D prettier-plugin-tailwindcss
 }
 ```
 
-> **Tailwind v4 note**: In v4, you must specify the CSS file path using the `tailwindStylesheet` option instead of `tailwindConfig`.
+> **Tailwind v4 note**: In v4, you must use the `tailwindStylesheet` option to specify the CSS file path instead of `tailwindConfig`.
 
 ---
 
 ## 6. Tailwind CSS v4 Considerations
 
-This project uses Tailwind CSS v4 from the start. Since AI code generation is likely to produce v3 syntax, be aware of the following v4-specific behaviors.
+This project uses Tailwind CSS v4 from the start. Since AI code generation is likely to produce v3 syntax, familiarize yourself with the following v4-specific behaviors.
 
 ### v4 Key Behaviors
 
 | Item | Behavior |
 |------|----------|
-| `content` configuration | Automatic content detection (`content` array not needed; use CSS `@source` directive for external sources) |
+| `content` configuration | Automatic content detection (`content` array not required; use CSS `@source` directive for external sources) |
 | `border` default color | `currentColor` — **you must explicitly specify a color class** (e.g., `border border-gray-200`) |
-| Opacity | `bg-opacity-*` removed → use slash syntax `bg-black/50` |
+| Opacity | `bg-opacity-*` removed → use `bg-black/50` slash syntax |
 | `hover:` | Only applies inside `@media (hover: hover)` (touch device support) |
-| `@apply` | Available in main CSS; requires `@reference` in separate files. Use `@utility` block for custom utilities |
-| `outline-none` | Only applies `outline-style: none`. Use `outline-hidden` for the previous behavior |
-| `ring` | Default width is 1px. Use `ring-3` for the previous 3px behavior |
+| `@apply` | Usable in the main CSS; requires `@reference` in separate files. Use `@utility` blocks for custom utilities |
+| `outline-none` | Only applies `outline-style: none`. For the previous behavior, use `outline-hidden` |
+| `ring` | Default width is 1px. For the previous 3px behavior, use `ring-3` |
 
-> **`border` default color caution**: Using `border` alone will render a border matching the text color. **You must always specify a color class.** The same applies to the `divide` utility.
+> **`border` default color warning**: Using `border` alone will render a border matching the text color. **You must always specify a color class.** The same applies to the `divide` utility.
 
-> **AI-generated code caution**: AI may generate v3 classes (`shadow-sm`, `rounded-md`, `bg-opacity-50`, etc.). Always verify during code review that v4 syntax is used.
+> **AI-generated code warning**: AI may generate v3 classes (`shadow-sm`, `rounded-md`, `bg-opacity-50`, etc.). Always verify during code review that v4 syntax is used.

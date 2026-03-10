@@ -1,7 +1,7 @@
 # Frontend Convention
 
 > This document defines common rules that apply across the entire frontend.
-> Rules specific to certain tools/categories are referenced in subdirectory documents.
+> Rules specific to particular tools/categories are found in the documents within subfolders.
 >
 > - ARCHITECTURE_CONVENTION.md
 > - REACT_CONVENTION.md
@@ -17,28 +17,28 @@
 
 ## 1. Technology Stack Overview
 
-| Area            | Technology                                  | Version              |
-| --------------- | ------------------------------------------- | -------------------- |
-| Framework       | React Router v7 (framework mode)            | 7                    |
-| UI Library      | React                                       | 19.2+                |
-| Language        | TypeScript                                  | Latest stable version |
-| Build Tool      | Vite                                        | Latest stable version |
-| Client State    | Zustand                                     | Latest stable version |
-| Server State    | TanStack Query                              | v5                   |
-| URL State Mgmt  | nuqs                                        | 2.8+                 |
-| Form/Validation | React Hook Form + Zod                       | Latest stable version |
-| Testing         | Vitest + React Testing Library + Playwright | Latest stable version |
+| Area              | Technology                                  | Version                 |
+| ----------------- | ------------------------------------------- | ----------------------- |
+| Framework         | React Router v7 (framework mode)            | 7                       |
+| UI Library        | React                                       | 19.2+                   |
+| Language          | TypeScript                                  | Latest stable version   |
+| Build Tool        | Vite                                        | Latest stable version   |
+| Client State      | Zustand                                     | Latest stable version   |
+| Server State      | TanStack Query                              | v5                      |
+| URL State Mgmt    | nuqs                                        | 2.8+                    |
+| Form/Validation   | React Hook Form + Zod                       | Latest stable version   |
+| Testing           | Vitest + React Testing Library + Playwright | Latest stable version   |
 
-> React Router v7 Framework Mode operates in SPA mode with `ssr: false` configuration. Pre-rendering is disabled by default, and is selectively enabled only for public pages that do not require authentication, such as login and terms of service pages. It is served from a CDN without a runtime server. Server Components and Server Actions are not used. However, even with `ssr: false`, some routes are rendered in Node.js at build time, so SSR-safe rules apply. See REACT_ROUTER_CONVENTION.md for details.
+> React Router v7 Framework Mode operates in SPA mode with the `ssr: false` setting. Pre-rendering is disabled by default, and is selectively enabled only for public pages that do not require authentication, such as login and terms of service pages. It is served from a CDN without a runtime server. Server Components and Server Actions are not used. However, even with `ssr: false`, some routes are rendered in Node.js at build time, so SSR-safe rules apply. See REACT_ROUTER_CONVENTION.md for details.
 
 ### Recommended Utility Libraries
 
-| Area            | Recommended      | Reason                                          |
-| --------------- | ---------------- | ----------------------------------------------- |
+| Area            | Recommended      | Reason                                            |
+| --------------- | ---------------- | ------------------------------------------------- |
 | Package Manager | pnpm             | Fast installation, disk efficiency, strict defaults |
-| Date Handling   | date-fns         | tree-shakable, functional, lightweight          |
-| Utilities       | Native JS first  | For lodash-es, import only the needed functions individually |
-| Error Tracking  | Sentry SDK       | Production error monitoring standard            |
+| Date Handling   | date-fns         | tree-shakable, functional, lightweight             |
+| Utilities       | Native JS first  | Import only needed functions from lodash-es         |
+| Error Tracking  | Sentry SDK       | Standard for production error monitoring            |
 
 - **Rule**: [SHOULD] Utility functions should prioritize native JavaScript methods. When lodash is needed, import only the required functions individually from `lodash-es`.
 - **Good Example**:
@@ -112,7 +112,7 @@ function Card({ children, header, footer }: CardProps) {
 
 ### Props Design
 
-- **Rule**: [MUST] Props should be defined with interface, and destructured in the component parameters. Use React.ReactNode type for children.
+- **Rule**: [MUST] Props should be defined with interface and destructured in the component parameters. Use React.ReactNode type for children.
 - **Good Example**:
 
 ```typescript
@@ -147,16 +147,16 @@ function Button({
 
 ## 3. File/Folder Naming
 
-| Target          | Rule                          | Example                   |
-| --------------- | ----------------------------- | ------------------------- |
-| Component files | PascalCase                    | `UserProfile.tsx`         |
-| Hook files      | kebab-case (`use-` prefix)    | `use-auth.ts`             |
-| Utility files   | kebab-case                    | `format-date.ts`          |
-| Directories     | kebab-case                    | `user-profile/`           |
-| Constant files  | kebab-case                    | `api-endpoints.ts`        |
-| Type files      | kebab-case + `.types.ts`      | `user.types.ts`           |
+| Target           | Rule                            | Example                   |
+| ---------------- | ------------------------------- | ------------------------- |
+| Component files  | PascalCase                      | `UserProfile.tsx`         |
+| Hook files       | kebab-case (`use-` prefix)      | `use-auth.ts`             |
+| Utility files    | kebab-case                      | `format-date.ts`          |
+| Directories      | kebab-case                      | `user-profile/`           |
+| Constant files   | kebab-case                      | `api-endpoints.ts`        |
+| Type files       | kebab-case                      | `user-types.ts`           |
 
-> **Note**: Per-component `.test.tsx` and `.stories.tsx` files are not included in the default structure.
+> **Note**: Per-component `.test.tsx` and `.stories.tsx` files are not included in the base structure.
 
 ---
 
@@ -183,7 +183,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "./utils";
 
 // 4) 타입
-import type { Product } from "@/types/product.types";
+import type { Product } from "@/types/product-types";
 ```
 
 ### No Barrel Files
@@ -196,11 +196,11 @@ import type { Product } from "@/types/product.types";
 
 ### Keyboard Accessibility
 
-- **Rule**: [MUST] Interactive elements (buttons, links, form fields, etc.) must be accessible and operable using only the keyboard
+- **Rule**: [MUST] Interactive elements (buttons, links, form fields, etc.) must be accessible and operable using only a keyboard
 
 ### Image Alt Text
 
-- **Rule**: [MUST] Provide a meaningful `alt` attribute for all `<img>` elements
+- **Rule**: [MUST] Provide meaningful `alt` attributes for all `<img>` elements
 
 ### WCAG Compliance
 
@@ -237,15 +237,15 @@ function ProductList({ products }: ProductListProps) {
 
 ### Core Web Vitals
 
-- **Rule**: [SHOULD] Meet Core Web Vitals targets (LCP < 2.5s, INP < 200ms, CLS < 0.1)
+- **Rule**: [SHOULD] Meet Core Web Vitals target values (LCP < 2.5s, INP < 200ms, CLS < 0.1)
 
 ### Image Optimization
 
-- **Rule**: [MUST] Images should be optimized at build time or CDN level (WebP/AVIF conversion, responsive srcset, lazy loading)
+- **Rule**: [MUST] Optimize images at build time or CDN level (WebP/AVIF conversion, responsive srcset, lazy loading)
 
 ### Code Splitting
 
-- **Rule**: [SHOULD] Heavy components should be code-split using `React.lazy` and `Suspense`
+- **Rule**: [SHOULD] Use `React.lazy` and `Suspense` for code splitting heavy components
 - **Good Example**:
 
 ```typescript
@@ -277,14 +277,14 @@ function Dashboard() {
 
 ## 7. Anti-Patterns
 
-This document summarizes only the representative anti-patterns that recur across the frontend. For detailed examples and specific rules, refer to the specialized subdocuments.
+This document summarizes only the representative anti-patterns that recur across the frontend. For detailed examples and specific rules, refer to the specialized sub-documents.
 
 ### Representative Anti-Pattern Summary
 
 - **Rule**: [MUST NOT] Do not pass props more than 3 levels deep. For detailed criteria, follow the composition/Context patterns in `REACT_CONVENTION.md`.
-- **Rule**: [MUST NOT] Do not cram page composition, data fetching, form handling, and modal control all into a single component. For component responsibility and placement, follow `ARCHITECTURE_CONVENTION.md`.
-- **Rule**: [MUST NOT] Do not fetch data directly inside `useEffect`. For server state, follow the TanStack Query patterns in `STATE_CONVENTION.md`.
-- **Rule**: [MUST NOT] Do not place unstable function references in effect dependencies, causing infinite re-execution. For detailed rules on ref/callback/effect, follow `REACT_CONVENTION.md`.
+- **Rule**: [MUST NOT] Do not cram page composition, data fetching, form handling, and modal control all into a single component. Follow `ARCHITECTURE_CONVENTION.md` for component responsibilities and placement.
+- **Rule**: [MUST NOT] Do not fetch data directly inside `useEffect`. Follow the TanStack Query patterns in `STATE_CONVENTION.md` for server state.
+- **Rule**: [MUST NOT] Do not cause infinite re-execution by placing unstable function references in effect dependencies. Follow `REACT_CONVENTION.md` for detailed rules on ref/callback/effect.
 
 ---
 
@@ -292,11 +292,11 @@ This document summarizes only the representative anti-patterns that recur across
 
 ### SafeStorage Utility
 
-- **Rule**: [MUST] When accessing `localStorage`/`sessionStorage`, always use safe wrappers (`safeLocalStorage`, `safeSessionStorage`). Do not access the native API directly.
-- **Rule**: [MUST] Provide an in-memory fallback when storage is unavailable to maintain data while the tab is alive.
+- **Rule**: [MUST] When accessing `localStorage`/`sessionStorage`, always use safe wrappers (`safeLocalStorage`, `safeSessionStorage`). Do not access native APIs directly.
+- **Rule**: [MUST] Provide an in-memory fallback when storage access is unavailable to maintain data while the tab is alive.
 - **Rule**: [SHOULD] Display a notification message to the user when storage unavailability is detected.
 
-> **Do not store authentication tokens in storage.** Access Tokens are managed in memory variables, and Refresh Tokens are managed via httpOnly cookies. SafeStorage is intended for **general data unrelated to authentication**, such as theme settings, language settings, and UI state. See API_CLIENT_CONVENTION.md for detailed rules.
+> **Do not store authentication tokens in storage.** Access Tokens are managed as in-memory variables, and Refresh Tokens are managed as httpOnly cookies. SafeStorage is intended for **general data unrelated to authentication**, such as theme settings, language settings, and UI state. See API_CLIENT_CONVENTION.md for detailed rules.
 
 ```typescript
 // app/lib/safe-storage.ts
@@ -352,7 +352,7 @@ export const safeSessionStorage = createSafeStorage(
 
 ### User Notification
 
-- **Rule**: [SHOULD] When storage unavailability is detected at app initialization, display a notification message so the user can identify the cause.
+- **Rule**: [SHOULD] When storage unavailability is detected during app initialization, display a notification message so the user can identify the cause.
 
 ```typescript
 // app/components/ui/storage-warning/StorageWarning.tsx

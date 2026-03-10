@@ -19,7 +19,7 @@
 - **Rule**: [SHOULD] Use `type` for union types, intersection types, utility type combinations, etc.
 - **Good Example**:
   ```typescript
-  // Object shape definition → interface
+  // Defining object shape → interface
   interface User {
     id: string;
     name: string;
@@ -50,9 +50,9 @@
   }
   ```
 
-### Leveraging Utility Types
+### Utility Type Usage
 
-- **Rule**: [SHOULD] Actively leverage TypeScript built-in utility types (`Partial`, `Pick`, `Omit`, `Record`, etc.).
+- **Rule**: [SHOULD] Actively use TypeScript built-in utility types (`Partial`, `Pick`, `Omit`, `Record`, etc.).
 - **Good Example**:
   ```typescript
   interface User {
@@ -91,7 +91,7 @@
 - **Good Example**:
   ```typescript
   const userName = 'John';
-  const items = [1, 2, 3]; // Array content can still be modified, so use const
+  const items = [1, 2, 3]; // Array contents can still be modified, so const is fine
 
   let count = 0;
   count += 1; // Reassignment needed → let
@@ -100,7 +100,7 @@
 ### Writing Functions
 
 - **Rule**: [MUST] Explicitly declare return types for public API (exported functions).
-- **Rule**: [MAY] Return types of internal functions may be delegated to TypeScript inference.
+- **Rule**: [MAY] Return types for internal functions can be delegated to TypeScript inference.
 - **Good Example**:
   ```typescript
   // Public API — explicit return type
@@ -129,7 +129,7 @@
   const sortedItems = items.sort((a, b) => a.price - b.price);
   ```
 
-### Asynchronous Handling — async/await
+### Async Handling — async/await
 
 - **Rule**: [MUST] Use `async/await` when working with Promises. Avoid `.then()` chains.
 - **Good Example**:
@@ -179,13 +179,13 @@
 
 ## Enum vs Union
 
-### Avoiding Enum Usage
+### Avoid Using Enum
 
 - **Rule**: [SHOULD] Use union types or `as const` objects instead of `enum`.
 
 ### Enum / as const Naming Rules
 
-- **Rule**: [MUST] Use **PascalCase** for keys and **lowercase snake_case** for values in enums and `as const` objects.
+- **Rule**: [MUST] Keys of enum and `as const` objects must use **PascalCase**, and values must use **lowercase snake_case**.
 - **Good Example**:
   ```typescript
   // as const object
@@ -205,7 +205,7 @@
   ```
   - Note: Do not use UPPER_CASE (`PENDING`) or camelCase (`pending`) for keys. Do not use UPPER_CASE (`PENDING`) or camelCase (`creditCard`) for values.
 
-### Using Union Types (Simple Cases)
+### Union Type Usage (Simple Cases)
 
 - **Good Example**:
   ```typescript
@@ -217,7 +217,7 @@
   }
   ```
 
-### Using as const Objects (When Value References Are Needed)
+### as const Object Usage (When Value Reference Is Needed)
 
 - **Good Example**:
   ```typescript
@@ -227,7 +227,7 @@
     Processing: 'processing',
     Shipped: 'shipped',
     Delivered: 'delivered',
-  } as const;  // Identical to snake_case when value is a single word
+  } as const;  // When value is a single word, it is the same as snake_case
 
   type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
@@ -237,7 +237,7 @@
   }
   ```
 
-### Cases Where Enum Is Allowed
+### When Enum Is Allowed
 
 - **Rule**: [MAY] `enum` may be used only when numeric mapping is needed or when iteration over values is required.
 - **Good Example**:
@@ -291,7 +291,7 @@ import { styles } from './styles';
 
 ### Barrel Export
 
-- **Rule**: [SHOULD] Expose the public API of packages or modules through barrel exports via `index.ts`.
+- **Rule**: [SHOULD] Expose public APIs of packages or modules through barrel exports via `index.ts`.
 - **Rule**: [MUST NOT] Do not import directly from deep paths. Use barrel-exported paths instead.
 - **Good Example**:
   ```typescript
@@ -330,7 +330,7 @@ import { styles } from './styles';
   );
   ```
 
-### ESLint Enforcement
+### ESLint Execution Requirements
 
 - **Rule**: [MUST] Running ESLint is mandatory for all code changes.
 
@@ -363,9 +363,9 @@ import { styles } from './styles';
 
 ### Prettier
 
-- **Rule**: [MUST] Use Prettier as the code formatter, and prevent conflicts with ESLint using `eslint-config-prettier`.
+- **Rule**: [MUST] Use Prettier as the code formatter, and use `eslint-config-prettier` to prevent conflicts with ESLint.
 
-- **Rule**: [SHOULD] Use the following Prettier settings as defaults. (May be adjusted based on team agreement)
+- **Rule**: [SHOULD] Use the following Prettier settings as defaults. (Can be adjusted per team agreement)
 
 ```json
 {
@@ -387,7 +387,7 @@ import { styles } from './styles';
 ### Overuse of as Casting
 
 - **Rule**: [MUST NOT] Do not use type assertions (`as`) to bypass type errors.
-  - Note: Do not use patterns like `response.data as User` or `someValue as unknown as number` (double assertion).
+  - Note: Do not use patterns like `response.data as User`, `someValue as unknown as number` (double assertion).
 - **Good Example**:
   ```typescript
   import { z } from 'zod';
@@ -403,25 +403,25 @@ import { styles } from './styles';
 
 ### Using any
 
-- **Rule**: [MUST NOT] Do not use `any`. Replace with `unknown` and narrow down using type guards.
+- **Rule**: [MUST NOT] Do not use `any`. Replace with `unknown` and narrow with type guards.
 
 ### Overuse of Non-null Assertion (!)
 
 - **Rule**: [MUST NOT] Do not habitually use non-null assertion (`!`).
-  - Note: Do not use patterns like `users.find(...)!` or `document.getElementById('app')!`.
+  - Note: Do not use patterns like `users.find(...)!`, `document.getElementById('app')!`.
 - **Good Example**:
   ```typescript
   const user = users.find((u) => u.id === id);
   if (!user) {
     throw new Error(`User not found: ${id}`);
   }
-  // At this point, user is narrowed to non-null type
+  // At this point, user's type is narrowed to non-null
   ```
 
 ### Overuse of @ts-ignore / @ts-expect-error
 
 - **Rule**: [MUST NOT] Do not use `@ts-ignore`.
-- **Rule**: [SHOULD] Use `@ts-expect-error` when unavoidable, and always leave a comment explaining the reason.
+- **Rule**: [SHOULD] When unavoidable, use `@ts-expect-error` and always leave a comment explaining the reason.
 - **Good Example**:
   ```typescript
   // @ts-expect-error: Library type definitions have not been updated yet (issue: #123)

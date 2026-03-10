@@ -5,7 +5,7 @@
 
 ## Technology Stack
 
-| Item | Version/Setting |
+| Item | Version/Configuration |
 |------|----------|
 | Test Framework | JUnit 5 + Mockito |
 
@@ -67,7 +67,7 @@ com.sellernote.api/
 | `@Controller` / `@RestController` | HTTP request handling (Controller layer) |
 | `@Service` | Business logic (Service layer) |
 | `@Repository` | Data access (Repository layer) |
-| `@Component` | General Beans that do not fall into the above categories |
+| `@Component` | General beans that do not fall into the above categories |
 
 ### Constructor Injection
 
@@ -81,11 +81,11 @@ com.sellernote.api/
       private final PaymentService paymentService;
   }
   ```
-> [MUST NOT] Field injection with `@Autowired` is prohibited.
+> [MUST NOT] `@Autowired` field injection is prohibited.
 
 ### @Configuration Classes
 
-- **Rule**: [SHOULD] Use `@Configuration` + `@Bean` when registering Beans for third-party libraries or when complex initialization logic is needed.
+- **Rule**: [SHOULD] Use `@Configuration` + `@Bean` when bean registration for third-party libraries or complex initialization logic is needed.
 - **Good Example**:
   ```java
   @Configuration
@@ -102,7 +102,7 @@ com.sellernote.api/
 
 ### Conditional Bean Registration
 
-- **Rule**: [MAY] When different Beans need to be registered depending on the environment or conditions, `@ConditionalOnProperty`, `@Profile`, etc. may be used.
+- **Rule**: [MAY] When different beans need to be registered depending on the environment or conditions, `@ConditionalOnProperty`, `@Profile`, etc. may be used.
 - **Good Example**:
   ```java
   @Configuration
@@ -121,7 +121,7 @@ com.sellernote.api/
 
 ### @ControllerAdvice Global Exception Handling
 
-- **Rule**: [MUST] Implement a global exception handler using `@RestControllerAdvice`.
+- **Rule**: [MUST] Implement a global exception handling handler using `@RestControllerAdvice`.
 - **Good Example**:
   ```java
   @RestControllerAdvice
@@ -154,7 +154,7 @@ com.sellernote.api/
 
 ### Custom Exception Hierarchy
 
-- **Rule**: [SHOULD] Define a common base class for business exceptions and create specific exceptions per domain.
+- **Rule**: [SHOULD] Define a common base class for business exceptions, and create specific exceptions per domain.
 - **Good Example**:
   ```java
   @Getter
@@ -202,16 +202,16 @@ com.sellernote.api/
           return orderRepository.findById(id).orElseThrow(OrderNotFoundException::new);
       }
 
-      @Transactional  // Modification method - overrides readOnly
+      @Transactional  // Mutation method - overrides readOnly
       public Order createOrder(CreateOrderRequest request) {
           return orderRepository.save(Order.from(request));
       }
   }
   ```
 
-### readOnly Setting
+### readOnly Configuration
 
-- **Rule**: [SHOULD] Declare `@Transactional(readOnly = true)` at the class level and override with `@Transactional` only on modification methods.
+- **Rule**: [SHOULD] Declare `@Transactional(readOnly = true)` at the class level, and override with `@Transactional` only on mutation methods.
 
 ### Propagation Level
 
@@ -219,9 +219,9 @@ com.sellernote.api/
 
 | Propagation Level | Usage |
 |----------|------|
-| `REQUIRED` (default) | Joins existing transaction if present, creates new one if not |
-| `REQUIRES_NEW` | Always creates a new transaction (for cases requiring independent commits such as logging, auditing) |
-| `MANDATORY` | Existing transaction required (throws exception if none exists) |
+| `REQUIRED` (default) | Joins an existing transaction if one exists, otherwise creates a new one |
+| `REQUIRES_NEW` | Always creates a new transaction (for cases requiring independent commits such as logging, auditing, etc.) |
+| `MANDATORY` | Requires an existing transaction (throws an exception if none exists) |
 
 - **Good Example**:
   ```java
@@ -282,7 +282,7 @@ src/main/resources/
 
 ### Sensitive Information Management
 
-- **Rule**: [MUST] Do not write sensitive information such as DB passwords and API Keys directly in configuration files. Use environment variables or secret management tools.
+- **Rule**: [MUST] Do not write sensitive information such as DB passwords and API keys directly in configuration files. Use environment variables or secret management tools.
 - **Good Example**:
   ```yaml
   # application-prod.yml
@@ -296,7 +296,7 @@ src/main/resources/
 
 ### Profile Activation
 
-- **Rule**: [MUST] Configure `application-prod.yml` to be automatically activated in production environments. Set the local default Profile to `local`.
+- **Rule**: [MUST] Configure `application-prod.yml` to be automatically activated in the production environment. Set the local default Profile to `local`.
 - **Good Example**:
   ```yaml
   # application.yml (common)
@@ -314,13 +314,13 @@ src/main/resources/
 ### Missing Transactions
 
 - **Rule**: [MUST NOT] Do not perform multiple data modification operations without `@Transactional`.
-> A partial commit may occur if an intermediate exception is thrown, breaking data consistency.
+> A partial commit may occur if an exception is thrown midway, breaking data consistency.
 
 ### Self-Invocation (Proxy Bypass)
 
 - **Rule**: [MUST NOT] Do not directly call `@Transactional` methods within the same class.
 > Since Spring AOP is proxy-based, calls within the same class do not go through the proxy, causing `@Transactional` to be ignored.
-- **Solution**: Extract the logic requiring a transaction into a separate Service class.
+- **Solution**: Extract the logic that requires a transaction into a separate Service class.
 
 ### @Transactional on private Methods
 
@@ -333,7 +333,7 @@ src/main/resources/
 
 ### Long Transactions
 
-- **Rule**: [SHOULD NOT] Do not perform long-running operations such as external API calls or file uploads inside a transaction.
+- **Rule**: [SHOULD NOT] Do not perform time-consuming operations such as external API calls or file uploads inside transactions.
 - **Good Example**:
   ```java
   @Transactional
@@ -341,7 +341,7 @@ src/main/resources/
       return orderRepository.save(Order.from(request));
   }
 
-  // External calls outside the transaction
+  // External calls outside of the transaction
   public void processOrderCreation(CreateOrderRequest request) {
       Order order = createOrder(request);
       s3Service.uploadReceipt(order);

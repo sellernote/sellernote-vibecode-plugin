@@ -1,7 +1,7 @@
 # API Client Convention
 
 > This document defines common rules and shared code that apply regardless of the HTTP client library.
-> For specific implementations, refer to the library-specific documentation.
+> Refer to the library-specific documents for concrete implementations.
 > - axios: axios/API_CLIENT_AXIOS_CONVENTION.md
 > Parent rules: FRONTEND_CONVENTION.md
 
@@ -26,8 +26,8 @@
 ### Token Refresh Flow
 
 - **Rule**: [MUST] On a 401 response, refresh the Access Token using the Refresh Token and retry the original request. On refresh failure, redirect to the login page.
-- **Rule**: [MUST] When multiple requests receive a 401 simultaneously, only the first one performs the refresh, while the rest wait in a queue and retry with the new token.
-- **Rule**: [MUST] If a retried request after refresh returns 401 again, prevent an infinite loop and immediately perform logout.
+- **Rule**: [MUST] When multiple requests receive 401 simultaneously, only the first one performs the refresh, while the rest wait in a queue and retry with the new token.
+- **Rule**: [MUST] If a retried request after refresh returns 401 again, prevent an infinite loop and immediately process a logout.
 
 ### Cross-Tab Token Synchronization
 
@@ -143,7 +143,7 @@ initTokenSync();
     apiClient.get<PaginatedResponse<Order>>('/orders', { params: filters });
   ```
 
-### URL Hardcoding
+### Hardcoding URLs
 
 - **Rule**: [MUST NOT] Do not hardcode API endpoint URLs in components or hooks.
 - **Bad Example**:

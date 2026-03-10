@@ -19,7 +19,7 @@ Frontend testing follows the pyramid structure below. Lower levels should be fas
 | Level | Tool | Target | Proportion |
 | --- | --- | --- | --- |
 | Unit | Vitest | Utility functions, custom hooks, pure logic | 50% |
-| Integration | React Testing Library | Combinations of multiple components, form submission flows, screen-level verification | 35% |
+| Integration | React Testing Library | Combination of multiple components, form submission flows, screen-level verification | 35% |
 | E2E | Playwright | Core user scenarios such as login, order creation | 15% |
 
 ---
@@ -101,7 +101,7 @@ describe("useCounter", () => {
 
 ### 2-3. useSuspenseQuery Testing
 
-- **Rule**: [SHOULD] Components using `useSuspenseQuery` should be tested with a `Suspense` boundary, and APIs should be mocked with MSW
+- **Rule**: [SHOULD] Components using `useSuspenseQuery` should be tested with `Suspense` boundaries and API mocking via MSW
 - **Good Example**:
 
 ```typescript
@@ -141,7 +141,7 @@ describe("UserProfile", () => {
 
 ### 2-4. File Location
 
-- **Rule**: [MUST NOT] Do not create `.test.tsx` or `.stories.tsx` files per component as a default structure.
+- **Rule**: [MUST NOT] Do not create `.test.tsx` and `.stories.tsx` files per component as a default structure.
 - **Rule**: [SHOULD] When tests are needed, write separate test files organized by feature.
 
 ```text
@@ -293,7 +293,7 @@ test.describe("주문 생성 플로우", () => {
     await page.getByLabel("비밀번호").fill("password123");
     await page.getByRole("button", { name: "로그인" }).click();
 
-    // 대시���드 도착 확인
+    // 대시보드 도착 ���인
     await expect(page).toHaveURL("/dashboard");
     await expect(page.getByRole("heading", { name: "대시보드" })).toBeVisible();
 
@@ -312,20 +312,20 @@ test.describe("주문 생성 플로우", () => {
 });
 ```
 
-E2E tests are costly, so focus on the following core scenarios:
+E2E tests are expensive, so focus on core scenarios like the following:
 
 | Scenario | Verification Items |
 | --- | --- |
 | Login/Logout | Authentication flow, session management |
 | Order CRUD | Full flow of create, read, update, delete |
 | Search/Filter | Search result accuracy, filter behavior |
-| Payment Flow | Payment information entry, payment completion confirmation |
+| Payment Flow | Payment information input, payment completion confirmation |
 
 ---
 
 ## 4. Test Naming
 
-- **Rule**: [SHOULD] Specify the test target with `describe`, and write conditions and expected results in `it`
+- **Rule**: [SHOULD] Use `describe` to specify the test target, and write conditions and expected results in `it`
 - **Good Example**:
 
 ```typescript
@@ -371,9 +371,9 @@ expect(screen.getByTestId("email-input")).toHaveValue("hong@example.com");
 expect(screen.getByTestId("success-msg")).toBeInTheDocument();
 ```
 
-### Overusing Snapshot Tests
+### Overuse of Snapshot Testing
 
-- **Rule**: [SHOULD NOT] Do not use snapshot tests on UI components that change frequently
+- **Rule**: [SHOULD NOT] Do not use snapshot testing for UI components that change frequently
 
 ### Sharing State Between Tests
 
@@ -420,7 +420,7 @@ describe("CartStore", () => {
 });
 ```
 
-### Missing waitFor for Async Logic
+### Missing waitFor for Asynchronous Logic
 
 - **Rule**: [MUST NOT] Do not assert on asynchronously rendered elements without `waitFor`
 - **Good Example**:

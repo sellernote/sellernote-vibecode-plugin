@@ -11,7 +11,7 @@
 ### Normalization Level
 
 - **Rule**: [SHOULD] Design targeting Third Normal Form (3NF) by default.
-- **Rule**: [MAY] Intentional denormalization is allowed when read performance is critical. However, the approach for maintaining data consistency during denormalization must be documented.
+- **Rule**: [MAY] Intentional denormalization is allowed when read performance is critical. However, when denormalizing, the strategy for maintaining data consistency must be documented.
 
 ### ERD Writing Standards
 
@@ -20,7 +20,7 @@
 
 ### Relationship Design Principles
 
-- **Rule**: [MUST] Explicitly define relationships between tables through foreign keys (FK).
+- **Rule**: [MUST] Explicitly define relationships between tables using foreign keys (FK).
 - **Rule**: [SHOULD] Many-to-many (M:N) relationships should use a junction table.
 
 ## Naming Rules
@@ -50,14 +50,14 @@
   -- order 테이블에서 user를 참조하는 FK
   user_id CHAR(36) NOT NULL  -- UUID FK
   ```
-- **Rule**: [MUST NOT] Do not use data types as column names. (e.g., `text`, `timestamp`, `number`)
+- **Rule**: [MUST NOT] Do not use data type names in column names. (e.g., `text`, `timestamp`, `number`)
 - **Rule**: [SHOULD] Boolean columns should use the `is_`, `has_`, `can_` prefix.
 - **Good Example**:
   ```sql
   is_active TINYINT(1) NOT NULL DEFAULT 1
   has_verified_email TINYINT(1) NOT NULL DEFAULT 0
   ```
-- **Rule**: [MUST NOT] Do not use the `no_` prefix to express negation. `no_` causes confusion with sequential identifiers (`_no`) and can be mistaken as an abbreviation for Number. Instead, combine `is_`, `has_`, `can_` prefixes with clearly meaningful adjectives.
+- **Rule**: [MUST NOT] Do not use the `no_` prefix to express negation. `no_` causes confusion with the sequential identifier (`_no`) and can be mistaken as an abbreviation for Number. Instead, combine `is_`, `has_`, `can_` prefixes with clear adjectives.
 - **Bad Example**:
   ```sql
   no_stock TINYINT(1) NOT NULL DEFAULT 0
@@ -97,14 +97,14 @@
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | CHAR(36) | PK. Stores UUID values |
+| `id` | CHAR(36) | PK. Stores a UUID value |
 | `_no` | BIGINT, AUTO_INCREMENT, UNIQUE | Internal sequential identifier. Uses a UNIQUE KEY index |
-| `created_at` | DATETIME | Record creation timestamp (UTC) |
-| `updated_at` | DATETIME | Record last modified timestamp (UTC) |
+| `created_at` | DATETIME | Record creation time (UTC) |
+| `updated_at` | DATETIME | Record last modified time (UTC) |
 
 ### Soft Delete
 
-- **Rule**: [SHOULD] Tables that require deletion history for business purposes should implement soft delete through a `deleted_at` field.
+- **Rule**: [SHOULD] Tables that require deletion history for business purposes should apply soft delete via the `deleted_at` field.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -129,23 +129,23 @@
   SELECT * FROM user WHERE deleted_at IS NULL;
   ```
 
-- **Rule**: [MUST] Tables with soft delete must always include the `deleted_at IS NULL` condition in default queries.
+- **Rule**: [MUST] Tables with soft delete applied must always include the `deleted_at IS NULL` condition in default queries.
 
 ### ID Strategy
 
 - **Rule**: [MUST] PK (`id`) stores UUID (v4) values in `CHAR(36)` type.
 - **Rule**: [MUST] All tables must have a `_no` column (BIGINT AUTO_INCREMENT) with a UNIQUE KEY index.
-- **Rule**: [MUST NOT] Do not expose `_no` values in external API responses. Always use `id` (UUID) for external exposure.
+- **Rule**: [MUST NOT] Do not expose `_no` values in external API responses. Always use `id` (UUID) for external interfaces.
 
 ## Data Types
 
 ### Type Selection Criteria
 
-- **Rule**: [MUST] Select the smallest type appropriate for the data being stored.
+- **Rule**: [MUST] Choose the smallest appropriate type for the data being stored.
 
 ### Strings
 
-- **Rule**: [SHOULD] Use `VARCHAR(n)` for strings with fixed or predictable length, and use `TEXT` types for large text where length is unpredictable.
+- **Rule**: [SHOULD] Use `VARCHAR(n)` for strings with fixed or predictable lengths, and `TEXT` types for large text with unpredictable lengths.
 
 | Purpose | Recommended Type | Example |
 |---------|-----------------|---------|
@@ -156,7 +156,7 @@
 
 ### Date/Time
 
-- **Rule**: [MUST] Store date/time data in UTC and convert timezone on display.
+- **Rule**: [MUST] Store date/time data in UTC and convert the timezone when displaying.
 - **Rule**: [SHOULD] Use ISO 8601 format (YYYY-MM-DD HH:MM:SS) as the standard.
 
 ### Currency/Decimals
@@ -172,7 +172,7 @@
 ### Index Creation Criteria
 
 - **Rule**: [SHOULD] Create indexes on columns frequently used in WHERE, JOIN, and ORDER BY clauses.
-- **Rule**: [MUST NOT] Do not create unnecessary indexes on small tables with a few hundred rows or fewer.
+- **Rule**: [MUST NOT] Do not create unnecessary indexes on small tables with a few hundred rows or less.
 - **Rule**: [SHOULD] Keep the number of indexes per table to 5 or fewer.
 
 ### Composite Index Order
@@ -180,13 +180,13 @@
 - **Rule**: [MUST] In composite indexes, place columns with higher cardinality (better selectivity) first.
 - **Good Example**:
   ```sql
-  -- user_id의 카디널리티가 status보다 높으므로 앞에 배치
+  -- user_id has higher cardinality than status, so it is placed first
   CREATE INDEX idx_order_user_id_status ON `order` (user_id, status);
   ```
 
 ### Covering Index
 
-- **Rule**: [MAY] For frequently executed queries, a covering index may be used by including the SELECT target columns in the index.
+- **Rule**: [MAY] For frequently executed queries, a covering index can be used by including the SELECT target columns in the index.
 - **Good Example**:
   ```sql
   -- user_id로 검색하고 email만 반환하는 쿼리가 빈번한 경우
@@ -211,7 +211,7 @@
 
 ### Rollback Strategy
 
-- **Rule**: [MUST] All migrations must include a rollback (down) script.
+- **Rule**: [MUST] Every migration must include a rollback (down) script.
 - **Good Example**:
   ```sql
   -- up: 테이블 생성
@@ -231,20 +231,20 @@
 
 ### Zero-Downtime Schema Changes
 
-- **Rule**: [MUST] Schema changes in production must be performable without service interruption.
-- **Rule**: [SHOULD] Schema changes on large tables should follow the order below:
-  1. Add new column (nullable or with default value) -- compatible with existing code
+- **Rule**: [MUST] Schema changes in production environments must be performed without service interruption.
+- **Rule**: [SHOULD] Schema changes on large tables should follow this sequence:
+  1. Add a new column (nullable or with a default value) -- compatible with existing code
   2. Deploy code to use the new column in the application
   3. Migrate existing data in batches
   4. Add NOT NULL constraint if needed
-  5. Remove old column (in a separate migration)
-- **Rule**: [MUST NOT] Do not perform column renaming or deletion in a single deployment in production.
+  5. Remove the old column (in a separate migration)
+- **Rule**: [MUST NOT] Do not perform column renaming or deletion in a single deployment in production environments.
 
 ## Business Logic Management
 
 ### No FUNCTION / Trigger Usage
 
-- **Rule**: [MUST NOT] Do not use database internal FUNCTIONs, Triggers, or Stored Procedures. All business logic must be implemented in application code.
+- **Rule**: [MUST NOT] Do not use database-internal FUNCTIONs, Triggers, or Stored Procedures. All business logic must be implemented in application code.
 - **Good Example**:
   ```typescript
   // 애플리케이션 코드에서 비즈니스 로직 처리
@@ -268,7 +268,7 @@
   SELECT id, email, name FROM user WHERE id = 'uuid-value';
   ```
 
-### N+1 Query
+### N+1 Queries
 
 - **Rule**: [MUST NOT] Do not execute queries repeatedly inside a loop.
 - **Good Example**:
@@ -282,11 +282,11 @@
 
 ### Implicit Type Conversion
 
-- **Rule**: [MUST NOT] Do not compare a column with a value of a different type in WHERE conditions. (This invalidates indexes and causes Full Table Scan)
+- **Rule**: [MUST NOT] Do not compare a column with a value of a different type in WHERE conditions. (This invalidates indexes and causes a Full Table Scan)
 
-### NULL Comparison Error
+### NULL Comparison Errors
 
-- **Rule**: [MUST NOT] Do not use `=` or `!=` operators for NULL comparison. Use `IS NULL` / `IS NOT NULL`.
+- **Rule**: [MUST NOT] Do not use `=` or `!=` operators for NULL comparisons. Use `IS NULL` / `IS NOT NULL`.
 - **Good Example**:
   ```sql
   SELECT * FROM user WHERE deleted_at IS NULL;

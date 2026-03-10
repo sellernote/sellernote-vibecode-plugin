@@ -1,6 +1,6 @@
 # Terraform Convention
 
-> Defines the rules applied to Terraform projects.
+> Defines rules applied to Terraform projects.
 > Parent rules: INFRASTRUCTURE_CONVENTION.md
 
 ## Project Structure
@@ -44,7 +44,7 @@ terraform/
 | `backend.tf` | Remote State backend configuration (environment directories only) |
 | `terraform.tfvars` | Variable value assignments (environment directories only) |
 | `providers.tf` | Provider configuration (environment directories only) |
-| `data.tf` | Data source definitions (as needed) |
+| `data.tf` | Data source definitions (when needed) |
 
 - [SHOULD] When resources grow in number, split files by logical groups. (e.g., `network.tf`, `ecs.tf`, `rds.tf`)
 
@@ -110,7 +110,7 @@ terraform/
 
 ### Module Separation Criteria
 
-- [SHOULD] Group resources that are logically created/destroyed together into a single module.
+- [SHOULD] Group resources that are logically created/deleted together into a single module.
 - **Good examples**:
   ```hcl
   module "networking" {
@@ -129,8 +129,8 @@ terraform/
 
 ### Module Design Principles
 
-- [MUST NOT] Do not configure providers directly inside a module. Providers should be configured in the calling root module.
-- [SHOULD] Avoid direct module-to-module calls (deep nesting) and compose them in the root module instead.
+- [MUST NOT] Do not configure providers directly inside modules. Providers should be configured in the calling root module.
+- [SHOULD] Avoid direct module-to-module calls (deep nesting) and compose modules at the root module level.
 
 ### Module Versioning
 
@@ -192,7 +192,7 @@ terraform/
 
 ## Workspaces
 
-- [SHOULD] Prefer directory-based separation over Terraform Workspaces for environment isolation. (Workspaces share the same backend, making complete isolation difficult)
+- [SHOULD] For environment separation, prefer directory-based separation over Terraform Workspaces. (Workspaces share the same backend, making complete isolation difficult)
 - [MAY] Workspaces may be used for minor variations of the same configuration (e.g., region-specific deployments).
 
 ## Code Quality
@@ -233,4 +233,4 @@ terraform/
 - [MUST NOT] Do not manage all infrastructure in a single module or a single State.
 - [MUST NOT] Do not manually transfer State files via Slack, email, shared drives, etc.
 - [MUST NOT] Do not run `terraform apply` directly in the production environment without reviewing `terraform plan`.
-- [SHOULD] Run production `terraform apply` through a CI/CD pipeline and include an approval process for plan results.
+- [SHOULD] Run production `terraform apply` through the CI/CD pipeline and include an approval process for the plan results.

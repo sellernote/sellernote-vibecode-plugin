@@ -1,7 +1,7 @@
 # Frontend Architecture Convention
 
 > This document defines the directory structure, component classification system, and dependency direction for frontend projects.
-> Parent rule: FRONTEND_CONVENTION.md
+> Parent rules: FRONTEND_CONVENTION.md
 
 ---
 
@@ -11,7 +11,7 @@ The project follows a directory structure based on React Router 7 Framework Mode
 
 ### React Router 7 Framework Mode Project
 
-- **Rule**: [MUST] React Router 7 projects must follow the directory structure below. Domain-specific code is colocated under `features/{domain}/`, and domain-contextual code reused across multiple Features is placed in `features/_common/{domain}/`.
+- **Rule**: [MUST] React Router 7 projects follow the directory structure below. Domain-specific code is co-located under `features/{domain}/`, and domain-contextual code reused across multiple Features is placed in `features/_common/{domain}/`.
 
 ```text
 app/
@@ -23,7 +23,7 @@ app/
 │   ├── home.tsx            # "/" index route
 │   ├── not-found.tsx       # "*" catch-all
 │   ├── auth/
-│   │   ├── layout.tsx      # Auth pages shared layout
+│   │   ├── layout.tsx      # Auth page shared layout
 │   │   ├── login.tsx       # "/login"
 │   │   └── signup.tsx      # "/signup"
 │   └── dashboard/
@@ -32,7 +32,7 @@ app/
 │       ├── orders.tsx      # "/dashboard/orders"
 │       └── order-detail.tsx # "/dashboard/orders/:id"
 │
-├── features/               # Domain-specific colocation (center of business code)
+├── features/               # Domain-specific co-location (center of business code)
 │   ├── _common/            # Shared across Features (maintaining domain context)
 │   │   └── po/             # Further classified by shared domain
 │   │       ├── components/ # Feature-level components reused across multiple Features
@@ -85,11 +85,11 @@ app/
 
 ## 2. Feature Directory Structure
 
-This section defines the operating rules for the `features/` directory.
+This section defines the operational rules for the `features/` directory.
 
 ### `_common/{domain}` Structure (Feature-Level Sharing)
 
-- **Rule**: [MUST] Under `features/_common/`, further classify by shared domain. Modules with "domain context" that are reused across 2 or more Features are placed in `features/_common/{domain}/`.
+- **Rule**: [MUST] Under `features/_common/`, further classify by shared domain. Modules with "domain context" reused by 2 or more Features are placed in `features/_common/{domain}/`.
 - **Rule**: [MUST NOT] Do not place domain-agnostic general-purpose code in `features/_common/{domain}/`. General-purpose code goes in `components/`, `hooks/`, `lib/`, `types/`.
 - **Rule**: [MUST NOT] `features/_common/{domain}/` must not import from specific Domain Feature directories (`features/purchase/`, `features/sales/`, etc.).
 - **Rule**: [SHOULD] Domain-specific pure functions/helpers shared across multiple Features go in `features/_common/{domain}/utils/`. App-wide general-purpose utilities go in `lib/`.
@@ -118,7 +118,7 @@ This section defines the operating rules for the `features/` directory.
 
 ### Feature Internal Structure
 
-- **Rule**: [MUST] Each domain Feature directory (`features/{domain}/`) follows the structure below. `components/` and `api/` are required; the rest are created as needed. API request/response types are not duplicated within the Feature — use auto-generated types from shared instead.
+- **Rule**: [MUST] Each domain Feature directory (`features/{domain}/`) follows the structure below. `components/` and `api/` are required; the rest are created as needed. API request/response types are not duplicated inside Features — use auto-generated types from shared instead.
 
 ```text
 features/{domain}/
@@ -154,13 +154,13 @@ features/{domain}/
 | `endpoint hook file` | `api/` | Mechanical |
 | Others (`use-xxx-permission.ts`, etc.) | `hooks/` | Mechanical |
 
-Since the folder is determined by naming alone, there is no need to deliberate "where should I put this hook?". The specific file naming rules for `endpoint hook files` follow the API file structure below.
+Since the folder is determined just by looking at the naming, there is no need for "where should I put this hook?" decisions. The specific file naming rules for `endpoint hook files` follow the API file structure below.
 
 ### API File Structure
 
-- **Rule**: [MUST] Within the `api/` directory, query keys and `queryOptions()` factories are defined together in `query-options.ts`. `query-options.ts` handles only cache keys and `queryFn`, and does not use `select`.
-- **Rule**: [MUST] Custom hooks per endpoint are separated into files by purpose. (`use-xxx-query.ts`, `use-xxx-mutation.ts`) This document refers to these as `endpoint hook files`, and endpoint-specific transform/helper/types can be colocated privately within these files.
-- **Rule**: [MUST NOT] Do not redefine API request/response types within the Feature. Import and use auto-generated types from shared.
+- **Rule**: [MUST] Within the `api/` directory, query keys and `queryOptions()` factories are defined together in `query-options.ts`. `query-options.ts` is responsible only for cache keys and `queryFn`, and does not use `select`.
+- **Rule**: [MUST] Custom hooks per endpoint are separated into files by purpose. (`use-xxx-query.ts`, `use-xxx-mutation.ts`) This document refers to these as `endpoint hook files`, and endpoint-specific transform/helper/types can be co-located privately within those files.
+- **Rule**: [MUST NOT] Do not redefine API request/response types inside Features. Import and use auto-generated types from shared.
 - **Good example**:
   ```typescript
   // features/order/api/query-options.ts
@@ -171,10 +171,10 @@ Since the folder is determined by naming alone, there is no need to deliberate "
   const fetchOrders = (params: GetOrdersRequest): Promise<GetOrdersResponse> =>
     apiClient.get('/orders', { params });
 
-  export const orderQueryOptions = {
+  export const orderQueries = {
     all: ['orders'] as const,
     list: (params: GetOrdersRequest) => queryOptions({
-      queryKey: [...orderQueryOptions.all, 'list', params] as const,
+      queryKey: [...orderQueries.all, 'list', params] as const,
       queryFn: () => fetchOrders(params),
     }),
   };
@@ -182,7 +182,7 @@ Since the folder is determined by naming alone, there is no need to deliberate "
   // features/order/api/use-orders-query.ts
   import { useQuery } from '@tanstack/react-query';
   import type { GetOrdersRequest, GetOrdersResponse } from '@/types/generated/order.generated';
-  import { orderQueryOptions } from './query-options';
+  import { orderQueries } from './query-options';
 
   type OrderListItem = {
     id: string;
@@ -199,7 +199,7 @@ Since the folder is determined by naming alone, there is no need to deliberate "
 
   export function useOrdersQuery(params: GetOrdersRequest) {
     return useQuery({
-      ...orderQueryOptions.list(params),
+      ...orderQueries.list(params),
       select: toOrderListItems,
     });
   }
@@ -207,30 +207,30 @@ Since the folder is determined by naming alone, there is no need to deliberate "
 
 ### Shared vs Feature-Specific Placement Criteria
 
-- **Rule**: [SHOULD] Determine the placement of code based on the following criteria.
+- **Rule**: [SHOULD] Determine code placement based on the following criteria.
 
 | Question | `features/{domain}/` (Single Feature) | `features/_common/{domain}/` (Shared across Features) | Shared directories (`components/`, `hooks/`, `lib/`, `types/`, etc.) |
 |------|:---:|:---:|:---:|
-| Is it used in only one Feature? | O | | |
-| Is it used in 2+ Features and has domain context (PO/invoice/settlement, etc.)? | | O | |
+| Is it used by only one Feature? | O | | |
+| Is it used by 2+ Features and has domain context (PO/invoice/settlement, etc.)? | | O | |
 | Can it be used generically without domain logic? | | | O |
-| Should it be deleted when a specific Feature is removed? | O | | |
+| Should it be deleted when a specific Feature is deleted? | O | | |
 | Is it domain-common code maintained together across multiple Features? | | O | |
 | Is it reused app-wide (domain-agnostic)? | | | O |
 
 - **Additional criteria**: Domain-specific pure functions/helpers without React/TanStack Query dependencies go in `features/{domain}/utils/` or `features/_common/{domain}/utils/`. Domain-agnostic general-purpose utilities go in `lib/`.
 
-### Feature Inter-Dependency Rules
+### Inter-Feature Dependency Rules
 
 - **Rule**: [MUST NOT] A Domain Feature must not directly import another Domain Feature.
-- **Rule**: [MUST] When code from one Domain Feature is also needed in another Domain Feature, promote that code to `features/_common/{domain}/` and then import from that path.
+- **Rule**: [MUST] When code from one Domain Feature becomes needed in another Domain Feature, promote that code to `features/_common/{domain}/` and import from that path.
 - **Rule**: [MUST] `features/_common/{domain}/` also uses specific file path imports and does not go through `index.ts` barrel files.
 - **Good example**:
   ```typescript
-  // Code shared across multiple Features is promoted to _common/{domain} before importing
+  // Code shared across multiple Features is promoted to _common/{domain} then imported
   import { POPickerDialog } from '@/features/_common/po/components/po-picker-dialog/POPickerDialog';
   import { buildPODisplayName } from '@/features/_common/po/utils/build-po-display-name';
-  import type { OrderStatus } from '@/types/order.types';  // Shared types from types/
+  import type { OrderStatus } from '@/types/order-types';  // Shared types from types/
   ```
 
 ### Feature Dependency Direction
@@ -295,17 +295,17 @@ Frontend components are classified into 4 types based on their role and dependen
 
 | Classification | Location | Characteristics | Allowed Dependencies | Examples |
 |------|------|------|----------------|------|
-| UI Component | `components/ui/` | Operates on props only, no business logic. Place project-specific UI components here. | React built-in hooks, other UI components | StatusBadge, DataTable, FileUpload |
-| Feature Component | `features/{domain}/components/`, `features/_common/{domain}/components/` | Contains business logic, uses hooks/store/queries. Composes UI components to build screens. | UI components, shared hooks/utilities, same Feature's api/store/hooks, `features/_common/{domain}` modules | OrderList, UserProfile, POPickerDialog |
-| Layout Component | `components/layout/` | Page structure, navigation. Does not contain business logic for a specific domain. | UI components, shared hooks/utilities | Header, Sidebar, Footer, PageLayout |
-| Page Component | `routes/**/*.tsx` | Only composes Feature/UI components, no business logic | Feature components, UI components, Layout components | DashboardPage, OrderDetailPage |
+| UI Component | `components/ui/` | Operates with props only, no business logic. Place project-specific UI components here. | React built-in hooks, other UI components | StatusBadge, DataTable, FileUpload |
+| Feature Component | `features/{domain}/components/`, `features/_common/{domain}/components/` | Contains business logic, uses hooks/store/queries. Composes UI components to build screens. | UI components, shared hooks/utils, api/store/hooks from the same Feature, `features/_common/{domain}` modules | OrderList, UserProfile, POPickerDialog |
+| Layout Component | `components/layout/` | Page structure, navigation. Does not contain business logic for a specific domain. | UI components, shared hooks/utils | Header, Sidebar, Footer, PageLayout |
+| Page Component | `routes/**/*.tsx` | Only responsible for composing Feature/UI components, no business logic | Feature components, UI components, Layout components | DashboardPage, OrderDetailPage |
 
 ### UI Components
 
-- **Rule**: [MUST] UI components operate on props only and do not directly depend on external state (store, queries, context).
+- **Rule**: [MUST] UI components operate with props only and do not directly depend on external state (store, queries, context).
 - **Good example**:
   ```tsx
-  // components/ui/data-table/DataTable.tsx -- Operates on props only
+  // components/ui/data-table/DataTable.tsx -- Operates with props only
   interface DataTableProps<T> {
     columns: Column<T>[];
     data: T[];
@@ -321,7 +321,7 @@ Frontend components are classified into 4 types based on their role and dependen
 
 ### Feature Components
 
-- **Rule**: [MUST] Feature components contain business logic and use hooks, store, and queries to manage data. They compose UI components to build screens.
+- **Rule**: [MUST] Feature components contain business logic and manage data using hooks, store, and queries. They compose UI components to build screens.
 - **Good example**:
   ```tsx
   // features/order/components/order-list/OrderList.tsx
@@ -345,11 +345,11 @@ Frontend components are classified into 4 types based on their role and dependen
 
 ### Layout Components
 
-- **Rule**: [MUST] Layout components handle page structure and navigation. They do not contain business logic for a specific domain.
+- **Rule**: [MUST] Layout components are responsible for page structure and navigation. They do not contain business logic for a specific domain.
 
 ### Page Components
 
-- **Rule**: [MUST] Page components only compose Feature/UI components. They do not write business logic directly.
+- **Rule**: [MUST] Page components are only responsible for composing Feature/UI components. They do not write business logic directly.
 - **Good example**:
   ```tsx
   // app/routes/dashboard/orders.tsx -- Route module
@@ -383,7 +383,7 @@ Frontend components are classified into 4 types based on their role and dependen
 │   Domain Feature   │  <-- Domain business logic
 │ features/{domain}/ │
 ├────────────────────┤
-│   Feature Common   │  <-- Shared domain modules across Features
+│   Feature Common   │  <-- Shared domain-common modules across Features
 │ features/_common/{domain}/ │
 ├────────────────────┤
 │     Shared/UI      │  <-- Props-driven shared modules
@@ -404,14 +404,14 @@ Reverse direction forbidden: Shared/UI -x-> Feature Common -x-> Domain Feature -
 | **Feature Common** | X | X | O | O |
 | **Shared** | X | X | X | O |
 
-### UI Component Dependency Restrictions
+### Dependency Restrictions for UI Components
 
-- **Rule**: [MUST] UI components must not directly import `store`, `queries`, or `hooks` (business custom hooks). They may only use React built-in hooks (`useState`, `useRef`, etc.) and other UI components.
+- **Rule**: [MUST] UI components must not directly import `store`, `queries`, or `hooks` (business custom hooks). Only React built-in hooks (`useState`, `useRef`, etc.) and other UI components can be used.
 
 ### Reverse Dependency Prohibition
 
 - **Rule**: [MUST NOT] Reverse dependencies (UI -> Feature, Feature -> Page) are forbidden.
-- **Rule**: [MUST NOT] Direct dependencies from Domain Feature -> Domain Feature are also forbidden. If sharing is needed, promote to `features/_common/{domain}/`.
+- **Rule**: [MUST NOT] Direct dependency from Domain Feature -> Domain Feature is also forbidden. If commonization is needed, promote to `features/_common/{domain}/`.
 - **Bad example**:
   ```tsx
   // components/ui/modal/Modal.tsx -- UI importing Feature (forbidden)
@@ -420,7 +420,7 @@ Reverse direction forbidden: Shared/UI -x-> Feature Common -x-> Domain Feature -
   export function Modal() {
     return (
       <div className="modal">
-        <OrderDetail />  {/* UI depends on Feature */}
+        <OrderDetail />  {/* UI depending on Feature */}
       </div>
     );
   }
@@ -450,50 +450,51 @@ Reverse direction forbidden: Shared/UI -x-> Feature Common -x-> Domain Feature -
 
 ## 6. Data Flow Architecture
 
-Data flows unidirectionally in the **Fetching -> Consume** direction. Data transformation responsibility is not separated into a dedicated `transforms/` directory but is colocated within the endpoint-specific custom hook files.
+Data flows unidirectionally in the **Fetching -> Consume** direction. Data transformation responsibility is not separated into a dedicated `transforms/` directory but co-located within the endpoint-specific custom hook file.
 
 ```text
 ┌───────────────┐     ┌───────────────┐
 │   Fetching    │ --> │    Consume    │
-│  (Definition) │     │  (Consumer)   │
-│               │     │               │
-│ features/     │     │ Feature/UI    │
-│  */api/       │     │ components    │
-│  */store/     │     │ (JSX render)  │
+│  (Definition/ │     │  (Consumer)   │
+│   Call site)  │     │               │
+│               │     │ Feature/UI    │
+│ features/     │     │ Components    │
+│  */api/       │     │ (JSX render)  │
+│  */store/     │     │               │
 └───────────────┘     └───────────────┘
 ```
 
-- **Rule**: [MUST] Data flows only in the Fetching -> Consume direction. Reverse data flow (direct fetching in the Consume layer, copying server data to client store, etc.) is forbidden.
+- **Rule**: [MUST] Data flows only in the Fetching -> Consume direction. Reverse data flow (direct fetch in the Consume layer, copying server data to client store, etc.) is forbidden.
 
 ### Responsibilities of Each Layer
 
-| Layer | Location | Responsibility | Does NOT include |
+| Layer | Location | Responsibility | Does NOT Include |
 |--------|------|------|-----------------|
 | Fetching (Definition) | `features/*/api/query-options.ts` | query key, `queryOptions()`, `queryFn` definition | `select`, screen-specific data transformation, UI rendering |
-| Fetching (Hooks) | Endpoint hook files in `features/*/api/` | `useQuery`, `useMutation`, endpoint-specific transform/helper, invalidate | JSX rendering, general-purpose utility placement |
+| Fetching (Hook) | Endpoint hook files in `features/*/api/` | `useQuery`, `useMutation`, endpoint-specific transform/helper, invalidate | JSX rendering, general-purpose utility placement |
 | Fetching (State) | `features/*/store/` — Zustand store | Client UI state storage | Server data copying |
 | Consume (Consumer) | Feature/UI/Page components | JSX rendering, event handling | Direct fetch, data transformation |
 
 ### Query Options Strategy
 
-`query-options.ts` is the single entry point for query definitions. Query keys and `queryOptions()` factories are gathered in this file, but screen-specific data transformation is not placed here.
+`query-options.ts` is the single entry point for query definitions. Query keys and `queryOptions()` factories are gathered in this file, but screen-specific data transformations are not placed here.
 
 #### Principle: Do not put transformation logic in `query-options.ts`
 
-- **Rule**: [MUST] `queryFn` in `queryOptions` handles only pure API calls.
+- **Rule**: [MUST] The `queryFn` in `queryOptions` is responsible only for pure API calls.
 - **Rule**: [MUST NOT] Do not write `select` options or screen-specific data transformation logic in `query-options.ts`.
 
-#### Principle: Colocate endpoint-specific transformations in the custom hook file
+#### Principle: Co-locate endpoint-specific transformations in the custom hook file
 
-- **Rule**: [SHOULD] Transform/helper/types used only by a single endpoint are kept private within that endpoint's hook file.
-- **Rule**: [SHOULD] Only promote helpers/types to `types/`, `constants/`, `lib/`, etc. when they are reused in 2 or more files or when the file becomes excessively large.
+- **Rule**: [SHOULD] Transforms/helpers/types used only by a single endpoint are kept private within that endpoint hook file.
+- **Rule**: [SHOULD] Only promote helpers/types to `types/`, `constants/`, `lib/`, etc. when they are reused by 2 or more files or when the file becomes excessively large.
 - **Rule**: [MUST] Use shared auto-generated types as-is for API request/response types.
 - **Good example**:
   ```typescript
-  // features/order/api/use-orders-query.ts — Endpoint-specific transformation colocated within file
+  // features/order/api/use-orders-query.ts — Endpoint-specific transforms co-located within the file
   import { useQuery } from '@tanstack/react-query';
   import type { GetOrdersRequest, GetOrdersResponse } from '@/types/generated/order.generated';
-  import { orderQueryOptions } from './query-options';
+  import { orderQueries } from './query-options';
 
   type OrderListItem = {
     id: string;
@@ -512,7 +513,7 @@ Data flows unidirectionally in the **Fetching -> Consume** direction. Data trans
 
   export function useOrdersQuery(params: GetOrdersRequest) {
     return useQuery({
-      ...orderQueryOptions.list(params),
+      ...orderQueries.list(params),
       select: toOrderListItem,
     });
   }
@@ -523,11 +524,11 @@ Data flows unidirectionally in the **Fetching -> Consume** direction. Data trans
 | File Pattern | Location | Role | Testing |
 |-----------|------|------|--------|
 | `query-options.ts` | `api/` | query key + `queryOptions()` + `queryFn` definition | Pure function unit tests |
-| `endpoint hook file` | `api/` | Handles `useQuery`/`useSuspenseQuery` for queries, `useMutation` with invalidate/update for mutations, and colocates endpoint-specific transform/helpers | `renderHook`-focused tests |
+| `endpoint hook file` | `api/` | For queries: `useQuery`/`useSuspenseQuery`, for mutations: `useMutation` with invalidate/update, co-locating endpoint-specific transform/helpers | `renderHook`-based tests |
 
-## 7. Code Colocation
+## 7. Code Co-location
 
-- **Rule**: [SHOULD] Related files (components, types, sub-component files exclusive to the parent) are placed in the same folder.
+- **Rule**: [SHOULD] Related files (components, types, sub-component-specific files) are placed in the same folder.
 
 ```text
 components/ui/button/
@@ -550,9 +551,9 @@ features/order/api/
 
 ## 8. Import Path Rules
 
-General import rules (absolute paths, ordering, type imports, barrel file prohibition) follow `frontend/FRONTEND_CONVENTION.md` as the reference. This document only emphasizes rules that directly affect Feature dependency tracking.
+General import rules (absolute paths, ordering, type imports, barrel file prohibition) follow `frontend/FRONTEND_CONVENTION.md`. This document only emphasizes rules that directly affect Feature dependency tracking.
 
-- **Rule**: [MUST] Internal project modules use `@/` absolute paths by default. Same folder/sub-folder may use relative paths (`./`, `../`).
+- **Rule**: [MUST] Internal project modules use `@/` absolute paths by default. Same folder/subfolders allow relative paths (`./`, `../`).
 - **Rule**: [MUST NOT] Do not use `index.ts` barrel files. They obscure Feature dependency direction and actual reference points.
 - **Good example**:
   ```tsx
@@ -578,13 +579,13 @@ General import rules (absolute paths, ordering, type imports, barrel file prohib
   ```
 - **Good example**:
   ```tsx
-  // Commonly needed code is promoted to _common/{domain} before importing
+  // Commonly needed code is promoted to _common/{domain} then imported
   // features/order/components/order-card/OrderCard.tsx
   import { UserAvatar } from '@/features/_common/user/components/user-avatar/UserAvatar';
 
   // Shared types are placed in types/ -- prevents circular dependencies
-  import type { User } from '@/types/user.types';
-  import type { Order } from '@/types/order.types';
+  import type { User } from '@/types/user-types';
+  import type { Order } from '@/types/order-types';
   ```
 
 ### Excessive Directory Nesting
@@ -633,15 +634,15 @@ General import rules (absolute paths, ordering, type imports, barrel file prohib
 
 ### Writing Transformation Logic in `query-options.ts`
 
-- **Rule**: [MUST NOT] Do not write `select` or screen-specific transformation logic in `query-options.ts`. Endpoint-specific transformations go in the corresponding endpoint hook file.
+- **Rule**: [MUST NOT] Do not write `select` or screen-specific transformation logic in `query-options.ts`. Place endpoint-specific transformations in the corresponding endpoint hook file.
 
 ### Using Barrel Files
 
-- **Rule**: [MUST NOT] Do not use any form of `index.ts` barrel files. They cause circular dependencies, tree-shaking degradation, and HMR performance issues.
+- **Rule**: [MUST NOT] Do not use `index.ts` barrel files in any form. They cause circular dependencies and degrade tree-shaking/HMR performance.
 
 ### Copying Server Data to Client Store
 
-- **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query into Zustand store.
+- **Rule**: [MUST NOT] Do not copy server data managed by TanStack Query into a Zustand store.
 
 ## 10. AI Agent Decision Trees
 
@@ -649,12 +650,12 @@ Three decision trees are provided so AI agents can make quick decisions when gen
 
 ### 1. File Placement Decision Tree
 
-"Where should I place the new file?"
+"Where should I place this new file?"
 
 ```text
 New file creation
 |
-+-- Is it specific to a domain (orders, auth, users, etc.)?
++-- Is it specific to a particular domain (order, auth, user, etc.)?
 |  +-- YES -> Under features/{domain}/
 |     |
 |     +-- API call / TanStack Query hook?
@@ -679,7 +680,7 @@ New file creation
 |     +-- Feature-specific pure utility/helper?
 |     |  +-- features/{domain}/utils/
 |
-+-- Shared across 2+ Features + has domain context?
++-- Shared by 2+ Features + has domain context?
 |  +-- YES -> Under features/_common/{domain}/
 |     * Do not import directly between Domain Features; promote here instead
 |     |
@@ -697,7 +698,7 @@ New file creation
 |
 +-- General-purpose (domain-agnostic)?
    |
-   +-- UI component that operates on props only?
+   +-- UI component that operates with props only?
    |  +-- components/ui/
    |
    +-- Page structure component (Header, Sidebar, etc.)?
@@ -709,13 +710,13 @@ New file creation
    +-- Utility function (cn(), formatCurrency, etc.)?
    |  +-- lib/
    |
-   +-- Types referenced by multiple Features (Order, User, etc.)?
+   +-- Type referenced by multiple Features (Order, User, etc.)?
    |  +-- types/
    |
    +-- Shared Zod schema?
    |  +-- schemas/
    |
-   +-- Constants shared across multiple Features?
+   +-- Constant shared across multiple Features?
       +-- constants/
 ```
 
@@ -726,17 +727,17 @@ New file creation
 ```text
 State is needed
 |
-+-- Is it data from the server? (API response, DB data)
++-- Is the data from the server? (API response, DB data)
 |  +-- YES -> TanStack Query (useQuery / useMutation)
 |     * Do not copy to Zustand
 |
-+-- Should it be reflected in the URL? (filters, sorting, pagination)
++-- Should it be reflected in the URL? (filter, sort, pagination)
 |  +-- YES -> nuqs
-|     * Preserves state for link sharing, bookmarks, and back/forward navigation
+|     * Preserves state for link sharing, bookmarking, back/forward navigation
 |
-+-- Is it used in only a single component?
++-- Is it used by only a single component?
 |  +-- YES -> useState / useReducer
-|     * Do not put it in a global store
+|     * Do not put in a global store
 |
 +-- Is it UI state shared across multiple components?
    +-- YES -> Zustand
@@ -750,16 +751,16 @@ State is needed
 ```text
 New component creation
 |
-+-- Operates on props only + no business logic?
++-- Operates with props only + no business logic?
 |  +-- YES -> UI Component
 |     Location: components/ui/
-|     Characteristics: No store/queries usage
+|     Characteristics: store/queries usage forbidden
 |     Examples: StatusBadge, DataTable, FileUpload
 |
 +-- Uses API/store + contains business logic?
 |  +-- YES -> Feature Component
 |     Location: features/{domain}/components/
-|     Characteristics: Uses useQuery, useStore; composes UI components
+|     Characteristics: Uses useQuery, useStore, composes UI components
 |     Examples: OrderList, UserProfile, PaymentForm
 |
 +-- Page structure (Sidebar, Header, Footer)?
@@ -771,6 +772,6 @@ New component creation
 +-- routes/ route module?
    +-- YES -> Page Component
       Location: routes/
-      Characteristics: Only composes Feature components, no business logic
+      Characteristics: Feature component composition only, no business logic
       Examples: OrdersPage, DashboardPage
 ```

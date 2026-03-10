@@ -1,6 +1,6 @@
 # Redis Convention
 
-> This document defines rules that apply to Redis projects.
+> This document defines the rules applied to Redis projects.
 > Parent rules: DATABASE_CONVENTION.md
 
 ## Key Naming
@@ -32,12 +32,12 @@
 
 ### Key Length Limit
 
-- **Rule**: [SHOULD] Key names should be kept as short as possible without losing meaning. Must not exceed 1024 bytes.
+- **Rule**: [SHOULD] Key names should be kept as short as possible without losing meaning. Must not exceed a maximum of 1024 bytes.
 
 ### Key Naming Patterns
 
 - **Rule**: [MUST] Key names use only lowercase letters, colons, and numbers. Do not include spaces or special characters.
-- **Rule**: [SHOULD] Key name patterns should follow the format `{namespace}:{entity}:{identifier}:{attribute}`.
+- **Rule**: [SHOULD] Key name patterns follow the format `{namespace}:{entity}:{identifier}:{attribute}`.
 
 ## Data Structure Selection
 
@@ -45,7 +45,7 @@
 
 | Data Structure | Selection Criteria | Representative Use Cases |
 |---------------|-------------------|------------------------|
-| String | Single value storage, counters, simple cache | Page cache, view counters, session tokens |
+| String | Single value storage, counters, simple caching | Page cache, view counters, session tokens |
 | Hash | Object/entity representation (field-value pairs) | User profiles, product information, configuration values |
 | List | Ordered data, queues/stacks | Job queues, recent activity logs, timelines |
 | Set | Unique collections, tagging, unique tracking | Unique visitor counts, tag lists, liked-by users |
@@ -107,12 +107,12 @@
   ZRANK ranking:product:sales "product:200"  -- 순위 조회
   ```
 
-## TTL and Cache
+## TTL and Caching
 
 ### TTL Configuration Criteria
 
-- **Rule**: [MUST] Cache data (with `cache:` prefix) must always have a TTL set.
-- **Rule**: [SHOULD] Apply different TTLs based on how frequently the data changes.
+- **Rule**: [MUST] TTL must always be set for cache data (with `cache:` prefix).
+- **Rule**: [SHOULD] Apply different TTL values based on how frequently the data changes.
 
 | Data Type | Recommended TTL | Example |
 |-----------|----------------|---------|
@@ -127,7 +127,7 @@
   SET session:abc123 '{"user_id":1001}' EX 1800
   ```
 
-### Cache Strategies
+### Cache Strategy
 
 #### Cache-Aside (Lazy Loading)
 
@@ -146,11 +146,11 @@
 
 #### Write-Through
 
-- **Rule**: [MAY] The Write-Through pattern may be applied when data consistency is critical. (Updates both cache and DB at write time)
+- **Rule**: [MAY] The Write-Through pattern may be applied when data consistency is important. (Update both cache and DB at write time)
 
 ### Cache Invalidation
 
-- **Rule**: [MUST] When data changes (CUD), immediately invalidate (delete) the related cache.
+- **Rule**: [MUST] Immediately invalidate (delete) related caches when data is changed (CUD operations).
 - **Good examples**:
   ```python
   def update_product(product_id, data):
@@ -163,7 +163,7 @@
 
 ### Cache Stampede Prevention
 
-- **Rule**: [SHOULD] Prevent cache stampedes where many requests simultaneously refresh the same cache. Resolve using distributed locks or by adding random jitter to TTLs.
+- **Rule**: [SHOULD] Prevent cache stampedes where many requests simultaneously refresh the same cache. Resolve with distributed locks or by adding random jitter to TTL.
 - **Good examples**:
   ```python
   import random
@@ -177,12 +177,12 @@
 ### When to Use
 
 - **Rule**: [MAY] Redis Pub/Sub may be used when real-time event broadcasting is needed.
-- **Rule**: [MUST NOT] Do not use Pub/Sub for critical business logic where message loss is unacceptable. (Fire-and-forget approach causes message loss when subscribers are not connected. Use Redis Streams or a separate message queue instead)
+- **Rule**: [MUST NOT] Do not use Pub/Sub for critical business logic where message loss is not acceptable. (Fire-and-forget approach causes message loss when subscribers are not connected. Use Redis Streams or a separate message queue instead)
 
 ### Message Design
 
-- **Rule**: [SHOULD] Pub/Sub channel names should follow the same colon (`:`) delimited pattern as key naming.
-- **Rule**: [SHOULD] Message bodies should be serialized in JSON format and include `event`, `data`, and `timestamp` fields.
+- **Rule**: [SHOULD] Pub/Sub channel names follow the same colon (`:`) delimiter pattern as key naming.
+- **Rule**: [SHOULD] Message bodies are serialized in JSON format and include `event`, `data`, and `timestamp` fields.
 - **Good examples**:
   ```json
   // 채널: event:order:status_changed
@@ -210,7 +210,7 @@
 ### Big Keys
 
 - **Rule**: [MUST NOT] Do not store excessively large values in a single key. (String: over 1MB, Collection: over 10,000 elements)
-- **Solution**: Split (shard) the data across multiple keys.
+- **Solution**: Split (shard) data across multiple keys.
 - **Good examples**:
   ```redis
   SADD users:group:1 "user:1" "user:2" ... "user:1000"
@@ -232,8 +232,8 @@
 
 ### Hot Key (Single Key Overload)
 
-- **Rule**: [MUST NOT] Do not design systems where all traffic concentrates on a single key. (Redis is single-threaded, so this affects overall performance)
-- **Solution**: Add a local cache layer, or distribute (shard) the key across multiple keys.
+- **Rule**: [MUST NOT] Do not design in a way that concentrates all traffic on a single key. (Redis is single-threaded, so it affects overall performance)
+- **Solution**: Add a local cache layer or distribute (shard) keys across multiple keys.
 - **Good examples**:
   ```python
   import random
