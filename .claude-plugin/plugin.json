@@ -1,8 +1,0 @@
-{
-  "name": "sellernote-vibecode",
-  "description": "Sellernote development convention-based skills for NestJS, TypeORM, and Next.js development",
-  "author": {
-    "name": "Sellernote",
-    "email": "dev@ship-da.com"
-  }
-}
